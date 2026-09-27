@@ -8,7 +8,8 @@
     "data": "python tools/build_data.py",
     "test": "vitest run",
     "e2e": "npm run build && playwright test",
-    "lint": "eslint . && prettier --check src tests e2e"
+    "lint": "eslint . && prettier --check src tests e2e",
+    "balance": "vitest run tests/balance.test.ts --mode balance --silent=false"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

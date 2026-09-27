@@ -81,7 +81,7 @@ test('kills give gold and XP; levels can be bought', () => {
   g.sim.wave = 3;
   g.sim.onKill!({ def: { hp: 100, boss: false } } as never);
   expect(g.level).toBe(5);
-  expect(g.gold).toBe(4);
+  expect(g.gold).toBe(2); // killGold(3) = 1 + 1
 });
 
 test('a scripted player can play full rounds start to finish', () => {
