@@ -1,52 +1,60 @@
-import gems from '../data/gems.json';
-import map from '../data/map.json';
-import quality from '../data/quality_levels.json';
-import towerData from '../data/towers.json';
 import waves from '../data/waves.json';
+import * as db from './persist';
 import { GEM_COLOR, Renderer } from './render';
-import { DOWNGRADE_COST, Game, type LevelDef } from './sim/game';
-import { Maze, type MapData } from './sim/maze';
-import { allDefs, Combat, type GemDef, type SpecialDef } from './sim/towers';
-import { TICK, WaveSim, type WaveEntry } from './sim/waves';
+import { DOWNGRADE_COST, score, type Cmd } from './sim/game';
+import { DEFS, newGame } from './sim/setup';
+import type { GemDef, SpecialDef, Tower } from './sim/towers';
+import { TICK, type WaveEntry } from './sim/waves';
+import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const hud = document.querySelector<HTMLElement>('#hud')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
-const maze = new Maze(map as unknown as MapData);
-const sim = new WaveSim(maze, waves as WaveEntry[]);
-const combat = new Combat(
-  sim,
-  allDefs(gems as Record<string, GemDef>, towerData as unknown as Record<string, SpecialDef>),
-);
-const game = new Game(combat, quality.levels as LevelDef[], (Math.random() * 2 ** 31) | 0);
-const view = new Renderer(canvas, maze, sim, combat);
 const stress = location.hash === '#stress';
+const settings = await db.get('settings');
+const save = stress ? null : await db.get('save');
+const game = newGame(save?.seed ?? (Math.random() * 2 ** 31) | 0);
+if (save) game.replay(save.commands); // resume: waves before the last command replay headless
+const { combat, sim } = game;
+const { maze } = sim;
+(window as unknown as { gemtd: typeof game }).gemtd = game; // for e2e / debugging
+const view = new Renderer(canvas, maze, sim, combat);
 let removing = false; // Remove-stone mode
-let sel: (typeof game.placed)[number] | null = null;
+let sel: Tower | null = null;
+let speed = settings.speed; // 0 = paused
+const menu = initMenu(settings, game, (s) => (speed = s));
+
+game.onCommand = () => db.set('save', { seed: game.seed, commands: game.log, version: db.VERSION });
+function run(cmd: Cmd) {
+  const ok = game.run(cmd);
+  view.invalidate();
+  return ok;
+}
 
 canvas.addEventListener('click', (e) => {
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
   const hit = combat.towerAt(c, r);
   const ok = removing
-    ? game.removeStone(c, r)
+    ? run(['stone', c, r])
     : hit
       ? (sel = hit)
-      : game.step === 'place' && game.place(c, r);
+      : game.step === 'place' && run(['place', c, r]);
   removing = false;
   if (!ok) [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
   view.invalidate();
 });
 function act(a: string) {
   if (a === 'stone') removing = !removing;
-  else if (a === 'level') game.buyLevel();
+  else if (a === 'level') run(['level']);
+  else if (a === 'menu') menu.toggle();
+  else if (a === 'pause') speed = speed ? 0 : settings.speed || 1;
   else if (sel) {
-    if (a.startsWith('combine:')) {
-      if (game.combine(sel, a.slice(8)) && game.step !== 'choose' && game.step !== 'place')
-        sel = null;
-    } else if (a === 'down') game.downgrade(sel);
-    else if (a === 'keep' ? game.keep(sel) : game.merge(sel, a === 'merge2' ? 2 : 4)) sel = null;
-    view.invalidate();
+    const { c, r } = sel;
+    const ok = a.startsWith('combine:')
+      ? run(['combine', c, r, a.slice(8)])
+      : run([a as 'keep' | 'merge2' | 'merge4' | 'down', c, r]);
+    if (ok && sim.phase === 'wave') sel = null;
   }
 }
 const keys: Record<string, string> = {
@@ -56,6 +64,8 @@ const keys: Record<string, string> = {
   d: 'down',
   r: 'stone',
   l: 'level',
+  b: 'menu',
+  ' ': 'pause',
 };
 const buttons = [...document.querySelectorAll<HTMLButtonElement>('#panel button')];
 for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
@@ -77,7 +87,12 @@ addEventListener('keydown', (e) => {
   if (e.key === 'F3') {
     e.preventDefault();
     debug.hidden = !debug.hidden;
-  } else if (keys[e.key]) act(keys[e.key]);
+  } else if (e.target instanceof HTMLInputElement) return;
+  else if (/^[123]$/.test(e.key)) speed = settings.speed = [1, 2, 4][+e.key - 1];
+  else if (keys[e.key]) {
+    e.preventDefault();
+    act(keys[e.key]);
+  }
 });
 
 if (stress) {
@@ -87,9 +102,31 @@ if (stress) {
     if (combat.place(types[n % 8] + ((n % 6) + 1), i % maze.w, (i / maze.w) | 0)) n++;
   sim.startWave();
   sim.castleHp = Infinity;
+  speed = 1;
   debug.hidden = false;
 }
 const flyer = (waves as WaveEntry[]).find((w) => w.flying)!;
+let recorded = game.over;
+async function recordScore() {
+  recorded = true;
+  const scores = await db.get('scores');
+  scores.push({
+    name: settings.name,
+    score: score(game),
+    wavesCleared: game.wavesCleared,
+    hpLeft: Math.max(0, sim.castleHp),
+    timeSec: Math.round(game.seconds),
+    difficulty: 'normal',
+    seed: game.seed,
+    won: sim.phase === 'won',
+    date: Date.now(),
+    version: db.VERSION,
+    commands: game.log,
+  });
+  await db.set('scores', scores);
+  await db.set('save', null);
+  menu.show();
+}
 function topUpStress() {
   for (let k = sim.creeps.length; k < 400; k++) {
     sim.spawn({ ...(k % 5 ? sim.waves[0] : flyer), hp: 1e12 });
@@ -102,7 +139,6 @@ function topUpStress() {
 
 let lastHud = '';
 function updateHud() {
-  const total = maze.segmentLengths(maze.route()!).reduce((a, b) => a + b);
   const step = game.step;
   const odds = game.odds
     .map((p, q) => (p ? `Q${q + 1} ${p}%` : ''))
@@ -117,16 +153,18 @@ function updateHud() {
           ? `selected ${sel.def.name}${sel.kills ? ` · ${sel.kills} kills` : ''}${sel.mvp ? ` · MVP ×${sel.mvp}` : ''}`
           : 'click one of this round’s gems to select it'
         : step === 'won'
-          ? 'You win!'
+          ? `You win! Score ${score(game)}`
           : step === 'lost'
-            ? 'Game over'
-            : 'wave in progress';
+            ? `Game over. Score ${score(game)}`
+            : speed
+              ? `wave in progress ×${speed}`
+              : 'paused (Space)';
   const s =
     `Wave ${sim.wave}/${sim.lastWave} · HP ${sim.castleHp} · Gold ${game.gold} · ` +
     `Level ${game.level} (${Math.floor(game.xp)}/${Math.ceil(game.xpFor[game.level] ?? game.xp)} XP) · ` +
-    `odds ${odds} · path ${total.toFixed(1)} — ${hint}`;
+    `odds ${odds} · ${Math.floor(game.seconds)}s — ${hint}`;
   const recipes = sel && combat.towers.includes(sel) ? game.recipesFor(sel) : [];
-  const key = s + recipes.map((x) => x.name) + combat.towers.length + sim.phase;
+  const key = s + recipes.map((x) => x.name) + combat.towers.length + sim.phase + sel?.def.name;
   if (key !== lastHud) {
     lastHud = key;
     hud.textContent = s;
@@ -135,9 +173,26 @@ function updateHud() {
         const b = document.createElement('button');
         b.dataset.a = 'combine:' + x.name;
         b.textContent = `Combine → ${x.name}`;
+        b.title = x.parts.map((p) => p.def.name).join(' + ');
         return b;
       }),
     );
+    // Recipe hints: every special tower the selected gem is an ingredient of.
+    if (sel) {
+      const code = sel.def.quality ? sel.def.type + sel.def.quality : sel.def.name;
+      const uses = Object.values(DEFS)
+        .filter((d) => (d as GemDef & Partial<SpecialDef>).recipes?.some((r) => r.includes(code)))
+        .map(
+          (d) =>
+            `${d.name} = ${(d as GemDef & SpecialDef).recipes.find((r) => r.includes(code))!.join('+')}`,
+        );
+      if (uses.length) {
+        const tip = document.createElement('span');
+        tip.className = 'tip';
+        tip.textContent = `${sel.def.name} (dmg ${sel.def.damage + sel.def.bonusDamage}, range ${sel.def.range}) · used in: ${uses.join(' · ')}`;
+        combos.append(tip);
+      }
+    }
     // Highlight every tower that can combine into something right now.
     view.hints =
       sim.phase === 'build'
@@ -171,7 +226,7 @@ let last = performance.now(),
   acc = 0;
 requestAnimationFrame(function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.25);
-  acc = Math.min(acc + dt, 0.25);
+  acc = Math.min(acc + dt * speed, 0.25 * Math.max(1, speed));
   last = now;
   let ticked = false;
   for (; acc >= TICK; acc -= TICK) {
@@ -188,6 +243,7 @@ requestAnimationFrame(function frame(now) {
   drawT += performance.now() - t0;
   frames++;
   if (!stress) updateHud();
+  if (game.over && !recorded && !stress) recordScore();
 
   if (now - second >= 1000) {
     Object.assign(perf, {

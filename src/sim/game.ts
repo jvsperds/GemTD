@@ -3,7 +3,7 @@
 // Remove stone are extra actions). Unkept gems become stones and the wave starts.
 // Combine builds a special tower from recipe ingredients anywhere on the board (BUILD.md §2.4).
 import { codeOf, rng, type Combat, type GemDef, type SpecialDef, type Tower } from './towers';
-import { CREEPS_PER_WAVE, UNITS_PER_CELL } from './waves';
+import { CREEPS_PER_WAVE, TICK, UNITS_PER_CELL } from './waves';
 
 export interface LevelDef {
   level: number;
@@ -18,6 +18,19 @@ export const MAX_QUALITY = 6;
 // ponytail: kill gold and XP curve are defaults until playtests (BUILD.md Â§6.2).
 export const XP_PER_HP = 0.1;
 export const LEVEL_EVERY_WAVES = 4.5; // never-buying player reaches level 9 at wave 36
+/** A player action, serialisable for save/resume and replays. Towers are addressed by cell. */
+export type Cmd =
+  | ['place' | 'keep' | 'merge2' | 'merge4' | 'down' | 'stone', number, number]
+  | ['combine', number, number, string]
+  | ['level'];
+/** Logged command with the wave tick it was issued at (commands may land mid-wave). */
+export type LogEntry = [at: number, cmd: Cmd];
+
+/** BUILD.md §2.8: waves cleared × 1000 + castle HP × 50 − elapsed seconds (+ difficulty bonus). */
+export function score(g: Game) {
+  return Math.round(g.wavesCleared * 1000 + Math.max(0, g.sim.castleHp) * 50 - g.seconds);
+}
+
 export const GREED = { chance: 0.05, mult: 10 };
 export const killGold = (wave: number, boss: boolean) => (wave + 1) * (boss ? 10 : 1);
 
@@ -26,6 +39,9 @@ export class Game {
   xp = 0;
   level = 1;
   placed: Tower[] = []; // this round's gems
+  ticks = 0; // wave ticks simulated, for the clock
+  log: LogEntry[] = [];
+  onCommand: (() => void) | null = null;
   /** XP needed to reach level L is xpFor[L - 1]. */
   readonly xpFor: number[];
   private rand: () => number;
@@ -34,7 +50,7 @@ export class Game {
   constructor(
     readonly combat: Combat,
     readonly levels: LevelDef[],
-    seed = 1,
+    readonly seed = 1,
   ) {
     this.rand = rng(seed ^ 0x5eed);
     const { sim } = combat;
@@ -85,9 +101,60 @@ export class Game {
     return this.levels[this.level - 1].upgradeCost;
   }
 
+  get seconds() {
+    return this.ticks * TICK;
+  }
+
+  get wavesCleared() {
+    return this.sim.phase === 'build' || this.sim.phase === 'won'
+      ? this.sim.wave
+      : this.sim.wave - 1;
+  }
+
+  get over() {
+    return this.sim.phase === 'won' || this.sim.phase === 'lost';
+  }
+
+  /** Apply a command; successful ones are logged. */
+  run(cmd: Cmd) {
+    const [op, c = 0, r = 0, name = ''] = cmd;
+    const t = this.combat.towerAt(c, r);
+    const ok =
+      op === 'place'
+        ? !!this.place(c, r)
+        : op === 'stone'
+          ? this.removeStone(c, r)
+          : op === 'level'
+            ? this.buyLevel()
+            : !!t &&
+              (op === 'keep'
+                ? this.keep(t)
+                : op === 'merge2'
+                  ? this.merge(t, 2)
+                  : op === 'merge4'
+                    ? this.merge(t, 4)
+                    : op === 'down'
+                      ? this.downgrade(t)
+                      : this.combine(t, name));
+    if (ok) {
+      this.log.push([this.ticks, cmd]);
+      this.onCommand?.();
+    }
+    return ok;
+  }
+
+  /** Re-run a command log on a fresh game with the same seed. Waves between commands run headless. */
+  replay(log: LogEntry[]) {
+    for (const [at, cmd] of log) {
+      while (this.sim.phase === 'wave' && this.ticks < at) this.tick();
+      this.run(cmd);
+    }
+  }
+
   /** Advance one sim tick; awards the MVP stack when a wave ends. */
   tick() {
     if (this.sim.phase !== 'wave') return;
+    this.ticks++;
     this.sim.tick();
     this.combat.tick();
     if (this.sim.phase === 'wave') return;
@@ -154,9 +221,12 @@ export class Game {
 
   place(c: number, r: number) {
     if (this.step !== 'place') return null;
+    // Roll only once the cell is accepted, so refused clicks don't advance the RNG (replays).
+    const t = this.combat.place('B1', c, r);
+    if (!t) return null;
     const type = GEM_TYPES[Math.floor(this.rand() * GEM_TYPES.length)];
-    const t = this.combat.place(type + this.rollQuality(), c, r);
-    if (t) this.placed.push(t);
+    t.def = this.combat.gems[type + this.rollQuality()];
+    this.placed.push(t);
     return t;
   }
 
