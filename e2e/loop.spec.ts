@@ -16,3 +16,22 @@ test('place 5 gems, keep one, wave starts', async ({ page }) => {
   await page.keyboard.press('k');
   await expect(page.locator('#hud')).toContainText('wave in progress');
 });
+
+test('mid-game reload resumes from the saved command log', async ({ page }) => {
+  await page.goto(pathToFileURL(resolve('dist/index.html')).href);
+  await expect(page.locator('body[data-ready="1"]')).toBeAttached();
+  type G = { run(c: unknown[]): boolean; combat: { towers: unknown[] }; gold: number };
+  const before = await page.evaluate(() => {
+    const g = (window as unknown as { gemtd: G }).gemtd;
+    for (let c = 10; c < 15; c++) g.run(['place', c, 16]);
+    g.run(['keep', 10, 16]);
+    return g.combat.towers.length;
+  });
+  await page.waitForTimeout(300); // IndexedDB write
+  await page.reload();
+  await expect(page.locator('body[data-ready="1"]')).toBeAttached();
+  await expect(page.locator('#hud')).toContainText('Wave 1/');
+  expect(
+    await page.evaluate(() => (window as unknown as { gemtd: G }).gemtd.combat.towers.length),
+  ).toBe(before);
+});
