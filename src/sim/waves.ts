@@ -293,7 +293,8 @@ export class WaveSim {
         [cr.x, cr.y] = [cr.tc + 0.5, cr.tr + 0.5];
         this.advance(cr, this.maze.waypoints, false);
       }
-    else if (hasAbility(cr, 'runrunrun') && cr.rushT <= 0 && this.rand() < RUSH_CHANCE) cr.rushT = RUSH_TIME;
+    else if (hasAbility(cr, 'runrunrun') && cr.rushT <= 0 && this.rand() < RUSH_CHANCE)
+      cr.rushT = RUSH_TIME;
   }
 
   /** Creep reached its current target point: pick the next one, or leak at the castle. */
