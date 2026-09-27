@@ -29,6 +29,8 @@ export interface Creep {
   def: WaveEntry;
   x: number;
   y: number;
+  px: number; // position at the start of the last tick, for render interpolation
+  py: number;
   hp: number;
   seg: number; // index of the waypoint it is heading to (1..n)
   tc: number; // ground: target cell centre
@@ -94,12 +96,14 @@ export class WaveSim {
     return true;
   }
 
-  private spawn(def: WaveEntry) {
+  spawn(def: WaveEntry) {
     const [c, r] = this.maze.waypoints[0];
     this.creeps.push({
       def,
       x: c + 0.5,
       y: r + 0.5,
+      px: c + 0.5,
+      py: r + 0.5,
       hp: def.hp,
       seg: 1,
       tc: c,
@@ -130,6 +134,8 @@ export class WaveSim {
     const wp = this.maze.waypoints;
     for (const cr of this.creeps) {
       if (!cr.alive) continue;
+      cr.px = cr.x;
+      cr.py = cr.y;
       let step = (Math.max(cr.def.speed - cr.slow, MIN_SPEED) / UNITS_PER_CELL) * TICK;
       while (step > 0 && cr.alive) {
         let tx: number, ty: number;

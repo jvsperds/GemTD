@@ -5,12 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GemTD</title>
     <style>
-      html, body { margin: 0; height: 100%; background: #111; }
-      canvas { display: block; width: 100vw; height: 100vh; }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      #hud {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        color: #fff;
+        font: 14px sans-serif;
+        pointer-events: none;
+      }
+      #debug {
+        position: fixed;
+        top: 32px;
+        right: 8px;
+        margin: 0;
+        padding: 6px;
+        color: #0f0;
+        background: #000c;
+        font: 12px monospace;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
     <canvas id="game"></canvas>
+    <div id="hud"></div>
+    <pre id="debug" hidden></pre>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

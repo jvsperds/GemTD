@@ -27,6 +27,8 @@ function creep(sim: WaveSim, x: number, y: number, over: Partial<WaveEntry> = {}
     def: { ...def, ...over },
     x,
     y,
+    px: x,
+    py: y,
     hp: over.hp ?? def.hp,
     seg: 1,
     tc: 0,
