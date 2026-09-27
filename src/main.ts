@@ -80,6 +80,7 @@ canvas.addEventListener('click', (e) => {
 });
 function act(a: string) {
   if (a === 'menu') return menu.toggle();
+  if (a === 'guide') return ((view.guide = !view.guide), view.invalidate());
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
   if (replaying) return;
   if (a === 'stone') removing = !removing;
@@ -99,6 +100,7 @@ const keys: Record<string, string> = {
   d: 'down',
   r: 'stone',
   l: 'level',
+  g: 'guide',
   b: 'menu',
   ' ': 'pause',
 };

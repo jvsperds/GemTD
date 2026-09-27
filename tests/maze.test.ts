@@ -15,7 +15,7 @@ test('walls, no-build zones and waypoints refuse rocks', () => {
   const m = fresh();
   expect(m.placeRock(18, 2)).toBe(false); // wall
   expect(m.placeRock(2, 2)).toBe(false); // spawn area
-  expect(m.placeRock(18, 12)).toBe(false); // centre cross
+  expect(m.placeRock(18, 12)).toBe(true); // centre cross is buildable
   expect(m.placeRock(10, 10)).toBe(true);
   expect(m.placeRock(10, 10)).toBe(false); // occupied
   expect(m.removeRock(10, 10)).toBe(true);
