@@ -13,6 +13,7 @@ import {
   HIGH_ARMOR,
   newCreep,
   RECHARGE,
+  REFRACTION,
   TICK,
   WaveSim,
   type WaveEntry,
@@ -140,13 +141,14 @@ test('refraction shield blocks one hit; reactive armor stacks; high armor adds a
   expect(armorOf(ha)).toBe(8 + HIGH_ARMOR);
 });
 
-test('untouchable slows attackers; disarm aura stops adjacent towers unless a calm aura covers them', () => {
+test('untouchable disarms attackers; disarm aura stops adjacent towers unless a calm aura covers them', () => {
   const { sim, combat } = setup();
   const t = combat.place('D1', 10, 10)!;
   const cr = creep(sim, 13.5, 10.5, { abilities: ['enemy_bukeqinfan'] });
-  combat.tick();
+  combat.rand = () => 0; // untouchable procs
+  ticks(combat, 30 * 2);
   expect(t.target).toBe(cr);
-  expect(combat.attacksPerSec(t)).toBeCloseTo(0.2);
+  expect(t.disarmT).toBeGreaterThan(0);
 
   sim.creeps.length = 0;
   const d = creep(sim, 11.5, 10.5, { abilities: ['guai_jiaoxieguanghuan'] });
@@ -164,7 +166,8 @@ test('rush, blink and refraction trigger on turns; recharge regenerates; kraken 
   sim.startWave();
   sim.creeps.length = 0;
   sim.rand = () => 0; // every turn trigger fires
-  const cr = sim.spawn({ ...base, abilities: ['runrunrun', 'enemy_zheguang', 'enemy_shanshuo'] });
+  const rf = sim.spawn({ ...base, abilities: ['enemy_zheguang', 'runrunrun'] }); // chain: refraction wins
+  const cr = sim.spawn({ ...base, abilities: ['runrunrun'] });
   (sim as unknown as { queue: unknown[] }).queue = [];
   let turned = false;
   for (let i = 0; i < 30 * 15 && !turned; i++) {
@@ -172,13 +175,14 @@ test('rush, blink and refraction trigger on turns; recharge regenerates; kraken 
     turned = cr.rushT > 0;
   }
   expect(turned).toBe(true);
-  expect(cr.shield).toBe(1);
+  expect(rf.shield).toBe(REFRACTION.instances);
+  expect(rf.rushT).toBe(0);
   expect(sim.speed(cr)).toBeCloseTo(base.speed * 1.5);
 
   const rc = sim.spawn({ ...base, abilities: ['enemy_recharge'] });
   rc.hp = 1000;
   sim.tick();
-  expect(rc.hp).toBeCloseTo(1000 + RECHARGE * TICK);
+  expect(rc.hp).toBeCloseTo(1000 + rc.def.hp * RECHARGE * TICK);
 
   const k = sim.spawn({ ...base, hp: 1e6, abilities: ['tidehunter_kraken_shell'] });
   k.slow = 100;
