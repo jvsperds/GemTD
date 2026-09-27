@@ -1,6 +1,7 @@
 // Creeps, waves, leaks, win/lose. Pure TS, no DOM. Fixed tick of TICK seconds.
 // Positions are in cell units (cell centre = c + 0.5). Speeds in data are Dota units/s (128 per cell).
 import type { Cell, Maze } from './maze';
+import type { Tower } from './towers';
 
 export interface WaveEntry {
   wave: number;
@@ -22,6 +23,7 @@ export const SPAWN_INTERVAL = 1; // seconds
 export const CASTLE_HP = 100;
 export const LEAK_DAMAGE = 1;
 export const BOSS_LEAK_DAMAGE = 10;
+export const MIN_SPEED = 100; // Dota move-speed floor under slows
 
 export interface Creep {
   def: WaveEntry;
@@ -32,6 +34,14 @@ export interface Creep {
   tc: number; // ground: target cell centre
   tr: number;
   alive: boolean;
+  // Debuffs from towers (strongest applies, timers in seconds).
+  slow: number;
+  slowT: number;
+  armorRed: number;
+  armorT: number;
+  poison: number; // magic dps
+  poisonT: number;
+  poisonBy: Tower | null;
 }
 
 export type Phase = 'build' | 'wave' | 'won' | 'lost';
@@ -95,6 +105,13 @@ export class WaveSim {
       tc: c,
       tr: r,
       alive: true,
+      slow: 0,
+      slowT: 0,
+      armorRed: 0,
+      armorT: 0,
+      poison: 0,
+      poisonT: 0,
+      poisonBy: null,
     });
   }
 
@@ -113,7 +130,7 @@ export class WaveSim {
     const wp = this.maze.waypoints;
     for (const cr of this.creeps) {
       if (!cr.alive) continue;
-      let step = (cr.def.speed / UNITS_PER_CELL) * TICK;
+      let step = (Math.max(cr.def.speed - cr.slow, MIN_SPEED) / UNITS_PER_CELL) * TICK;
       while (step > 0 && cr.alive) {
         let tx: number, ty: number;
         if (cr.def.flying) {
