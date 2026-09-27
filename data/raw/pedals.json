@@ -1,0 +1,312 @@
+[
+  {
+    "code": "gemtd_youbushiban",
+    "name": "Ensnare Pedal",
+    "recipe": "Y3 + D2",
+    "abilities": [
+      {
+        "id": "naga_siren_ensnare"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_zhangqishiban",
+    "name": "Gale Pedal",
+    "recipe": "G3 + E2",
+    "abilities": [
+      {
+        "id": "new_venomous_gale",
+        "Raw": "deals %tick_damage magic damage.",
+        "Raw: Special": "[tick_interval: 3.0 3.0 3.0 3.0][strike_damage: 0][radius: 125 125 125 125][duration: 5 7 9 11][tick_damage: 0][movement_slow: -50 -50 -50 -50]",
+        "Raw: Special 2": "[distance: 800 800 800 800][speed: 600]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_hongliushiban",
+    "name": "Torrent Pedal",
+    "recipe": "B3 + Q2",
+    "abilities": [
+      {
+        "id": "new_torrent",
+        "Raw": "during %stun_duration seconds, every %stun_duration / %tick_count seconds, deals 0 magic damage. ~ [MOVESPEED: %movespeed_bonus%]",
+        "Raw: Special": "[stun_duration: 2][tick_count: 10][movespeed_bonus: -40][vision_duration: 4.73][delay: 1.6 1.6 1.6 1.6][torrent_height: 400]",
+        "Raw: Special 2": "[slow_duration: 8 10 12 14][radius: 256]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_haojiaoshiban",
+    "name": "Howl Pedal",
+    "recipe": "P3 + R2",
+    "abilities": [
+      {
+        "id": "new_haojiao",
+        "Name": "",
+        "Tooltip": "",
+        "Raw": "[DAMAGEOUTGOING: %unit_bonus_damage%]",
+        "Raw: Special": "[aura_radius: 256][unit_bonus_damage: 20 30 40 50][howl_duration: 10.0][think_interval: 0.5]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_suanwushiban",
+    "name": "Acid Pedal",
+    "recipe": "Q3 + Y2",
+    "abilities": [
+      {
+        "id": "new_acid_spray",
+        "Raw": "Aura: Range %radius Effect: deals %damage physical damage.",
+        "Raw: Special": "[duration: 10.0][damage: 0][radius: 625][armor_reduction: -8 -10 -12 -14][tick_rate: 1.0]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_mabishiban",
+    "name": "Paralysis Pedal",
+    "recipe": "R3 + G2",
+    "abilities": [
+      {
+        "id": "new_cask",
+        "Raw: Special": "[bounce_delay: 0.2][hero_duration: 1][creep_duration: 1][bounces_tooltip: 6 8 10 12][hero_damage: 0][bounces: 6 8 10 12]",
+        "Raw: Special 2": "[bounce_range: 1000][speed: 1800]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_kongheshiban",
+    "name": "Terrorize Pedal",
+    "recipe": "D3 + P2",
+    "abilities": [
+      {
+        "id": "new_konghe",
+        "Raw": "[INCOMING DAMAGE: %konghe_damage_per%][MOVESPEED: %konghe_speed_per%]",
+        "Raw: Special": "[konghe_speed_per: 30][konghe_duration: 6 8 10 12][konghe_damage_per: 50]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_xuwushiban",
+    "name": "Decrepify Pedal",
+    "recipe": "E3 + B2",
+    "abilities": [
+      {
+        "id": "new_xuwu",
+        "Raw": "[MOVESPEED: %xuwu_speed_per%][MAGICAL RESISTANCE DECREPIFY UNIQUE: %xuwu_mokang_per]",
+        "Raw: Special": "[xuwu_speed_per: -50][xuwu_mokang_per: -30][xuwu_duration: 5 6 7 8]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_youbushiban_yin",
+    "name": "Sparkling Ensnare Pedal",
+    "recipe": "3 * Ensnare Pedal",
+    "abilities": [
+      {
+        "id": "new_youbu2",
+        "Raw: Special": "[youbu_duration: 2 3 4 5]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_zhangqishiban_yin",
+    "name": "Sparkling Gale Pedal",
+    "recipe": "3 * Gale Pedal",
+    "abilities": [
+      {
+        "id": "new_venomous_gale2",
+        "Raw": "deals %tick_damage magic damage.",
+        "Raw: Special": "[tick_interval: 3.0 3.0 3.0 3.0][strike_damage: 0][radius: 125 125 125 125][duration: 7 9 11 13][tick_damage: 0][movement_slow: -70 -70 -70 -70]",
+        "Raw: Special 2": "[distance: 1200 1200 1200 1200][speed: 400]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_hongliushiban_yin",
+    "name": "Sparkling Torrent Pedal",
+    "recipe": "3 * Torrent Pedal",
+    "abilities": [
+      {
+        "id": "new_torrent2",
+        "Raw": "during %stun_duration seconds, every %stun_duration / %tick_count seconds, deals 0 magic damage. ~ [MOVESPEED: %movespeed_bonus%]",
+        "Raw: Special": "[stun_duration: 4][tick_count: 10][movespeed_bonus: -60][vision_duration: 4.73][delay: 1.6 1.6 1.6 1.6][torrent_height: 800]",
+        "Raw: Special 2": "[slow_duration: 8 10 12 14][radius: 256]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_haojiaoshiban_yin",
+    "name": "Sparkling Howl Pedal",
+    "recipe": "3 * Howl Pedal",
+    "abilities": [
+      {
+        "id": "new_haojiao2",
+        "Raw": "[DAMAGEOUTGOING: %unit_bonus_damage%]",
+        "Raw: Special": "[aura_radius: 384][unit_bonus_damage: 40 60 80 100][howl_duration: 10.0][think_interval: 0.5]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_suanwushiban_yin",
+    "name": "Sparkling Acid Pedal",
+    "recipe": "3 * Acid Pedal",
+    "abilities": [
+      {
+        "id": "new_acid_spray2",
+        "Raw": "Aura: Range %radius Effect: deals %damage physical damage.",
+        "Raw: Special": "[duration: 15.0][damage: 0][radius: 625][armor_reduction: -16 -20 -24 -28][tick_rate: 1.0]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_mabishiban_yin",
+    "name": "Sparkling Paralyze Pedal",
+    "recipe": "3 * Paralysis Pedal",
+    "abilities": [
+      {
+        "id": "new_cask2",
+        "Raw: Special": "[youbu_duration: 2 3 4 5]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_kongheshiban_yin",
+    "name": "Sparkling Terrorize Pedal",
+    "recipe": "3 * Terrorize Pedal",
+    "abilities": [
+      {
+        "id": "new_konghe2",
+        "Raw": "[INCOMING DAMAGE: %konghe_damage_per%][MOVESPEED: %konghe_speed_per%]",
+        "Raw: Special": "[konghe_speed_per: 30][konghe_duration: 6 8 10 12][konghe_damage_per: 100]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_xuwushiban_yin",
+    "name": "Sparkling Decrepify Pedal",
+    "recipe": "3 * Decrepify Pedal",
+    "abilities": [
+      {
+        "id": "new_xuwu2",
+        "Raw": "[MOVESPEED: %xuwu_speed_per%][MAGICAL RESISTANCE DECREPIFY UNIQUE: %xuwu_mokang_per]",
+        "Raw: Special": "[xuwu_speed_per: -70][xuwu_mokang_per: -60][xuwu_duration: 6 7 8 9]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_youbushiban_jin",
+    "name": "Blingbling Ensnare Pedal",
+    "recipe": "3 * Sparkling Ensnare Pedal",
+    "abilities": [
+      {
+        "id": "new_youbu3",
+        "Raw: Special": "[youbu_duration: 2 3 4 5]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_zhangqishiban_jin",
+    "name": "Blingbling Gale Pedal",
+    "recipe": "3 * Sparkling Gale Pedal",
+    "abilities": [
+      {
+        "id": "new_venomous_gale3",
+        "Raw": "deals %tick_damage magic damage.",
+        "Raw: Special": "[tick_interval: 3.0 3.0 3.0 3.0][strike_damage: 0][radius: 125 125 125 125][duration: 11 13 15 17][tick_damage: 0][movement_slow: -90 -90 -90 -90]",
+        "Raw: Special 2": "[distance: 1600 1600 1600 1600][speed: 200]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_hongliushiban_jin",
+    "name": "Blingbling Torrent Pedal",
+    "recipe": "3 * Sparkling Torrent Pedal",
+    "abilities": [
+      {
+        "id": "new_torrent3",
+        "Raw": "during %stun_duration seconds, every %stun_duration / %tick_count seconds, deals 0 magic damage. ~ [MOVESPEED: %movespeed_bonus%]",
+        "Raw: Special": "[stun_duration: 8][tick_count: 10][movespeed_bonus: -80][vision_duration: 4.73][delay: 1.6 1.6 1.6 1.6][torrent_height: 1200]",
+        "Raw: Special 2": "[slow_duration: 12 14 16 18][radius: 256]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_haojiaoshiban_jin",
+    "name": "Blingbling Howl Pedal",
+    "recipe": "3 * Sparkling Howl Pedal",
+    "abilities": [
+      {
+        "id": "new_haojiao3",
+        "Raw": "[DAMAGEOUTGOING: %unit_bonus_damage%]",
+        "Raw: Special": "[aura_radius: 512][unit_bonus_damage: 80 120 160 200][howl_duration: 10.0][think_interval: 0.5]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_suanwushiban_jin",
+    "name": "Blingbling Acid Pedal",
+    "recipe": "3 * Sparkling Acid Pedal",
+    "abilities": [
+      {
+        "id": "new_acid_spray3",
+        "Raw": "Aura: Range %radius Effect: deals %damage physical damage.",
+        "Raw: Special": "[duration: 20.0][damage: 0][radius: 625][armor_reduction: -32 -40 -48 -56][tick_rate: 1.0]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_mabishiban_jin",
+    "name": "Blingbling Paralyze Pedal",
+    "recipe": "3 * Sparkling Paralyze Pedal",
+    "abilities": [
+      {
+        "id": "new_cask3",
+        "Raw: Special": "[youbu_duration: 2 3 4 5]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_kongheshiban_jin",
+    "name": "Blingbling Terrorize Pedal",
+    "recipe": "3 * Sparkling Terrorize Pedal",
+    "abilities": [
+      {
+        "id": "new_konghe3",
+        "Raw": "[INCOMING DAMAGE: %konghe_damage_per%][MOVESPEED: %konghe_speed_per%]",
+        "Raw: Special": "[konghe_speed_per: 30][konghe_duration: 6 8 10 12][konghe_damage_per: 200]",
+        "Pierce Spell Immunity": "true"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_xuwushiban_jin",
+    "name": "Blingbling Decrepify Pedal",
+    "recipe": "3 * Sparkling Decrepify Pedal",
+    "abilities": [
+      {
+        "id": "new_xuwu3",
+        "Raw": "[MOVESPEED: %xuwu_speed_per%][MAGICAL RESISTANCE DECREPIFY UNIQUE: %xuwu_mokang_per]",
+        "Raw: Special": "[xuwu_speed_per: -90][xuwu_mokang_per: -90][xuwu_duration: 7 8 9 10]",
+        "Pierce Spell Immunity": "false"
+      }
+    ]
+  }
+]

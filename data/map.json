@@ -1,0 +1,35 @@
+{
+  "_source": "Maze Builder screenshot supplied by Jasper (2026-09-27). Coordinates are [col, row], 0-indexed, origin top-left.",
+  "width": 37,
+  "height": 37,
+  "cellUnits": 128,
+  "spawn": [4, 4],
+  "checkpoints": [[4, 18], [32, 18], [32, 4], [18, 4], [18, 32]],
+  "castle": [32, 32],
+  "route": "spawn -> CP1 -> CP2 -> CP3 -> CP4 -> CP5 -> castle",
+  "noBuildZones": [
+    {"name": "spawnArea", "cols": [0, 8], "rows": [0, 8]},
+    {"name": "castleArea", "cols": [28, 36], "rows": [28, 36]}
+  ],
+  "walls": {
+    "_note": "Black cells in the screenshot (fixed, not player stones). Checkpoint cells themselves stay walkable.",
+    "segments": [
+      {"col": 18, "rows": [0, 8]},
+      {"row": 18, "cols": [0, 8]},
+      {"row": 18, "cols": [28, 36]},
+      {"col": 18, "rows": [28, 36]}
+    ]
+  },
+  "centerCross": {
+    "_note": "Grey cells in the screenshot. Assumed walkable but not buildable - VERIFY with the pathing fixture below.",
+    "segments": [
+      {"row": 18, "cols": [9, 27]},
+      {"col": 18, "rows": [9, 27]}
+    ]
+  },
+  "emptyMapPathFixture": {
+    "_note": "Path lengths shown by the Maze Builder on the empty map. Our pathfinder must reproduce these; use them to pick the movement rule (4- vs 8-direction, wall handling).",
+    "segments": [14, 29, 14, 14, 29, 14],
+    "total": 114
+  }
+}

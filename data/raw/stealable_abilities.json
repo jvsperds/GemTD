@@ -1,0 +1,554 @@
+[
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_slow1",
+    "abilities": [],
+    "Name": "slow 1",
+    "Tooltip": "Decrease enemy's movement speed by 60.",
+    "Raw": "[MOVESPEED: -60]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_slow2",
+    "abilities": [],
+    "Name": "slow 2",
+    "Tooltip": "Decrease enemy's movement speed by 90.",
+    "Raw": "[MOVESPEED: -90]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_slow3",
+    "abilities": [],
+    "Name": "slow 3",
+    "Tooltip": "Decrease enemy's movement speed by 120.",
+    "Raw": "[MOVESPEED: -120]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_slow4",
+    "abilities": [],
+    "Name": "slow 4",
+    "Tooltip": "Decrease enemy's movement speed by 150.",
+    "Raw": "[MOVESPEED: -150]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_slow5",
+    "abilities": [],
+    "Name": "slow 5",
+    "Tooltip": "Decrease enemy's movement speed by 180.",
+    "Raw": "[MOVESPEED: -180]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_slow6",
+    "abilities": [],
+    "Name": "slow MAX",
+    "Tooltip": "Decrease enemy's movement speed by 480.",
+    "Raw": "[MOVESPEED: -480]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_true_sight",
+    "abilities": [],
+    "Name": "true sight",
+    "Tooltip": "Grants true sight around the gem."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura1",
+    "abilities": [],
+    "Name": "aura 1",
+    "Tooltip": "Allies's attack speed+20 nearby.",
+    "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 20]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura2",
+    "abilities": [],
+    "Name": "aura 2",
+    "Tooltip": "Allies's attack speed+30 nearby.",
+    "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 30]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura3",
+    "abilities": [],
+    "Name": "aura 3",
+    "Tooltip": "Allies's attack speed+40 nearby.",
+    "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 40]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura4",
+    "abilities": [],
+    "Name": "aura 4",
+    "Tooltip": "Allies's attack speed+50 nearby.",
+    "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 50]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura5",
+    "abilities": [],
+    "Name": "aura 5",
+    "Tooltip": "Allies's attack speed+60 nearby.",
+    "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 60]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura6",
+    "abilities": [],
+    "Name": "aura MAX",
+    "Tooltip": "Allies's attack speed+70 nearby.",
+    "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 70]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed_aura_guichu",
+    "abilities": [],
+    "Name": "otomad",
+    "Tooltip": "Allies's attack speed+200 nearby.",
+    "Raw": "Aura: Range 200 Effect: [ATTACKSPEED: 200]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianshe1",
+    "abilities": [],
+    "Name": "cleave 1",
+    "Tooltip": "Deals 30% damage around 300 range of the target.",
+    "Raw": "On Attack Landed, run script jianshe1 (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianshe2",
+    "abilities": [],
+    "Name": "cleave 2",
+    "Tooltip": "Deals 40% damage around 350 range of the target.",
+    "Raw": "On Attack Landed, run script jianshe2 (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianshe3",
+    "abilities": [],
+    "Name": "cleave 3",
+    "Tooltip": "Deals 50% damage around 400 range of the target.",
+    "Raw": "On Attack Landed, run script jianshe3 (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianshe4",
+    "abilities": [],
+    "Name": "cleave 4",
+    "Tooltip": "Deals 60% damage around 450 range of the target.",
+    "Raw": "On Attack Landed, run script jianshe4 (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianshe5",
+    "abilities": [],
+    "Name": "cleave 5",
+    "Tooltip": "Deals 70% damage around 500 range of the target.",
+    "Raw": "On Attack Landed, run script jianshe5 (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianshe6",
+    "abilities": [],
+    "Name": "cleave MAX",
+    "Tooltip": "Deals full damage around 700 range of the target.",
+    "Raw": "On Attack Landed, run script jianshe6 (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_ranjin",
+    "abilities": [],
+    "Name": "Burned",
+    "Tooltip": "Deal 100% magic damage to target enemy per attack.",
+    "Raw": "On Attack Landed, run script ranjin (addon_game_mode.lua) with [Damage: %attack_damage]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_du1",
+    "abilities": [],
+    "Name": "poison 1",
+    "Tooltip": "Enemies take 2 damage every second. Lasts 5 seconds.",
+    "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 2 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_du2",
+    "abilities": [],
+    "Name": "poison 2",
+    "Tooltip": "Enemies take 4 damage every second. Lasts 5 seconds.",
+    "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 4 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_du3",
+    "abilities": [],
+    "Name": "poison 3",
+    "Tooltip": "Enemies take 8 damage every second. Lasts 5 seconds.",
+    "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 8 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_du4",
+    "abilities": [],
+    "Name": "poison 4",
+    "Tooltip": "Enemies take 16 damage every second. Lasts 5 seconds.",
+    "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 16 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_du5",
+    "abilities": [],
+    "Name": "poison 5",
+    "Tooltip": "Enemies take 32 damage every second. Lasts 5 seconds.",
+    "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 32 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_du6",
+    "abilities": [],
+    "Name": "poison MAX",
+    "Tooltip": "Enemies take 128 damage every second. Lasts 5 seconds.",
+    "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 128 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_fenliejian",
+    "abilities": [],
+    "Name": "split 1",
+    "Tooltip": "Attacks up to 3 enemies at the same time.",
+    "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_fenliejian_xianyan",
+    "abilities": [],
+    "Name": "split 2",
+    "Tooltip": "Attacks up to 5 enemies at the same time.",
+    "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [attack_count: 4]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianjia1",
+    "abilities": [],
+    "Name": "pierce 1",
+    "Tooltip": "Decrease enemy's armor by 2.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -2]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianjia2",
+    "abilities": [],
+    "Name": "pierce 2",
+    "Tooltip": "Decrease enemy's armor by 4.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -4]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianjia3",
+    "abilities": [],
+    "Name": "pierce 3",
+    "Tooltip": "Decrease enemy's armor by 8.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -8]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianjia4",
+    "abilities": [],
+    "Name": "pierce 4",
+    "Tooltip": "Decrease enemy's armor by 16.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -16]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianjia5",
+    "abilities": [],
+    "Name": "pierce 5",
+    "Tooltip": "Decrease enemy's armor by 32.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -32]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jianjia6",
+    "abilities": [],
+    "Name": "pierce MAX",
+    "Tooltip": "Decrease enemy's armor by 64.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -64]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_huiyao",
+    "abilities": [],
+    "Name": "burn 1",
+    "Tooltip": "Deals 60 magical damage every second to nearby enemies.",
+    "Raw": "Aura: Range 400 Effect: during 1 seconds, every 0.5 seconds, deals 30 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_huiyao2",
+    "abilities": [],
+    "Name": "burn 2",
+    "Tooltip": "Deals 320 magical damage every second to nearby enemies.",
+    "Raw": "Aura: Range 500 Effect: during 1 seconds, every 0.5 seconds, deals 160 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_huiyao3",
+    "abilities": [],
+    "Name": "burn 3",
+    "Tooltip": "Deals 2500 magical damage every second to nearby enemies.",
+    "Raw": "Aura: Range 800 Effect: during 1 seconds, every 2 seconds, deals 5000 magic damage."
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_fenzheng",
+    "abilities": [],
+    "Name": "magic weakness",
+    "Tooltip": "Enemy's magic resistance decreased by 50.",
+    "Raw": "Aura: Range 400 Effect: [MAGICAL RESISTANCE: -50]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_zheyi",
+    "abilities": [],
+    "Name": "anti-fly 1",
+    "Tooltip": "Flying enemies' armor decreased by 10 and movement speed decreased by 150.",
+    "Raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -10][MOVESPEED: -250]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_zheyi2",
+    "abilities": [],
+    "Name": "anti-fly 2",
+    "Tooltip": "Flying enemies' armor decreased by 10 and movement speed decreased by 250 and magic resistance decreased by 50.",
+    "Raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -10][MOVESPEED: -250][MAGICAL RESISTANCE: -50]",
+    "Pierce Spell Immunity": "true"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_zheyi3",
+    "abilities": [],
+    "Name": "anti-fly3",
+    "Tooltip": "Flying enemies' armor decreased by 64 and movement speed decreased by 480 and magic resistance decreased by 100.",
+    "Raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -64][MOVESPEED: -480][MAGICAL RESISTANCE: -100]",
+    "Pierce Spell Immunity": "true"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_bixi",
+    "abilities": [],
+    "Name": "decadent",
+    "Tooltip": "Decrease nearby enemies' armor by 15.",
+    "Raw": "Aura: Range 800 Effect: [PHYSICAL ARMOR: -15]",
+    "Pierce Spell Immunity": "false"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_bixi2",
+    "abilities": [],
+    "Name": "decadent2",
+    "Tooltip": "Decrease enemy's armor by 30 nearby, ignore magic immune.",
+    "Raw": "Aura: Range 1200 Effect: [PHYSICAL ARMOR: -30]",
+    "Pierce Spell Immunity": "true"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_baoji1",
+    "abilities": [],
+    "Name": "crit 1",
+    "Tooltip": "10% chance to deal 5x damage.",
+    "Raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]",
+    "Pierce Spell Immunity": "true"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_lanbaoshi",
+    "abilities": [],
+    "Name": "ice",
+    "Tooltip": "Decrease nearby enemies' movement by 70%.",
+    "Raw": "Aura: Range 300 Effect: [MOVESPEED: -70%]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jihan",
+    "abilities": [],
+    "Name": "Freezing cold",
+    "Tooltip": "Decrease the speed of enemies around by 50%",
+    "Raw": "On Attack Landed, [Duration: 3] [Splash: 300][MOVESPEED: -50%][DISABLE HEALING: 1]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jingzhun",
+    "abilities": [],
+    "Name": "Monkey King Bar",
+    "Tooltip": "Grant towers around with attacks regardless of evasion.",
+    "Raw": "Aura: Range 300 Effect: [CANNOT MISS: true]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_10jiyun",
+    "abilities": [],
+    "Name": "stun",
+    "Tooltip": "Attacks have a 10% chance to stun the enemy.",
+    "Raw": "On Attack Landed, [10%][Stun 2 seconds]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_5shihua",
+    "abilities": [],
+    "Name": "Stone Gaze",
+    "Tooltip": "1% probability in attack to trigger Gaze: Enemies' movement speed in 1000 range will be sharply decreased, even those faced to the Golem over 2s will be transformed into stone, rooted for 3s with 100% extra physical damage.",
+    "Raw": "On Attack Landed, [1%]run script shihua (addon_game_mode.lua) with []",
+    "Raw: Special": "[bonus_magic_resist: 0][bonus_physical_damage: 100]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_maoyan",
+    "abilities": [],
+    "Name": "inspire",
+    "Tooltip": "Increase nearby gems' attack damage by 50%.",
+    "Raw": "Aura: Range 500 Effect: [DAMAGEOUTGOING: 50%]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jin",
+    "abilities": [],
+    "Name": "corrupt 1",
+    "Tooltip": "Decrease target enemy's armor by 32.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -32]",
+    "Pierce Spell Immunity": "true"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_jin2",
+    "abilities": [],
+    "Name": "corrupt 2",
+    "Tooltip": "Decrease target enemy's armor by 48.",
+    "Raw": "On Attack Landed, [PHYSICAL ARMOR: -48]",
+    "Pierce Spell Immunity": "true"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_shandianlian",
+    "abilities": [],
+    "Name": "lightning chain",
+    "Tooltip": "Attacks have a 30% chance to spark a damaging lightning that jumps accross enemies.",
+    "Raw": "On Attack Landed, [30%]run script jn_D3_00 (shandianlian.lua) with [Damage: 150, Radius: 1000, AttackCount: 1, Count: 5]",
+    "Pierce Spell Immunity": "false"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_chazhuangshandian",
+    "abilities": [],
+    "Name": "forked Lightning",
+    "Tooltip": "Attacks have a 25% chance to spark a forked lightning.",
+    "Raw": "On Attack Landed, [25%]run script Shock (shock.lua) with []",
+    "Raw: Special": "[damage: 2500][targets: 5][start_radius: 100][chance: 25][end_distance: 5000][end_radius: 3000]",
+    "Pierce Spell Immunity": "false"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_fenliejian_you",
+    "abilities": [],
+    "Name": "radiation",
+    "Tooltip": "Attacks up to 10 enemies at the same time.",
+    "Raw": "On Attack, run script DuoChongGongJi_you (fenliejian.lua) with [attack_count: 10]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_chenmoguanghuan",
+    "abilities": [],
+    "Name": "Resist",
+    "Tooltip": "Towers nearby resist magic influence.",
+    "Raw": "Aura: Range 600 Effect: [MAGIC IMMUNE: true]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_lanbaoshi2",
+    "abilities": [],
+    "Name": "ice2",
+    "Tooltip": "Decrease nearby enemies' movement by 75%.",
+    "Raw": "Aura: Range 556 Effect: [MOVESPEED: -75%]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_aojiao",
+    "abilities": [],
+    "Name": "Melancholy",
+    "Tooltip": "Stop attacking when melancholic",
+    "Raw": "On Attack Start, [3%] [Duration: 5][DISARMED: true]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack1",
+    "abilities": [],
+    "Name": "damage1",
+    "Tooltip": "+20 attack damage.",
+    "Raw": "[BASEATTACK BONUSDAMAGE: 20]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack2",
+    "abilities": [],
+    "Name": "damage2",
+    "Tooltip": "+40 attack damage.",
+    "Raw": "[BASEATTACK BONUSDAMAGE: 40]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack3",
+    "abilities": [],
+    "Name": "damage3",
+    "Tooltip": "+80 attack damage.",
+    "Raw": "[BASEATTACK BONUSDAMAGE: 80]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack4",
+    "abilities": [],
+    "Name": "damage4",
+    "Tooltip": "+160 attack damage.",
+    "Raw": "[BASEATTACK BONUSDAMAGE: 160]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack5",
+    "abilities": [],
+    "Name": "damage5",
+    "Tooltip": "+320 attack damage.",
+    "Raw": "[BASEATTACK BONUSDAMAGE: 320]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack6",
+    "abilities": [],
+    "Name": "damage MAX",
+    "Tooltip": "+640 attack damage.",
+    "Raw": "[BASEATTACK BONUSDAMAGE: 640]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_attack7",
+    "abilities": [],
+    "Raw": "[BASEATTACK BONUSDAMAGE: 1280]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed1",
+    "abilities": [],
+    "Name": "speed1",
+    "Tooltip": "+200 attack speed.",
+    "Raw": "[ATTACKSPEED: 200]"
+  },
+  {
+    "title": "Abilities to steal",
+    "ability": "tower_speed2",
+    "abilities": [],
+    "Name": "speed2",
+    "Tooltip": "+500 attack speed.",
+    "Raw": "[ATTACKSPEED: 500]"
+  }
+]

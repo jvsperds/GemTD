@@ -1,0 +1,146 @@
+[
+  {
+    "section": "Pedals",
+    "name": "Ensnare Pedal",
+    "inputs": "Y3 + D2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Gale Pedal",
+    "inputs": "G3 + E2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Torrent Pedal",
+    "inputs": "B3 + Q2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Howl Pedal",
+    "inputs": "P3 + R2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Acid Pedal",
+    "inputs": "Q3 + Y2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Paralysis Pedal",
+    "inputs": "R3 + G2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Terrorize Pedal",
+    "inputs": "D3 + P2",
+    "altInputs": []
+  },
+  {
+    "section": "Pedals",
+    "name": "Decrepify Pedal",
+    "inputs": "E3 + B2",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Ensnare Pedal",
+    "inputs": "3 * Ensnare Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Gale Pedal",
+    "inputs": "3 * Gale Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Torrent Pedal",
+    "inputs": "3 * Torrent Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Howl Pedal",
+    "inputs": "3 * Howl Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Acid Pedal",
+    "inputs": "3 * Acid Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Paralyze Pedal",
+    "inputs": "3 * Paralysis Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Terrorize Pedal",
+    "inputs": "3 * Terrorize Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Sparkling Pedals",
+    "name": "Sparkling Decrepify Pedal",
+    "inputs": "3 * Decrepify Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Ensnare Pedal",
+    "inputs": "3 * Sparkling Ensnare Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Gale Pedal",
+    "inputs": "3 * Sparkling Gale Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Torrent Pedal",
+    "inputs": "3 * Sparkling Torrent Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Howl Pedal",
+    "inputs": "3 * Sparkling Howl Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Acid Pedal",
+    "inputs": "3 * Sparkling Acid Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Paralyze Pedal",
+    "inputs": "3 * Sparkling Paralyze Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Terrorize Pedal",
+    "inputs": "3 * Sparkling Terrorize Pedal",
+    "altInputs": []
+  },
+  {
+    "section": "Blingbling Pedals",
+    "name": "Blingbling Decrepify Pedal",
+    "inputs": "3 * Sparkling Decrepify Pedal",
+    "altInputs": []
+  }
+]
