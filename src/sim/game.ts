@@ -26,9 +26,11 @@ export type Cmd =
 /** Logged command with the wave tick it was issued at (commands may land mid-wave). */
 export type LogEntry = [at: number, cmd: Cmd];
 
-/** BUILD.md §2.8: waves cleared × 1000 + castle HP × 50 − elapsed seconds (+ difficulty bonus). */
+/** BUILD.md §2.8: waves cleared × (1000 + difficulty bonus) + castle HP × 50 − elapsed seconds. */
 export function score(g: Game) {
-  return Math.round(g.wavesCleared * 1000 + Math.max(0, g.sim.castleHp) * 50 - g.seconds);
+  return Math.round(
+    g.wavesCleared * (1000 + g.bonusPerWave) + Math.max(0, g.sim.castleHp) * 50 - g.seconds,
+  );
 }
 
 export const GREED = { chance: 0.05, mult: 10 };
@@ -39,6 +41,8 @@ export class Game {
   xp = 0;
   level = 1;
   placed: Tower[] = []; // this round's gems
+  bonusPerWave = 0; // difficulty bonus
+  kills = 0;
   ticks = 0; // wave ticks simulated, for the clock
   log: LogEntry[] = [];
   onCommand: (() => void) | null = null;
@@ -77,6 +81,7 @@ export class Game {
         this.rand() < GREED.chance;
       this.gold += killGold(sim.wave, cr.def.boss) * (greedy ? GREED.mult : 1);
       this.xp += cr.def.hp * XP_PER_HP;
+      this.kills++;
       while (this.level < this.levels.length && this.xp >= this.xpFor[this.level]) this.level++;
     };
   }

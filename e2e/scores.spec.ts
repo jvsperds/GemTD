@@ -47,4 +47,10 @@ test('finished game is on the leaderboard after reload with network blocked', as
   await expect(page.locator('#rows tr')).toHaveCount(1);
   await expect(page.locator('#rows')).toContainText('Player');
   await expect(page.locator('#hud')).toContainText('Wave 0/');
+
+  // Phase 7: the stored command log replays the finished game.
+  await page.locator('#rows button', { hasText: 'Watch' }).click();
+  await expect(page.locator('body[data-ready="1"]')).toBeAttached();
+  await expect(page.locator('#hud')).toContainText('REPLAY');
+  await expect(page.locator('#hud')).toContainText('Wave 1/', { timeout: 10000 });
 });

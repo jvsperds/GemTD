@@ -1,0 +1,27 @@
+/* global self, caches, fetch */
+// Offline cache for the installed (served) build. The game is one file, so cache-first is enough.
+const CACHE = 'gemtd-v1';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+self.addEventListener('install', (e) =>
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))),
+);
+self.addEventListener('activate', (e) =>
+  e.waitUntil(
+    caches
+      .keys()
+      .then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))),
+  ),
+);
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then(
+      (hit) =>
+        hit ||
+        fetch(e.request).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return res;
+        }),
+    ),
+  );
+});
