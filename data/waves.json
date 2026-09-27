@@ -1,0 +1,866 @@
+[
+ {
+  "wave": 1,
+  "name": "Frenzied Pig",
+  "hp": 3.0,
+  "speed": 446.25,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 2,
+  "name": "Swift Frog",
+  "hp": 6.0,
+  "speed": 510.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 3,
+  "name": "Sturdy Yak",
+  "hp": 12.0,
+  "speed": 446.25,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 4,
+  "name": "Smart Robot",
+  "hp": 12.0,
+  "speed": 850.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 5,
+  "name": "Baby Panda",
+  "hp": 14.4,
+  "speed": 425.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 5,
+  "name": "Balloon Badger",
+  "hp": 13.2,
+  "speed": 425.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 6,
+  "name": "Tardy Stump",
+  "hp": 60.0,
+  "speed": 382.5,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 7,
+  "name": "Satisfied Lizard",
+  "hp": 60.0,
+  "speed": 510.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 8,
+  "name": "Invisible Spider",
+  "hp": 42.0,
+  "speed": 637.5,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "riki_permanent_invisibility"
+  ]
+ },
+ {
+  "wave": 9,
+  "name": "Dusky",
+  "hp": 72.0,
+  "speed": 510.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 10,
+  "name": "Invincible Dog",
+  "hp": 1260.0,
+  "speed": 637.5,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": true,
+  "abilities": []
+ },
+ {
+  "wave": 11,
+  "name": "Sheep",
+  "hp": 180.0,
+  "speed": 446.25,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 12,
+  "name": "Funny Alpaca",
+  "hp": 270.0,
+  "speed": 510.0,
+  "armor": 4.0,
+  "magicResist": 20.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "guai_jiaoxieguanghuan"
+  ]
+ },
+ {
+  "wave": 13,
+  "name": "Pig Princess",
+  "hp": 480.0,
+  "speed": 510.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 14,
+  "name": "Bulldog",
+  "hp": 660.0,
+  "speed": 510.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 15,
+  "name": "Cat & Dog",
+  "hp": 240.0,
+  "speed": 595.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 15,
+  "name": "Bamboo Addict",
+  "hp": 264.0,
+  "speed": 510.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 16,
+  "name": "Young Demon",
+  "hp": 570.0,
+  "speed": 680.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_momian"
+  ]
+ },
+ {
+  "wave": 17,
+  "name": "Belted Chicken",
+  "hp": 960.0,
+  "speed": 510.0,
+  "armor": 4.0,
+  "magicResist": 50.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_bukeqinfan"
+  ]
+ },
+ {
+  "wave": 18,
+  "name": "Bajie",
+  "hp": 1800.0,
+  "speed": 573.75,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "riki_permanent_invisibility",
+   "guai_jiaoxieguanghuan"
+  ]
+ },
+ {
+  "wave": 19,
+  "name": "Exquisite Rabbit",
+  "hp": 1320.0,
+  "speed": 850.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "runrunrun"
+  ]
+ },
+ {
+  "wave": 19,
+  "name": "Donkey Trio",
+  "hp": 2220.0,
+  "speed": 595.0,
+  "armor": 4.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "runrunrun"
+  ]
+ },
+ {
+  "wave": 20,
+  "name": "Shakbag",
+  "hp": 20400.0,
+  "speed": 765.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": true,
+  "abilities": []
+ },
+ {
+  "wave": 21,
+  "name": "Ripper",
+  "hp": 4500.0,
+  "speed": 573.75,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 21,
+  "name": "Crab",
+  "hp": 5400.0,
+  "speed": 595.0,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": []
+ },
+ {
+  "wave": 22,
+  "name": "Lockjaw",
+  "hp": 5400.0,
+  "speed": 510.0,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_high_armor"
+  ]
+ },
+ {
+  "wave": 23,
+  "name": "Flopjaw",
+  "hp": 7200.0,
+  "speed": 552.5,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian",
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 23,
+  "name": "Trapjaw",
+  "hp": 6000.0,
+  "speed": 531.25,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian",
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 24,
+  "name": "Mech Donkey",
+  "hp": 4500.0,
+  "speed": 658.75,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "shredder_reactive_armor"
+  ]
+ },
+ {
+  "wave": 24,
+  "name": "Machjaw",
+  "hp": 6000.0,
+  "speed": 573.75,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "shredder_reactive_armor"
+  ]
+ },
+ {
+  "wave": 25,
+  "name": "Demolisher",
+  "hp": 1680.0,
+  "speed": 510.0,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_high_armor"
+  ]
+ },
+ {
+  "wave": 25,
+  "name": "Corsair",
+  "hp": 2160.0,
+  "speed": 340.0,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_high_armor"
+  ]
+ },
+ {
+  "wave": 26,
+  "name": "Skateboard Flamingo",
+  "hp": 3780.0,
+  "speed": 765.0,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_momian"
+  ]
+ },
+ {
+  "wave": 27,
+  "name": "Lgd Goldfish",
+  "hp": 2100.0,
+  "speed": 531.25,
+  "armor": 8.0,
+  "magicResist": 50.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_bukeqinfan"
+  ]
+ },
+ {
+  "wave": 27,
+  "name": "Jellyfish",
+  "hp": 1200.0,
+  "speed": 531.25,
+  "armor": 8.0,
+  "magicResist": 50.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian",
+   "enemy_bukeqinfan"
+  ]
+ },
+ {
+  "wave": 28,
+  "name": "Ig Dragon",
+  "hp": 2280.0,
+  "speed": 637.5,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "shredder_reactive_armor"
+  ]
+ },
+ {
+  "wave": 28,
+  "name": "Timbersaw",
+  "hp": 2940.0,
+  "speed": 510.0,
+  "armor": 24.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "shredder_reactive_armor"
+  ]
+ },
+ {
+  "wave": 29,
+  "name": "Vg Fox",
+  "hp": 3600.0,
+  "speed": 658.75,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "guai_shanbi",
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 29,
+  "name": "Parrot Boatman",
+  "hp": 2700.0,
+  "speed": 850.0,
+  "armor": 8.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "guai_shanbi",
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 30,
+  "name": "Carpet Rider",
+  "hp": 48000.0,
+  "speed": 637.5,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": true,
+  "abilities": []
+ },
+ {
+  "wave": 31,
+  "name": "Bookwyrm",
+  "hp": 8400.0,
+  "speed": 765.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_momian",
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 31,
+  "name": "Otter Dragon",
+  "hp": 12600.0,
+  "speed": 680.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian",
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 32,
+  "name": "Rechargeable Shark",
+  "hp": 51000.0,
+  "speed": 510.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_recharge"
+  ]
+ },
+ {
+  "wave": 33,
+  "name": "Ribboned Zombie",
+  "hp": 48000.0,
+  "speed": 595.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian",
+   "enemy_shanshuo"
+  ]
+ },
+ {
+  "wave": 33,
+  "name": "Baby DP",
+  "hp": 33000.0,
+  "speed": 850.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian",
+   "enemy_shanshuo"
+  ]
+ },
+ {
+  "wave": 34,
+  "name": "Baby Bloody",
+  "hp": 7800.0,
+  "speed": 786.25,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 34,
+  "name": "Bounty Apprentice",
+  "hp": 12000.0,
+  "speed": 616.25,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 35,
+  "name": "Black And White Fox",
+  "hp": 5280.0,
+  "speed": 595.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_momian"
+  ]
+ },
+ {
+  "wave": 36,
+  "name": "Jumo",
+  "hp": 33000.0,
+  "speed": 850.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_momian"
+  ]
+ },
+ {
+  "wave": 37,
+  "name": "Baekho",
+  "hp": 72000.0,
+  "speed": 1020.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_shanshuo"
+  ]
+ },
+ {
+  "wave": 38,
+  "name": "Lilnova",
+  "hp": 120000.0,
+  "speed": 850.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "guai_jiaoxieguanghuan"
+  ]
+ },
+ {
+  "wave": 39,
+  "name": "Mermaid Rider",
+  "hp": 33000.0,
+  "speed": 510.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_bukeqinfan",
+   "tidehunter_kraken_shell",
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 39,
+  "name": "Newt",
+  "hp": 9000.0,
+  "speed": 680.0,
+  "armor": 12.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_bukeqinfan",
+   "tidehunter_kraken_shell",
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 40,
+  "name": "Thrilling Ghost",
+  "hp": 198000.0,
+  "speed": 680.0,
+  "armor": 0.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": true,
+  "abilities": [
+   "tidehunter_kraken_shell"
+  ]
+ },
+ {
+  "wave": 41,
+  "name": "Jade Dragon",
+  "hp": 144000.0,
+  "speed": 595.0,
+  "armor": 16.0,
+  "magicResist": 50.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 41,
+  "name": "Azuremir",
+  "hp": 72000.0,
+  "speed": 1105.0,
+  "armor": 16.0,
+  "magicResist": 25.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_zheguang"
+  ]
+ },
+ {
+  "wave": 42,
+  "name": "Kupu",
+  "hp": 9000.0,
+  "speed": 595.0,
+  "armor": 16.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_momian",
+   "runrunrun"
+  ]
+ },
+ {
+  "wave": 43,
+  "name": "Furry Fish",
+  "hp": 114000.0,
+  "speed": 680.0,
+  "armor": 16.0,
+  "magicResist": 50.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_bukeqinfan",
+   "guai_shanbi",
+   "enemy_recharge"
+  ]
+ },
+ {
+  "wave": 44,
+  "name": "Shroomy",
+  "hp": 120000.0,
+  "speed": 425.0,
+  "armor": 16.0,
+  "magicResist": 10.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_momian",
+   "enemy_shanshuo"
+  ]
+ },
+ {
+  "wave": 45,
+  "name": "Chirpy",
+  "hp": 72000.0,
+  "speed": 2040.0,
+  "armor": 16.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "guai_xietong",
+   "guai_jiaoxieguanghuan"
+  ]
+ },
+ {
+  "wave": 46,
+  "name": "Boooofus",
+  "hp": 360000.0,
+  "speed": 680.0,
+  "armor": 32.0,
+  "magicResist": 20.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_wumian"
+  ]
+ },
+ {
+  "wave": 47,
+  "name": "Swift Donkey",
+  "hp": 180000.0,
+  "speed": 425.0,
+  "armor": 16.0,
+  "magicResist": 80.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_momian",
+   "enemy_bukeqinfan",
+   "runrunrun"
+  ]
+ },
+ {
+  "wave": 47,
+  "name": "Crummy",
+  "hp": 330000.0,
+  "speed": 510.0,
+  "armor": 16.0,
+  "magicResist": 80.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "enemy_bukeqinfan",
+   "runrunrun"
+  ]
+ },
+ {
+  "wave": 48,
+  "name": "Wabbit",
+  "hp": 36000.0,
+  "speed": 467.5,
+  "armor": 16.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_momian",
+   "guai_jiaoxieguanghuan",
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 48,
+  "name": "G1 Courier",
+  "hp": 60000.0,
+  "speed": 340.0,
+  "armor": 16.0,
+  "magicResist": 10.0,
+  "flying": true,
+  "boss": false,
+  "abilities": [
+   "enemy_momian",
+   "guai_jiaoxieguanghuan",
+   "guai_shanbi"
+  ]
+ },
+ {
+  "wave": 49,
+  "name": "Drodo",
+  "hp": 480000.0,
+  "speed": 595.0,
+  "armor": 32.0,
+  "magicResist": 80.0,
+  "flying": false,
+  "boss": false,
+  "abilities": [
+   "tidehunter_kraken_shell",
+   "enemy_recharge"
+  ]
+ },
+ {
+  "wave": 50,
+  "name": "Baby Roshan",
+  "hp": 600000.0,
+  "speed": 850.0,
+  "armor": 16.0,
+  "magicResist": 20.0,
+  "flying": true,
+  "boss": true,
+  "abilities": [
+   "tidehunter_kraken_shell"
+  ]
+ }
+]
