@@ -7,7 +7,7 @@
     "build": "tsc --noEmit && vite build",
     "data": "python tools/build_data.py",
     "test": "vitest run",
-    "e2e": "playwright test",
+    "e2e": "npm run build && playwright test",
     "lint": "eslint . && prettier --check src tests e2e"
   },
   "devDependencies": {
