@@ -1,10 +1,13 @@
 import map from '../data/map.json';
+import waves from '../data/waves.json';
 import { Maze, ROCK, WALL, type MapData } from './sim/maze';
+import { TICK, WaveSim, type WaveEntry } from './sim/waves';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const ctx = canvas.getContext('2d')!;
 const maze = new Maze(map as unknown as MapData);
 let route = maze.route()!;
+const sim = new WaveSim(maze, waves as WaveEntry[]);
 let flash = -1; // cell index of a refused placement, drawn red once
 
 function layout() {
@@ -71,12 +74,25 @@ canvas.addEventListener('click', (e) => {
   const { size, ox, oy } = layout();
   const c = Math.floor((e.clientX - ox) / size);
   const r = Math.floor((e.clientY - oy) / size);
+  if (sim.phase !== 'build') return;
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
   if (!maze.removeRock(c, r) && !maze.placeRock(c, r)) flash = maze.idx(c, r);
   route = maze.route()!;
   draw();
 });
 
-addEventListener('resize', draw);
-draw();
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') sim.startWave();
+});
+
+// ponytail: redraws the whole grid each frame; layered renderer is Phase 2.5.
+let last = performance.now(),
+  acc = 0;
+requestAnimationFrame(function frame(now) {
+  acc = Math.min(acc + (now - last) / 1000, 0.25);
+  last = now;
+  for (; acc >= TICK; acc -= TICK) sim.tick();
+  draw();
+  requestAnimationFrame(frame);
+});
 document.body.dataset.ready = '1';
