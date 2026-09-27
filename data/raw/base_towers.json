@@ -1,0 +1,827 @@
+[
+  {
+    "code": "gemtd_b1",
+    "name": "Chipped Sapphire / B1",
+    "damage": 2.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_slow1",
+        "Name": "slow 1",
+        "Tooltip": "Decrease enemy's movement speed by 60.",
+        "Raw": "[MOVESPEED: -60]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_b11",
+    "name": "Flawed Sapphire / B2",
+    "damage": 4.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_slow2",
+        "Name": "slow 2",
+        "Tooltip": "Decrease enemy's movement speed by 90.",
+        "Raw": "[MOVESPEED: -90]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_b111",
+    "name": "Normal Sapphire / B3",
+    "damage": 6.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_slow3",
+        "Name": "slow 3",
+        "Tooltip": "Decrease enemy's movement speed by 120.",
+        "Raw": "[MOVESPEED: -120]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_b1111",
+    "name": "Flawless Sapphire / B4",
+    "damage": 8.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_slow4",
+        "Name": "slow 4",
+        "Tooltip": "Decrease enemy's movement speed by 150.",
+        "Raw": "[MOVESPEED: -150]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_b11111",
+    "name": "Perfect Sapphire / B5",
+    "damage": 10.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_slow5",
+        "Name": "slow 5",
+        "Tooltip": "Decrease enemy's movement speed by 180.",
+        "Raw": "[MOVESPEED: -180]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_b111111",
+    "name": "Huge Sapphire / B6",
+    "damage": 36.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_slow6",
+        "Name": "slow MAX",
+        "Tooltip": "Decrease enemy's movement speed by 480.",
+        "Raw": "[MOVESPEED: -480]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_d1",
+    "name": "Chipped Diamond / D1",
+    "damage": 5.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": []
+  },
+  {
+    "code": "gemtd_d11",
+    "name": "Flawed Diamond / D2",
+    "damage": 10.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": []
+  },
+  {
+    "code": "gemtd_d111",
+    "name": "Normal Diamond / D3",
+    "damage": 20.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": []
+  },
+  {
+    "code": "gemtd_d1111",
+    "name": "Flawless Diamond / D4",
+    "damage": 20.0,
+    "bonusDamage": 20.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_attack1",
+        "Name": "damage1",
+        "Tooltip": "+20 attack damage.",
+        "Raw": "[BASEATTACK BONUSDAMAGE: 20]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_d11111",
+    "name": "Perfect Diamond / D5",
+    "damage": 40.0,
+    "bonusDamage": 40.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_attack2",
+        "Name": "damage2",
+        "Tooltip": "+40 attack damage.",
+        "Raw": "[BASEATTACK BONUSDAMAGE: 40]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_d111111",
+    "name": "Huge Diamond / D6",
+    "damage": 140.0,
+    "bonusDamage": 320.0,
+    "attackRate": 0.7,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_attack5",
+        "Name": "damage5",
+        "Tooltip": "+320 attack damage.",
+        "Raw": "[BASEATTACK BONUSDAMAGE: 320]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_e1",
+    "name": "Chipped Opal / E1",
+    "damage": 1.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_true_sight",
+        "Name": "true sight",
+        "Tooltip": "Grants true sight around the gem."
+      },
+      {
+        "id": "tower_speed_aura1",
+        "Name": "aura 1",
+        "Tooltip": "Allies's attack speed+20 nearby.",
+        "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 20]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_e11",
+    "name": "Flawed Opal / E2",
+    "damage": 2.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_true_sight",
+        "Name": "true sight",
+        "Tooltip": "Grants true sight around the gem."
+      },
+      {
+        "id": "tower_speed_aura2",
+        "Name": "aura 2",
+        "Tooltip": "Allies's attack speed+30 nearby.",
+        "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 30]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_e111",
+    "name": "Normal Opal / E3",
+    "damage": 3.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_true_sight",
+        "Name": "true sight",
+        "Tooltip": "Grants true sight around the gem."
+      },
+      {
+        "id": "tower_speed_aura3",
+        "Name": "aura 3",
+        "Tooltip": "Allies's attack speed+40 nearby.",
+        "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 40]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_e1111",
+    "name": "Flawless Opal / E4",
+    "damage": 4.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_true_sight",
+        "Name": "true sight",
+        "Tooltip": "Grants true sight around the gem."
+      },
+      {
+        "id": "tower_speed_aura4",
+        "Name": "aura 4",
+        "Tooltip": "Allies's attack speed+50 nearby.",
+        "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 50]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_e11111",
+    "name": "Perfect Opal / E5",
+    "damage": 5.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_true_sight",
+        "Name": "true sight",
+        "Tooltip": "Grants true sight around the gem."
+      },
+      {
+        "id": "tower_speed_aura5",
+        "Name": "aura 5",
+        "Tooltip": "Allies's attack speed+60 nearby.",
+        "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 60]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_e111111",
+    "name": "Huge Opal / E6",
+    "damage": 6.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_true_sight",
+        "Name": "true sight",
+        "Tooltip": "Grants true sight around the gem."
+      },
+      {
+        "id": "tower_speed_aura6",
+        "Name": "aura MAX",
+        "Tooltip": "Allies's attack speed+70 nearby.",
+        "Raw": "Aura: Range 664 Effect: [ATTACKSPEED: 70]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_g1",
+    "name": "Chipped Emerald / G1",
+    "damage": 2.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_du1",
+        "Name": "poison 1",
+        "Tooltip": "Enemies take 2 damage every second. Lasts 5 seconds.",
+        "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 2 magic damage."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_g11",
+    "name": "Flawed Emerald / G2",
+    "damage": 4.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_du2",
+        "Name": "poison 2",
+        "Tooltip": "Enemies take 4 damage every second. Lasts 5 seconds.",
+        "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 4 magic damage."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_g111",
+    "name": "Normal Emerald / G3",
+    "damage": 6.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_du3",
+        "Name": "poison 3",
+        "Tooltip": "Enemies take 8 damage every second. Lasts 5 seconds.",
+        "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 8 magic damage."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_g1111",
+    "name": "Flawless Emerald / G4",
+    "damage": 8.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_du4",
+        "Name": "poison 4",
+        "Tooltip": "Enemies take 16 damage every second. Lasts 5 seconds.",
+        "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 16 magic damage."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_g11111",
+    "name": "Perfect Emerald / G5",
+    "damage": 10.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_du5",
+        "Name": "poison 5",
+        "Tooltip": "Enemies take 32 damage every second. Lasts 5 seconds.",
+        "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 32 magic damage."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_g111111",
+    "name": "Huge Emerald / G6",
+    "damage": 12.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_du6",
+        "Name": "poison MAX",
+        "Tooltip": "Enemies take 128 damage every second. Lasts 5 seconds.",
+        "Raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 128 magic damage."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_p1",
+    "name": "Chipped Amethyst / P1",
+    "damage": 2.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianjia1",
+        "Name": "pierce 1",
+        "Tooltip": "Decrease enemy's armor by 2.",
+        "Raw": "On Attack Landed, [PHYSICAL ARMOR: -2]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_p11",
+    "name": "Flawed Amethyst / P2",
+    "damage": 4.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianjia2",
+        "Name": "pierce 2",
+        "Tooltip": "Decrease enemy's armor by 4.",
+        "Raw": "On Attack Landed, [PHYSICAL ARMOR: -4]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_p111",
+    "name": "Normal Amethyst / P3",
+    "damage": 6.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianjia3",
+        "Name": "pierce 3",
+        "Tooltip": "Decrease enemy's armor by 8.",
+        "Raw": "On Attack Landed, [PHYSICAL ARMOR: -8]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_p1111",
+    "name": "Flawless Amethyst / P4",
+    "damage": 8.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianjia4",
+        "Name": "pierce 4",
+        "Tooltip": "Decrease enemy's armor by 16.",
+        "Raw": "On Attack Landed, [PHYSICAL ARMOR: -16]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_p11111",
+    "name": "Perfect Amethyst / P5",
+    "damage": 10.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianjia5",
+        "Name": "pierce 5",
+        "Tooltip": "Decrease enemy's armor by 32.",
+        "Raw": "On Attack Landed, [PHYSICAL ARMOR: -32]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_p111111",
+    "name": "Huge Amethyst / P6",
+    "damage": 70.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianjia6",
+        "Name": "pierce MAX",
+        "Tooltip": "Decrease enemy's armor by 64.",
+        "Raw": "On Attack Landed, [PHYSICAL ARMOR: -64]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_q1",
+    "name": "Chipped Aquamarine / Q1",
+    "damage": 2.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 400.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_speed1",
+        "Name": "speed1",
+        "Tooltip": "+200 attack speed.",
+        "Raw": "[ATTACKSPEED: 200]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_q11",
+    "name": "Flawed Aquamarine / Q2",
+    "damage": 4.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.9,
+    "range": 400.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_speed1",
+        "Name": "speed1",
+        "Tooltip": "+200 attack speed.",
+        "Raw": "[ATTACKSPEED: 200]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_q111",
+    "name": "Normal Aquamarine / Q3",
+    "damage": 8.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.8,
+    "range": 400.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_speed1",
+        "Name": "speed1",
+        "Tooltip": "+200 attack speed.",
+        "Raw": "[ATTACKSPEED: 200]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_q1111",
+    "name": "Flawless Aquamarine / Q4",
+    "damage": 16.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.7,
+    "range": 400.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_speed1",
+        "Name": "speed1",
+        "Tooltip": "+200 attack speed.",
+        "Raw": "[ATTACKSPEED: 200]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_q11111",
+    "name": "Perfect Aquamarine / Q5",
+    "damage": 24.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 400.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_speed1",
+        "Name": "speed1",
+        "Tooltip": "+200 attack speed.",
+        "Raw": "[ATTACKSPEED: 200]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_q111111",
+    "name": "Huge Aquamarine / Q6",
+    "damage": 80.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.5,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_speed2",
+        "Name": "speed2",
+        "Tooltip": "+500 attack speed.",
+        "Raw": "[ATTACKSPEED: 500]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_r1",
+    "name": "Chipped Ruby / R1",
+    "damage": 4.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianshe1",
+        "Name": "cleave 1",
+        "Tooltip": "Deals 30% damage around 300 range of the target.",
+        "Raw": "On Attack Landed, run script jianshe1 (addon_game_mode.lua) with [Damage: %attack_damage]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_r11",
+    "name": "Flawed Ruby / R2",
+    "damage": 8.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianshe2",
+        "Name": "cleave 2",
+        "Tooltip": "Deals 40% damage around 350 range of the target.",
+        "Raw": "On Attack Landed, run script jianshe2 (addon_game_mode.lua) with [Damage: %attack_damage]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_r111",
+    "name": "Normal Ruby / R3",
+    "damage": 12.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianshe3",
+        "Name": "cleave 3",
+        "Tooltip": "Deals 50% damage around 400 range of the target.",
+        "Raw": "On Attack Landed, run script jianshe3 (addon_game_mode.lua) with [Damage: %attack_damage]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_r1111",
+    "name": "Flawless Ruby / R4",
+    "damage": 24.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianshe4",
+        "Name": "cleave 4",
+        "Tooltip": "Deals 60% damage around 450 range of the target.",
+        "Raw": "On Attack Landed, run script jianshe4 (addon_game_mode.lua) with [Damage: %attack_damage]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_r11111",
+    "name": "Perfect Ruby / R5",
+    "damage": 48.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianshe5",
+        "Name": "cleave 5",
+        "Tooltip": "Deals 70% damage around 500 range of the target.",
+        "Raw": "On Attack Landed, run script jianshe5 (addon_game_mode.lua) with [Damage: %attack_damage]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_r111111",
+    "name": "Huge Ruby / R6",
+    "damage": 150.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.0,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_jianshe6",
+        "Name": "cleave MAX",
+        "Tooltip": "Deals full damage around 700 range of the target.",
+        "Raw": "On Attack Landed, run script jianshe6 (addon_game_mode.lua) with [Damage: %attack_damage]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_y1",
+    "name": "Chipped Topaz / Y1",
+    "damage": 3.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.3,
+    "range": 600.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_fenliejian",
+        "Name": "split 1",
+        "Tooltip": "Attacks up to 3 enemies at the same time.",
+        "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_y11",
+    "name": "Flawed Topaz / Y2",
+    "damage": 6.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.3,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_fenliejian",
+        "Name": "split 1",
+        "Tooltip": "Attacks up to 3 enemies at the same time.",
+        "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_y111",
+    "name": "Normal Topaz / Y3",
+    "damage": 9.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.3,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_fenliejian",
+        "Name": "split 1",
+        "Tooltip": "Attacks up to 3 enemies at the same time.",
+        "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_y1111",
+    "name": "Flawless Topaz / Y4",
+    "damage": 18.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.3,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_fenliejian",
+        "Name": "split 1",
+        "Tooltip": "Attacks up to 3 enemies at the same time.",
+        "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_y11111",
+    "name": "Perfect Topaz / Y5",
+    "damage": 36.0,
+    "bonusDamage": 0.0,
+    "attackRate": 1.3,
+    "range": 500.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_fenliejian",
+        "Name": "split 1",
+        "Tooltip": "Attacks up to 3 enemies at the same time.",
+        "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_y111111",
+    "name": "Huge Topaz / Y6",
+    "damage": 200.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.6,
+    "range": 5000.0,
+    "recipe": null,
+    "abilities": [
+      {
+        "id": "tower_fenliejian",
+        "Name": "split 1",
+        "Tooltip": "Attacks up to 3 enemies at the same time.",
+        "Raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+      }
+    ]
+  }
+]

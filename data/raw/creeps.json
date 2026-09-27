@@ -1,0 +1,3408 @@
+[
+  {
+    "wave": 1,
+    "code": "gemtd_kuangbaoyezhu",
+    "name": "Frenzied Pig",
+    "hpBase": 5.0,
+    "hpByPlayers": [
+      3.0,
+      11.0,
+      22.0,
+      29.0
+    ],
+    "moveBase": 525.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 1 Frenzied Pig",
+      "code": "gemtd_kuangbaoyezhu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Frenzied Pig",
+      "Lvl": "1",
+      "HP (1-4 players) [Base]": "3 . 11 . 22 . 29 [5]",
+      "Movement (1-4 players) [Base]": "446 . 604 . 714 . 830 [525]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 2,
+    "code": "gemtd_kuaidiqingwatiaotiao",
+    "name": "Swift Frog",
+    "hpBase": 10.0,
+    "hpByPlayers": [
+      6.0,
+      21.0,
+      43.0,
+      58.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 2 Swift Frog",
+      "code": "gemtd_kuaidiqingwatiaotiao",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Swift Frog",
+      "Lvl": "2",
+      "HP (1-4 players) [Base]": "6 . 21 . 43 . 58 [10]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 3,
+    "code": "gemtd_zhongchenggaoshanmaoniu",
+    "name": "Sturdy Yak",
+    "hpBase": 20.0,
+    "hpByPlayers": [
+      12.0,
+      42.0,
+      86.0,
+      116.0
+    ],
+    "moveBase": 525.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 3 Sturdy Yak",
+      "code": "gemtd_zhongchenggaoshanmaoniu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Sturdy Yak",
+      "Lvl": "3",
+      "HP (1-4 players) [Base]": "12 . 42 . 86 . 116 [20]",
+      "Movement (1-4 players) [Base]": "446 . 604 . 714 . 830 [525]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 4,
+    "code": "gemtd_moluokedejixiezhushou",
+    "name": "Smart Robot",
+    "hpBase": 20.0,
+    "hpByPlayers": [
+      12.0,
+      42.0,
+      86.0,
+      116.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 4 Smart Robot",
+      "code": "gemtd_moluokedejixiezhushou",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Smart Robot",
+      "Lvl": "4",
+      "HP (1-4 players) [Base]": "12 . 42 . 86 . 116 [20]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 5,
+    "code": "gemtd_xiaohongmao_fly",
+    "name": "Baby Panda",
+    "hpBase": 24.0,
+    "hpByPlayers": [
+      14.0,
+      50.0,
+      103.0,
+      139.0
+    ],
+    "moveBase": 500.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 5 Baby Panda & Balloon Badger",
+      "code": "gemtd_xiaohongmao_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Baby Panda",
+      "Lvl": "5",
+      "HP (1-4 players) [Base]": "14 . 50 . 103 . 139 [24]",
+      "Movement (1-4 players) [Base]": "425 . 575 . 680 . 790 (flying) [500]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 5,
+    "code": "gemtd_wuweizhihuan_fly",
+    "name": "Balloon Badger",
+    "hpBase": 22.0,
+    "hpByPlayers": [
+      13.0,
+      46.0,
+      95.0,
+      128.0
+    ],
+    "moveBase": 500.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 5 Baby Panda & Balloon Badger",
+      "code": "gemtd_wuweizhihuan_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Balloon Badger",
+      "Lvl": "5",
+      "HP (1-4 players) [Base]": "13 . 46 . 95 . 128 [22]",
+      "Movement (1-4 players) [Base]": "425 . 575 . 680 . 790 (flying) [500]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 6,
+    "code": "gemtd_shudunziranzhizhu",
+    "name": "Tardy Stump",
+    "hpBase": 100.0,
+    "hpByPlayers": [
+      60.0,
+      210.0,
+      430.0,
+      580.0
+    ],
+    "moveBase": 450.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 6 Tardy Stump",
+      "code": "gemtd_shudunziranzhizhu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Tardy Stump",
+      "Lvl": "6",
+      "HP (1-4 players) [Base]": "60 . 210 . 430 . 580 [100]",
+      "Movement (1-4 players) [Base]": "383 . 518 . 612 . 711 [450]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 7,
+    "code": "gemtd_chaomengjuxi",
+    "name": "Satisfied Lizard",
+    "hpBase": 100.0,
+    "hpByPlayers": [
+      60.0,
+      210.0,
+      430.0,
+      580.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 7 Satisfied Lizard",
+      "code": "gemtd_chaomengjuxi",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Satisfied Lizard",
+      "Lvl": "7",
+      "HP (1-4 players) [Base]": "60 . 210 . 430 . 580 [100]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 8,
+    "code": "gemtd_mengzhu",
+    "name": "Invisible Spider",
+    "hpBase": 70.0,
+    "hpByPlayers": [
+      42.0,
+      147.0,
+      301.0,
+      406.0
+    ],
+    "moveBase": 750.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "riki_permanent_invisibility"
+    ],
+    "raw": {
+      "title": "Level 8 Invisible Spider",
+      "code": "gemtd_mengzhu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "riki_permanent_invisibility",
+          "Raw: Special": "[fade_time: 1.0][fade_delay: 2.0][bonus_health_regen: 0]"
+        }
+      ],
+      "English": "Invisible Spider",
+      "Lvl": "8",
+      "HP (1-4 players) [Base]": "42 . 147 . 301 . 406 [70]",
+      "Movement (1-4 players) [Base]": "638 . 862 . 1020 . 1185 [750]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 9,
+    "code": "gemtd_dashiqi",
+    "name": "Dusky",
+    "hpBase": 120.0,
+    "hpByPlayers": [
+      72.0,
+      252.0,
+      516.0,
+      696.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 9 Dusky",
+      "code": "gemtd_dashiqi",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "Dusky",
+      "Lvl": "9",
+      "HP (1-4 players) [Base]": "72 . 252 . 516 . 696 [120]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 10,
+    "code": "gemtd_buquzhanquan_boss",
+    "name": "Invincible Dog",
+    "hpBase": 2100.0,
+    "hpByPlayers": [
+      1260.0,
+      4410.0,
+      9030.0,
+      12180.0
+    ],
+    "moveBase": 750.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 10 Invincible Dog",
+      "code": "gemtd_buquzhanquan_boss",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Invincible Dog",
+      "Lvl": "10",
+      "HP (1-4 players) [Base]": "1260 . 4410 . 9030 . 12180 [2100]",
+      "Movement (1-4 players) [Base]": "638 . 862 . 1020 . 1185 [750]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 11,
+    "code": "gemtd_maorongrongdefeiyangyang",
+    "name": "Sheep",
+    "hpBase": 300.0,
+    "hpByPlayers": [
+      180.0,
+      630.0,
+      1290.0,
+      1740.0
+    ],
+    "moveBase": 525.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 11 Sheep",
+      "code": "gemtd_maorongrongdefeiyangyang",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Sheep",
+      "Lvl": "11",
+      "HP (1-4 players) [Base]": "180 . 630 . 1290 . 1740 [300]",
+      "Movement (1-4 players) [Base]": "446 . 604 . 714 . 830 [525]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 12,
+    "code": "gemtd_caonimalama",
+    "name": "Funny Alpaca",
+    "hpBase": 450.0,
+    "hpByPlayers": [
+      270.0,
+      945.0,
+      1935.0,
+      2610.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 20.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_jiaoxieguanghuan"
+    ],
+    "raw": {
+      "title": "Level 12 Funny Alpaca",
+      "code": "gemtd_caonimalama",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        }
+      ],
+      "English": "Funny Alpaca",
+      "Lvl": "12",
+      "HP (1-4 players) [Base]": "270 . 945 . 1935 . 2610 [450]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "4",
+      "Magic resistance": "20"
+    }
+  },
+  {
+    "wave": 13,
+    "code": "gemtd_fengtungongzhu",
+    "name": "Pig Princess",
+    "hpBase": 800.0,
+    "hpByPlayers": [
+      480.0,
+      1680.0,
+      3440.0,
+      4640.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 13 Pig Princess",
+      "code": "gemtd_fengtungongzhu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Pig Princess",
+      "Lvl": "13",
+      "HP (1-4 players) [Base]": "480 . 1680 . 3440 . 4640 [800]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 14,
+    "code": "gemtd_bugou",
+    "name": "Bulldog",
+    "hpBase": 1100.0,
+    "hpByPlayers": [
+      660.0,
+      2310.0,
+      4730.0,
+      6380.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 14 Bulldog",
+      "code": "gemtd_bugou",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Bulldog",
+      "Lvl": "14",
+      "HP (1-4 players) [Base]": "660 . 2310 . 4730 . 6380 [1100]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 15,
+    "code": "gemtd_tianmaodigou_fly",
+    "name": "Cat & Dog",
+    "hpBase": 400.0,
+    "hpByPlayers": [
+      240.0,
+      840.0,
+      1720.0,
+      2320.0
+    ],
+    "moveBase": 700.0,
+    "flying": true,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 15 Cat & Dog & Bamboo Addict",
+      "code": "gemtd_tianmaodigou_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Cat & Dog",
+      "Lvl": "15",
+      "HP (1-4 players) [Base]": "240 . 840 . 1720 . 2320 [400]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 (flying) [700]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 15,
+    "code": "gemtd_banzhuduizhang_fly",
+    "name": "Bamboo Addict",
+    "hpBase": 440.0,
+    "hpByPlayers": [
+      264.0,
+      924.0,
+      1892.0,
+      2552.0
+    ],
+    "moveBase": 600.0,
+    "flying": true,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 15 Cat & Dog & Bamboo Addict",
+      "code": "gemtd_banzhuduizhang_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Bamboo Addict",
+      "Lvl": "15",
+      "HP (1-4 players) [Base]": "264 . 924 . 1892 . 2552 [440]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 (flying) [600]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 16,
+    "code": "gemtd_xunjiemotong",
+    "name": "Young Demon",
+    "hpBase": 950.0,
+    "hpByPlayers": [
+      570.0,
+      1995.0,
+      4085.0,
+      5510.0
+    ],
+    "moveBase": 800.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian"
+    ],
+    "raw": {
+      "title": "Level 16 Young Demon",
+      "code": "gemtd_xunjiemotong",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        }
+      ],
+      "English": "Young Demon",
+      "Lvl": "16",
+      "HP (1-4 players) [Base]": "570 . 1995 . 4085 . 5510 [950]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 [800]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 17,
+    "code": "gemtd_yonggandexiaoji",
+    "name": "Belted Chicken",
+    "hpBase": 1600.0,
+    "hpByPlayers": [
+      960.0,
+      3360.0,
+      6880.0,
+      9280.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 50.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_bukeqinfan"
+    ],
+    "raw": {
+      "title": "Level 17 Belted Chicken",
+      "code": "gemtd_yonggandexiaoji",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        }
+      ],
+      "English": "Belted Chicken",
+      "Lvl": "17",
+      "HP (1-4 players) [Base]": "960 . 3360 . 6880 . 9280 [1600]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "4",
+      "Magic resistance": "50"
+    }
+  },
+  {
+    "wave": 18,
+    "code": "gemtd_xiaobajie",
+    "name": "Bajie",
+    "hpBase": 3000.0,
+    "hpByPlayers": [
+      1800.0,
+      6300.0,
+      12900.0,
+      17400.0
+    ],
+    "moveBase": 675.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "riki_permanent_invisibility",
+      "guai_jiaoxieguanghuan"
+    ],
+    "raw": {
+      "title": "Level 18 Bajie",
+      "code": "gemtd_xiaobajie",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "riki_permanent_invisibility",
+          "Raw: Special": "[fade_time: 1.0][fade_delay: 2.0][bonus_health_regen: 0]"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        }
+      ],
+      "English": "Bajie",
+      "Lvl": "18",
+      "HP (1-4 players) [Base]": "1800 . 6300 . 12900 . 17400 [3000]",
+      "Movement (1-4 players) [Base]": "574 . 776 . 918 . 1067 [675]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 19,
+    "code": "gemtd_shentu",
+    "name": "Exquisite Rabbit",
+    "hpBase": 2200.0,
+    "hpByPlayers": [
+      1320.0,
+      4620.0,
+      9460.0,
+      12760.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "runrunrun"
+    ],
+    "raw": {
+      "title": "Level 19 Exquisite Rabbit & Donkey Trio",
+      "code": "gemtd_shentu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "runrunrun",
+          "Name": "Rush",
+          "Tooltip": "Rush for a while when direction changes.",
+          "Raw": "[MOVESPEED: 50%]"
+        }
+      ],
+      "English": "Exquisite Rabbit",
+      "Lvl": "19",
+      "HP (1-4 players) [Base]": "1320 . 4620 . 9460 . 12760 [2200]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 19,
+    "code": "gemtd_yaobaidelvgemi",
+    "name": "Donkey Trio",
+    "hpBase": 3700.0,
+    "hpByPlayers": [
+      2220.0,
+      7770.0,
+      15910.0,
+      21460.0
+    ],
+    "moveBase": 700.0,
+    "flying": false,
+    "armor": 4.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "runrunrun"
+    ],
+    "raw": {
+      "title": "Level 19 Exquisite Rabbit & Donkey Trio",
+      "code": "gemtd_yaobaidelvgemi",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "runrunrun",
+          "Name": "Rush",
+          "Tooltip": "Rush for a while when direction changes.",
+          "Raw": "[MOVESPEED: 50%]"
+        }
+      ],
+      "English": "Donkey Trio",
+      "Lvl": "19",
+      "HP (1-4 players) [Base]": "2220 . 7770 . 15910 . 21460 [3700]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 [700]",
+      "Armor": "4",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 20,
+    "code": "gemtd_huxiaotao_boss",
+    "name": "Shakbag",
+    "hpBase": 34000.0,
+    "hpByPlayers": [
+      20400.0,
+      71400.0,
+      146200.0,
+      197200.0
+    ],
+    "moveBase": 900.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 20 Shakbag",
+      "code": "gemtd_huxiaotao_boss",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Shakbag",
+      "Lvl": "20",
+      "HP (1-4 players) [Base]": "20400 . 71400 . 146200 . 197200 [34000]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 [900]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 21,
+    "code": "gemtd_siwangsiliezhe",
+    "name": "Ripper",
+    "hpBase": 7500.0,
+    "hpByPlayers": [
+      4500.0,
+      15750.0,
+      32250.0,
+      43500.0
+    ],
+    "moveBase": 675.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 21 Ripper & Crab",
+      "code": "gemtd_siwangsiliezhe",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Ripper",
+      "Lvl": "21",
+      "HP (1-4 players) [Base]": "4500 . 15750 . 32250 . 43500 [7500]",
+      "Movement (1-4 players) [Base]": "574 . 776 . 918 . 1067 [675]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 21,
+    "code": "gemtd_xiexiaowo",
+    "name": "Crab",
+    "hpBase": 9000.0,
+    "hpByPlayers": [
+      5400.0,
+      18900.0,
+      38700.0,
+      52200.0
+    ],
+    "moveBase": 700.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 21 Ripper & Crab",
+      "code": "gemtd_xiexiaowo",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Crab",
+      "Lvl": "21",
+      "HP (1-4 players) [Base]": "5400 . 18900 . 38700 . 52200 [9000]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 [700]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 22,
+    "code": "gemtd_yaorenxiangluoke",
+    "name": "Lockjaw",
+    "hpBase": 9000.0,
+    "hpByPlayers": [
+      5400.0,
+      18900.0,
+      38700.0,
+      52200.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_high_armor"
+    ],
+    "raw": {
+      "title": "Level 22 Lockjaw",
+      "code": "gemtd_yaorenxiangluoke",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_high_armor",
+          "Name": "High armor",
+          "Raw": "[PHYSICAL ARMOR: %armor]",
+          "Raw: Special": "[armor: 20 30 40 50]"
+        }
+      ],
+      "English": "Lockjaw",
+      "Lvl": "22",
+      "HP (1-4 players) [Base]": "5400 . 18900 . 38700 . 52200 [9000]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 23,
+    "code": "gemtd_dazuiyaorenxiang",
+    "name": "Flopjaw",
+    "hpBase": 12000.0,
+    "hpByPlayers": [
+      7200.0,
+      25200.0,
+      51600.0,
+      69600.0
+    ],
+    "moveBase": 650.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 23 Flopjaw & Trapjaw",
+      "code": "gemtd_dazuiyaorenxiang",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Flopjaw",
+      "Lvl": "23",
+      "HP (1-4 players) [Base]": "7200 . 25200 . 51600 . 69600 [12000]",
+      "Movement (1-4 players) [Base]": "553 . 747 . 884 . 1027 [650]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 23,
+    "code": "gemtd_tiezuiyaorenxiang",
+    "name": "Trapjaw",
+    "hpBase": 10000.0,
+    "hpByPlayers": [
+      6000.0,
+      21000.0,
+      43000.0,
+      58000.0
+    ],
+    "moveBase": 625.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 23 Flopjaw & Trapjaw",
+      "code": "gemtd_tiezuiyaorenxiang",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Trapjaw",
+      "Lvl": "23",
+      "HP (1-4 players) [Base]": "6000 . 21000 . 43000 . 58000 [10000]",
+      "Movement (1-4 players) [Base]": "531 . 719 . 850 . 988 [625]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 24,
+    "code": "gemtd_jixiezhanlv",
+    "name": "Mech Donkey",
+    "hpBase": 7500.0,
+    "hpByPlayers": [
+      4500.0,
+      15750.0,
+      32250.0,
+      43500.0
+    ],
+    "moveBase": 775.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "shredder_reactive_armor"
+    ],
+    "raw": {
+      "title": "Level 24 Mech Donkey & Machjaw",
+      "code": "gemtd_jixiezhanlv",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "shredder_reactive_armor",
+          "Raw: Special": "[bonus_armor: 5.0 5.0 5.0 5.0]"
+        }
+      ],
+      "English": "Mech Donkey",
+      "Lvl": "24",
+      "HP (1-4 players) [Base]": "4500 . 15750 . 32250 . 43500 [7500]",
+      "Movement (1-4 players) [Base]": "659 . 891 . 1054 . 1225 [775]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 24,
+    "code": "gemtd_jixieyaorenxiang",
+    "name": "Machjaw",
+    "hpBase": 10000.0,
+    "hpByPlayers": [
+      6000.0,
+      21000.0,
+      43000.0,
+      58000.0
+    ],
+    "moveBase": 675.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "shredder_reactive_armor"
+    ],
+    "raw": {
+      "title": "Level 24 Mech Donkey & Machjaw",
+      "code": "gemtd_jixieyaorenxiang",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "shredder_reactive_armor",
+          "Raw: Special": "[bonus_armor: 5.0 5.0 5.0 5.0]"
+        }
+      ],
+      "English": "Machjaw",
+      "Lvl": "24",
+      "HP (1-4 players) [Base]": "6000 . 21000 . 43000 . 58000 [10000]",
+      "Movement (1-4 players) [Base]": "574 . 776 . 918 . 1067 [675]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 25,
+    "code": "gemtd_huoxingche_fly",
+    "name": "Demolisher",
+    "hpBase": 2800.0,
+    "hpByPlayers": [
+      1680.0,
+      5880.0,
+      12040.0,
+      16240.0
+    ],
+    "moveBase": 600.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_high_armor"
+    ],
+    "raw": {
+      "title": "Level 25 Demolisher & Corsair",
+      "code": "gemtd_huoxingche_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_high_armor",
+          "Name": "High armor",
+          "Raw": "[PHYSICAL ARMOR: %armor]",
+          "Raw: Special": "[armor: 20 30 40 50]"
+        }
+      ],
+      "English": "Demolisher",
+      "Lvl": "25",
+      "HP (1-4 players) [Base]": "1680 . 5880 . 12040 . 16240 [2800]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 (flying) [600]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 25,
+    "code": "gemtd_fengbaozhizikesaier_fly",
+    "name": "Corsair",
+    "hpBase": 3600.0,
+    "hpByPlayers": [
+      2160.0,
+      7560.0,
+      15480.0,
+      20880.0
+    ],
+    "moveBase": 400.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_high_armor"
+    ],
+    "raw": {
+      "title": "Level 25 Demolisher & Corsair",
+      "code": "gemtd_fengbaozhizikesaier_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_high_armor",
+          "Name": "High armor",
+          "Raw": "[PHYSICAL ARMOR: %armor]",
+          "Raw: Special": "[armor: 20 30 40 50]"
+        }
+      ],
+      "English": "Corsair",
+      "Lvl": "25",
+      "HP (1-4 players) [Base]": "2160 . 7560 . 15480 . 20880 [3600]",
+      "Movement (1-4 players) [Base]": "340 . 460 . 544 . 632 (flying) [400]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 26,
+    "code": "gemtd_niepanhuolieniao",
+    "name": "Skateboard Flamingo",
+    "hpBase": 6300.0,
+    "hpByPlayers": [
+      3780.0,
+      13230.0,
+      27090.0,
+      36540.0
+    ],
+    "moveBase": 900.0,
+    "flying": false,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian"
+    ],
+    "raw": {
+      "title": "Level 26 Skateboard Flamingo",
+      "code": "gemtd_niepanhuolieniao",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        }
+      ],
+      "English": "Skateboard Flamingo",
+      "Lvl": "26",
+      "HP (1-4 players) [Base]": "3780 . 13230 . 27090 . 36540 [6300]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 [900]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 27,
+    "code": "gemtd_lgddejinmengmeng_fly",
+    "name": "Lgd Goldfish",
+    "hpBase": 3500.0,
+    "hpByPlayers": [
+      2100.0,
+      7350.0,
+      15050.0,
+      20300.0
+    ],
+    "moveBase": 625.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 50.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_bukeqinfan"
+    ],
+    "raw": {
+      "title": "Level 27 Lgd Goldfish & Jellyfish",
+      "code": "gemtd_lgddejinmengmeng_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        }
+      ],
+      "English": "Lgd Goldfish",
+      "Lvl": "27",
+      "HP (1-4 players) [Base]": "2100 . 7350 . 15050 . 20300 [3500]",
+      "Movement (1-4 players) [Base]": "531 . 719 . 850 . 988 (flying) [625]",
+      "Armor": "8",
+      "Magic resistance": "50"
+    }
+  },
+  {
+    "wave": 27,
+    "code": "gemtd_ruxingshuimu_fly",
+    "name": "Jellyfish",
+    "hpBase": 2000.0,
+    "hpByPlayers": [
+      1200.0,
+      4200.0,
+      8600.0,
+      11600.0
+    ],
+    "moveBase": 625.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 50.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian",
+      "enemy_bukeqinfan"
+    ],
+    "raw": {
+      "title": "Level 27 Lgd Goldfish & Jellyfish",
+      "code": "gemtd_ruxingshuimu_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        }
+      ],
+      "English": "Jellyfish",
+      "Lvl": "27",
+      "HP (1-4 players) [Base]": "1200 . 4200 . 8600 . 11600 [2000]",
+      "Movement (1-4 players) [Base]": "531 . 719 . 850 . 988 (flying) [625]",
+      "Armor": "8",
+      "Magic resistance": "50"
+    }
+  },
+  {
+    "wave": 28,
+    "code": "gemtd_youniekesizhinu_fly",
+    "name": "Ig Dragon",
+    "hpBase": 3800.0,
+    "hpByPlayers": [
+      2280.0,
+      7980.0,
+      16340.0,
+      22040.0
+    ],
+    "moveBase": 750.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "shredder_reactive_armor"
+    ],
+    "raw": {
+      "title": "Level 28 Ig Dragon & Timbersaw",
+      "code": "gemtd_youniekesizhinu_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "shredder_reactive_armor",
+          "Raw: Special": "[bonus_armor: 5.0 5.0 5.0 5.0]"
+        }
+      ],
+      "English": "Ig Dragon",
+      "Lvl": "28",
+      "HP (1-4 players) [Base]": "2280 . 7980 . 16340 . 22040 [3800]",
+      "Movement (1-4 players) [Base]": "638 . 862 . 1020 . 1185 (flying) [750]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 28,
+    "code": "gemtd_xiaofamuji_fly",
+    "name": "Timbersaw",
+    "hpBase": 4900.0,
+    "hpByPlayers": [
+      2940.0,
+      10290.0,
+      21070.0,
+      28420.0
+    ],
+    "moveBase": 600.0,
+    "flying": true,
+    "armor": 24.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "shredder_reactive_armor"
+    ],
+    "raw": {
+      "title": "Level 28 Ig Dragon & Timbersaw",
+      "code": "gemtd_xiaofamuji_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "shredder_reactive_armor",
+          "Raw: Special": "[bonus_armor: 5.0 5.0 5.0 5.0]"
+        }
+      ],
+      "English": "Timbersaw",
+      "Lvl": "28",
+      "HP (1-4 players) [Base]": "2940 . 10290 . 21070 . 28420 [4900]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 (flying) [600]",
+      "Armor": "24",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 29,
+    "code": "gemtd_feihuxia_fly",
+    "name": "Vg Fox",
+    "hpBase": 6000.0,
+    "hpByPlayers": [
+      3600.0,
+      12600.0,
+      25800.0,
+      34800.0
+    ],
+    "moveBase": 775.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_shanbi",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 29 Vg Fox & Parrot Boatman",
+      "code": "gemtd_feihuxia_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Vg Fox",
+      "Lvl": "29",
+      "HP (1-4 players) [Base]": "3600 . 12600 . 25800 . 34800 [6000]",
+      "Movement (1-4 players) [Base]": "659 . 891 . 1054 . 1225 (flying) [775]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 29,
+    "code": "gemtd_yingwuchuanfu_fly",
+    "name": "Parrot Boatman",
+    "hpBase": 4500.0,
+    "hpByPlayers": [
+      2700.0,
+      9450.0,
+      19350.0,
+      26100.0
+    ],
+    "moveBase": 1000.0,
+    "flying": true,
+    "armor": 8.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_shanbi",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 29 Vg Fox & Parrot Boatman",
+      "code": "gemtd_yingwuchuanfu_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Parrot Boatman",
+      "Lvl": "29",
+      "HP (1-4 players) [Base]": "2700 . 9450 . 19350 . 26100 [4500]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 (flying) [1000]",
+      "Armor": "8",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 30,
+    "code": "gemtd_mofafeitanxiaoemo_boss_fly",
+    "name": "Carpet Rider",
+    "hpBase": 80000.0,
+    "hpByPlayers": [
+      48000.0,
+      168000.0,
+      344000.0,
+      464000.0
+    ],
+    "moveBase": 750.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Level 30 Carpet Rider",
+      "code": "gemtd_mofafeitanxiaoemo_boss_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Carpet Rider",
+      "Lvl": "30",
+      "HP (1-4 players) [Base]": "48000 . 168000 . 344000 . 464000 [80000]",
+      "Movement (1-4 players) [Base]": "638 . 862 . 1020 . 1185 (flying) [750]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 31,
+    "code": "gemtd_modianxiaolong",
+    "name": "Bookwyrm",
+    "hpBase": 14000.0,
+    "hpByPlayers": [
+      8400.0,
+      29400.0,
+      60200.0,
+      81200.0
+    ],
+    "moveBase": 900.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 31 Bookwyrm & Otter Dragon",
+      "code": "gemtd_modianxiaolong",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Bookwyrm",
+      "Lvl": "31",
+      "HP (1-4 players) [Base]": "8400 . 29400 . 60200 . 81200 [14000]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 [900]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 31,
+    "code": "gemtd_talongaosiji",
+    "name": "Otter Dragon",
+    "hpBase": 21000.0,
+    "hpByPlayers": [
+      12600.0,
+      44100.0,
+      90300.0,
+      121800.0
+    ],
+    "moveBase": 800.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 31 Bookwyrm & Otter Dragon",
+      "code": "gemtd_talongaosiji",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Otter Dragon",
+      "Lvl": "31",
+      "HP (1-4 players) [Base]": "12600 . 44100 . 90300 . 121800 [21000]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 [800]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 32,
+    "code": "gemtd_xiaoshayu",
+    "name": "Rechargeable Shark",
+    "hpBase": 85000.0,
+    "hpByPlayers": [
+      51000.0,
+      178500.0,
+      365500.0,
+      493000.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_recharge"
+    ],
+    "raw": {
+      "title": "Level 32 Rechargeable Shark",
+      "code": "gemtd_xiaoshayu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_recharge",
+          "Name": "Recharge",
+          "Raw": "[HEALTH REGEN: %recharge_life]",
+          "Raw: Special": "[recharge_life: 400 600 800 1000]"
+        }
+      ],
+      "English": "Rechargeable Shark",
+      "Lvl": "32",
+      "HP (1-4 players) [Base]": "51000 . 178500 . 365500 . 493000 [85000]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 33,
+    "code": "gemtd_feijiangxiaobao",
+    "name": "Ribboned Zombie",
+    "hpBase": 80000.0,
+    "hpByPlayers": [
+      48000.0,
+      168000.0,
+      344000.0,
+      464000.0
+    ],
+    "moveBase": 700.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian",
+      "enemy_shanshuo"
+    ],
+    "raw": {
+      "title": "Level 33 Ribboned Zombie & Baby DP",
+      "code": "gemtd_feijiangxiaobao",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        },
+        {
+          "id": "enemy_shanshuo",
+          "Name": "blink",
+          "Tooltip": "Have chances to blink forward when direction changes."
+        }
+      ],
+      "English": "Ribboned Zombie",
+      "Lvl": "33",
+      "HP (1-4 players) [Base]": "48000 . 168000 . 344000 . 464000 [80000]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 [700]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 33,
+    "code": "gemtd_siwangxianzhi",
+    "name": "Baby DP",
+    "hpBase": 55000.0,
+    "hpByPlayers": [
+      33000.0,
+      115500.0,
+      236500.0,
+      319000.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian",
+      "enemy_shanshuo"
+    ],
+    "raw": {
+      "title": "Level 33 Ribboned Zombie & Baby DP",
+      "code": "gemtd_siwangxianzhi",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        },
+        {
+          "id": "enemy_shanshuo",
+          "Name": "blink",
+          "Tooltip": "Have chances to blink forward when direction changes."
+        }
+      ],
+      "English": "Baby DP",
+      "Lvl": "33",
+      "HP (1-4 players) [Base]": "33000 . 115500 . 236500 . 319000 [55000]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 34,
+    "code": "gemtd_xuemobaobao_fly",
+    "name": "Baby Bloody",
+    "hpBase": 13000.0,
+    "hpByPlayers": [
+      7800.0,
+      27300.0,
+      55900.0,
+      75400.0
+    ],
+    "moveBase": 925.0,
+    "flying": true,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 34 Baby Bloody & Bounty Apprentice",
+      "code": "gemtd_xuemobaobao_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "Baby Bloody",
+      "Lvl": "34",
+      "HP (1-4 players) [Base]": "7800 . 27300 . 55900 . 75400 [13000]",
+      "Movement (1-4 players) [Base]": "786 . 1064 . 1258 . 1462 (flying) [925]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 34,
+    "code": "gemtd_shangjinbaobao_fly",
+    "name": "Bounty Apprentice",
+    "hpBase": 20000.0,
+    "hpByPlayers": [
+      12000.0,
+      42000.0,
+      86000.0,
+      116000.0
+    ],
+    "moveBase": 725.0,
+    "flying": true,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 34 Baby Bloody & Bounty Apprentice",
+      "code": "gemtd_shangjinbaobao_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "Bounty Apprentice",
+      "Lvl": "34",
+      "HP (1-4 players) [Base]": "12000 . 42000 . 86000 . 116000 [20000]",
+      "Movement (1-4 players) [Base]": "616 . 834 . 986 . 1146 (flying) [725]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 35,
+    "code": "gemtd_jinyinhuling_fly",
+    "name": "Black And White Fox",
+    "hpBase": 8800.0,
+    "hpByPlayers": [
+      5280.0,
+      18480.0,
+      37840.0,
+      51040.0
+    ],
+    "moveBase": 700.0,
+    "flying": true,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian"
+    ],
+    "raw": {
+      "title": "Level 35 Black And White Fox",
+      "code": "gemtd_jinyinhuling_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        }
+      ],
+      "English": "Black And White Fox",
+      "Lvl": "35",
+      "HP (1-4 players) [Base]": "5280 . 18480 . 37840 . 51040 [8800]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 (flying) [700]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 36,
+    "code": "gemtd_cuihua",
+    "name": "Jumo",
+    "hpBase": 55000.0,
+    "hpByPlayers": [
+      33000.0,
+      115500.0,
+      236500.0,
+      319000.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian"
+    ],
+    "raw": {
+      "title": "Level 36 Jumo",
+      "code": "gemtd_cuihua",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        }
+      ],
+      "English": "Jumo",
+      "Lvl": "36",
+      "HP (1-4 players) [Base]": "33000 . 115500 . 236500 . 319000 [55000]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 37,
+    "code": "gemtd_xiaobaihu",
+    "name": "Baekho",
+    "hpBase": 120000.0,
+    "hpByPlayers": [
+      72000.0,
+      252000.0,
+      516000.0,
+      696000.0
+    ],
+    "moveBase": 1200.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_shanshuo"
+    ],
+    "raw": {
+      "title": "Level 37 Baekho",
+      "code": "gemtd_xiaobaihu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_shanshuo",
+          "Name": "blink",
+          "Tooltip": "Have chances to blink forward when direction changes."
+        }
+      ],
+      "English": "Baekho",
+      "Lvl": "37",
+      "HP (1-4 players) [Base]": "72000 . 252000 . 516000 . 696000 [120000]",
+      "Movement (1-4 players) [Base]": "1020 . 1380 . 1632 . 1896 [1200]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 38,
+    "code": "gemtd_xiaoxingyue",
+    "name": "Lilnova",
+    "hpBase": 200000.0,
+    "hpByPlayers": [
+      120000.0,
+      420000.0,
+      860000.0,
+      1160000.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_jiaoxieguanghuan"
+    ],
+    "raw": {
+      "title": "Level 38 Lilnova",
+      "code": "gemtd_xiaoxingyue",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        }
+      ],
+      "English": "Lilnova",
+      "Lvl": "38",
+      "HP (1-4 players) [Base]": "120000 . 420000 . 860000 . 1160000 [200000]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 39,
+    "code": "gemtd_liangqiyuhai_fly",
+    "name": "Mermaid Rider",
+    "hpBase": 55000.0,
+    "hpByPlayers": [
+      33000.0,
+      115500.0,
+      236500.0,
+      319000.0
+    ],
+    "moveBase": 600.0,
+    "flying": true,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_bukeqinfan",
+      "tidehunter_kraken_shell",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 39 Mermaid Rider & Newt",
+      "code": "gemtd_liangqiyuhai_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "Mermaid Rider",
+      "Lvl": "39",
+      "HP (1-4 players) [Base]": "33000 . 115500 . 236500 . 319000 [55000]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 (flying) [600]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 39,
+    "code": "gemtd_fennenrongyuan_fly",
+    "name": "Newt",
+    "hpBase": 15000.0,
+    "hpByPlayers": [
+      9000.0,
+      31500.0,
+      64500.0,
+      87000.0
+    ],
+    "moveBase": 800.0,
+    "flying": true,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_bukeqinfan",
+      "tidehunter_kraken_shell",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 39 Mermaid Rider & Newt",
+      "code": "gemtd_fennenrongyuan_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "Newt",
+      "Lvl": "39",
+      "HP (1-4 players) [Base]": "9000 . 31500 . 64500 . 87000 [15000]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 (flying) [800]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 40,
+    "code": "gemtd_guixiaoxieling_boss_fly",
+    "name": "Thrilling Ghost",
+    "hpBase": 330000.0,
+    "hpByPlayers": [
+      198000.0,
+      693000.0,
+      1419000.0,
+      1914000.0
+    ],
+    "moveBase": 800.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell"
+    ],
+    "raw": {
+      "title": "Level 40 Thrilling Ghost",
+      "code": "gemtd_guixiaoxieling_boss_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        }
+      ],
+      "English": "Thrilling Ghost",
+      "Lvl": "40",
+      "HP (1-4 players) [Base]": "198000 . 693000 . 1419000 . 1914000 [330000]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 (flying) [800]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 41,
+    "code": "gemtd_cuiyuxiaolong",
+    "name": "Jade Dragon",
+    "hpBase": 240000.0,
+    "hpByPlayers": [
+      144000.0,
+      504000.0,
+      1032000.0,
+      1392000.0
+    ],
+    "moveBase": 700.0,
+    "flying": false,
+    "armor": 16.0,
+    "magicResist": 50.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 41 Jade Dragon & Azuremir",
+      "code": "gemtd_cuiyuxiaolong",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Jade Dragon",
+      "Lvl": "41",
+      "HP (1-4 players) [Base]": "144000 . 504000 . 1032000 . 1392000 [240000]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 [700]",
+      "Armor": "16",
+      "Magic resistance": "50"
+    }
+  },
+  {
+    "wave": 41,
+    "code": "gemtd_weilanlong",
+    "name": "Azuremir",
+    "hpBase": 120000.0,
+    "hpByPlayers": [
+      72000.0,
+      252000.0,
+      516000.0,
+      696000.0
+    ],
+    "moveBase": 1300.0,
+    "flying": false,
+    "armor": 16.0,
+    "magicResist": 25.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_zheguang"
+    ],
+    "raw": {
+      "title": "Level 41 Jade Dragon & Azuremir",
+      "code": "gemtd_weilanlong",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_zheguang",
+          "Name": "refraction",
+          "Tooltip": "Have chances to gain a refraction shield when direction changes."
+        }
+      ],
+      "English": "Azuremir",
+      "Lvl": "41",
+      "HP (1-4 players) [Base]": "72000 . 252000 . 516000 . 696000 [120000]",
+      "Movement (1-4 players) [Base]": "1105 . 1495 . 1768 . 2054 [1300]",
+      "Armor": "16",
+      "Magic resistance": "25"
+    }
+  },
+  {
+    "wave": 42,
+    "code": "gemtd_saodiekupu_fly",
+    "name": "Kupu",
+    "hpBase": 15000.0,
+    "hpByPlayers": [
+      9000.0,
+      31500.0,
+      64500.0,
+      87000.0
+    ],
+    "moveBase": 700.0,
+    "flying": true,
+    "armor": 16.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian",
+      "runrunrun"
+    ],
+    "raw": {
+      "title": "Level 42 Kupu",
+      "code": "gemtd_saodiekupu_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        },
+        {
+          "id": "runrunrun",
+          "Name": "Rush",
+          "Tooltip": "Rush for a while when direction changes.",
+          "Raw": "[MOVESPEED: 50%]"
+        }
+      ],
+      "English": "Kupu",
+      "Lvl": "42",
+      "HP (1-4 players) [Base]": "9000 . 31500 . 64500 . 87000 [15000]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 (flying) [700]",
+      "Armor": "16",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 43,
+    "code": "gemtd_maomaoyu",
+    "name": "Furry Fish",
+    "hpBase": 190000.0,
+    "hpByPlayers": [
+      114000.0,
+      399000.0,
+      817000.0,
+      1102000.0
+    ],
+    "moveBase": 800.0,
+    "flying": false,
+    "armor": 16.0,
+    "magicResist": 50.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_bukeqinfan",
+      "guai_shanbi",
+      "enemy_recharge"
+    ],
+    "raw": {
+      "title": "Level 43 Furry Fish",
+      "code": "gemtd_maomaoyu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        },
+        {
+          "id": "enemy_recharge",
+          "Name": "Recharge",
+          "Raw": "[HEALTH REGEN: %recharge_life]",
+          "Raw: Special": "[recharge_life: 400 600 800 1000]"
+        }
+      ],
+      "English": "Furry Fish",
+      "Lvl": "43",
+      "HP (1-4 players) [Base]": "114000 . 399000 . 817000 . 1102000 [190000]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 [800]",
+      "Armor": "16",
+      "Magic resistance": "50"
+    }
+  },
+  {
+    "wave": 44,
+    "code": "gemtd_xiaomogu",
+    "name": "Shroomy",
+    "hpBase": 200000.0,
+    "hpByPlayers": [
+      120000.0,
+      420000.0,
+      860000.0,
+      1160000.0
+    ],
+    "moveBase": 500.0,
+    "flying": false,
+    "armor": 16.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian",
+      "enemy_shanshuo"
+    ],
+    "raw": {
+      "title": "Level 44 Shroomy",
+      "code": "gemtd_xiaomogu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        },
+        {
+          "id": "enemy_shanshuo",
+          "Name": "blink",
+          "Tooltip": "Have chances to blink forward when direction changes."
+        }
+      ],
+      "English": "Shroomy",
+      "Lvl": "44",
+      "HP (1-4 players) [Base]": "120000 . 420000 . 860000 . 1160000 [200000]",
+      "Movement (1-4 players) [Base]": "425 . 575 . 680 . 790 [500]",
+      "Armor": "16",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 45,
+    "code": "gemtd_jiujiu_fly",
+    "name": "Chirpy",
+    "hpBase": 120000.0,
+    "hpByPlayers": [
+      72000.0,
+      252000.0,
+      516000.0,
+      696000.0
+    ],
+    "moveBase": 2400.0,
+    "flying": true,
+    "armor": 16.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "guai_xietong",
+      "guai_jiaoxieguanghuan"
+    ],
+    "raw": {
+      "title": "Level 45 Chirpy",
+      "code": "gemtd_jiujiu_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "guai_xietong",
+          "Name": "",
+          "Tooltip": "",
+          "Raw": "Aura: Range 9999 Effect: [MOVESPEED: -150]"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        }
+      ],
+      "English": "Chirpy",
+      "Lvl": "45",
+      "HP (1-4 players) [Base]": "72000 . 252000 . 516000 . 696000 [120000]",
+      "Movement (1-4 players) [Base]": "2040 . 2760 . 3264 . 3792 (flying) [2400]",
+      "Armor": "16",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 46,
+    "code": "gemtd_siwangxintu",
+    "name": "Boooofus",
+    "hpBase": 600000.0,
+    "hpByPlayers": [
+      360000.0,
+      1260000.0,
+      2580000.0,
+      3480000.0
+    ],
+    "moveBase": 800.0,
+    "flying": false,
+    "armor": 32.0,
+    "magicResist": 20.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian"
+    ],
+    "raw": {
+      "title": "Level 46 Boooofus",
+      "code": "gemtd_siwangxintu",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        }
+      ],
+      "English": "Boooofus",
+      "Lvl": "46",
+      "HP (1-4 players) [Base]": "360000 . 1260000 . 2580000 . 3480000 [600000]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 [800]",
+      "Armor": "32",
+      "Magic resistance": "20"
+    }
+  },
+  {
+    "wave": 47,
+    "code": "gemtd_xunjieyuanzumaolv",
+    "name": "Swift Donkey",
+    "hpBase": 300000.0,
+    "hpByPlayers": [
+      180000.0,
+      630000.0,
+      1290000.0,
+      1740000.0
+    ],
+    "moveBase": 500.0,
+    "flying": false,
+    "armor": 16.0,
+    "magicResist": 80.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian",
+      "enemy_bukeqinfan",
+      "runrunrun"
+    ],
+    "raw": {
+      "title": "Level 47 Swift Donkey & Crummy",
+      "code": "gemtd_xunjieyuanzumaolv",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "runrunrun",
+          "Name": "Rush",
+          "Tooltip": "Rush for a while when direction changes.",
+          "Raw": "[MOVESPEED: 50%]"
+        }
+      ],
+      "English": "Swift Donkey",
+      "Lvl": "47",
+      "HP (1-4 players) [Base]": "180000 . 630000 . 1290000 . 1740000 [300000]",
+      "Movement (1-4 players) [Base]": "425 . 575 . 680 . 790 [500]",
+      "Armor": "16",
+      "Magic resistance": "80"
+    }
+  },
+  {
+    "wave": 47,
+    "code": "gemtd_jilamofashi",
+    "name": "Crummy",
+    "hpBase": 550000.0,
+    "hpByPlayers": [
+      330000.0,
+      1155000.0,
+      2365000.0,
+      3190000.0
+    ],
+    "moveBase": 600.0,
+    "flying": false,
+    "armor": 16.0,
+    "magicResist": 80.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_bukeqinfan",
+      "runrunrun"
+    ],
+    "raw": {
+      "title": "Level 47 Swift Donkey & Crummy",
+      "code": "gemtd_jilamofashi",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "runrunrun",
+          "Name": "Rush",
+          "Tooltip": "Rush for a while when direction changes.",
+          "Raw": "[MOVESPEED: 50%]"
+        }
+      ],
+      "English": "Crummy",
+      "Lvl": "47",
+      "HP (1-4 players) [Base]": "330000 . 1155000 . 2365000 . 3190000 [550000]",
+      "Movement (1-4 players) [Base]": "510 . 690 . 816 . 948 [600]",
+      "Armor": "16",
+      "Magic resistance": "80"
+    }
+  },
+  {
+    "wave": 48,
+    "code": "gemtd_xiaofeixia_fly",
+    "name": "Wabbit",
+    "hpBase": 60000.0,
+    "hpByPlayers": [
+      36000.0,
+      126000.0,
+      258000.0,
+      348000.0
+    ],
+    "moveBase": 550.0,
+    "flying": true,
+    "armor": 16.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian",
+      "guai_jiaoxieguanghuan",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 48 Wabbit & G1 Courier",
+      "code": "gemtd_xiaofeixia_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "Wabbit",
+      "Lvl": "48",
+      "HP (1-4 players) [Base]": "36000 . 126000 . 258000 . 348000 [60000]",
+      "Movement (1-4 players) [Base]": "468 . 633 . 748 . 869 (flying) [550]",
+      "Armor": "16",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 48,
+    "code": "gemtd_jiwanghaidao_fly",
+    "name": "G1 Courier",
+    "hpBase": 100000.0,
+    "hpByPlayers": [
+      60000.0,
+      210000.0,
+      430000.0,
+      580000.0
+    ],
+    "moveBase": 400.0,
+    "flying": true,
+    "armor": 16.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian",
+      "guai_jiaoxieguanghuan",
+      "guai_shanbi"
+    ],
+    "raw": {
+      "title": "Level 48 Wabbit & G1 Courier",
+      "code": "gemtd_jiwanghaidao_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        }
+      ],
+      "English": "G1 Courier",
+      "Lvl": "48",
+      "HP (1-4 players) [Base]": "60000 . 210000 . 430000 . 580000 [100000]",
+      "Movement (1-4 players) [Base]": "340 . 460 . 544 . 632 (flying) [400]",
+      "Armor": "16",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": 49,
+    "code": "gemtd_juniaoduoduo",
+    "name": "Drodo",
+    "hpBase": 800000.0,
+    "hpByPlayers": [
+      480000.0,
+      1680000.0,
+      3440000.0,
+      4640000.0
+    ],
+    "moveBase": 700.0,
+    "flying": false,
+    "armor": 32.0,
+    "magicResist": 80.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell",
+      "enemy_recharge"
+    ],
+    "raw": {
+      "title": "Level 49 Drodo",
+      "code": "gemtd_juniaoduoduo",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        },
+        {
+          "id": "enemy_recharge",
+          "Name": "Recharge",
+          "Raw": "[HEALTH REGEN: %recharge_life]",
+          "Raw: Special": "[recharge_life: 400 600 800 1000]"
+        }
+      ],
+      "English": "Drodo",
+      "Lvl": "49",
+      "HP (1-4 players) [Base]": "480000 . 1680000 . 3440000 . 4640000 [800000]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 [700]",
+      "Armor": "32",
+      "Magic resistance": "80"
+    }
+  },
+  {
+    "wave": 50,
+    "code": "gemtd_roushan_boss_fly",
+    "name": "Baby Roshan",
+    "hpBase": 1000000.0,
+    "hpByPlayers": [
+      600000.0,
+      2100000.0,
+      4300000.0,
+      5800000.0
+    ],
+    "moveBase": 1000.0,
+    "flying": true,
+    "armor": 16.0,
+    "magicResist": 20.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell"
+    ],
+    "raw": {
+      "title": "Level 50 Baby Roshan",
+      "code": "gemtd_roushan_boss_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        }
+      ],
+      "English": "Baby Roshan",
+      "Lvl": "50",
+      "HP (1-4 players) [Base]": "600000 . 2100000 . 4300000 . 5800000 [1000000]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 (flying) [1000]",
+      "Armor": "16",
+      "Magic resistance": "20"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_stone",
+    "name": "Stone",
+    "hpBase": 1.0,
+    "hpByPlayers": [
+      1.0,
+      2.0,
+      4.0,
+      6.0
+    ],
+    "moveBase": 0.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_stone",
+      "abilities": [],
+      "English": "Stone",
+      "Lvl": "0",
+      "HP (1-4 players) [Base]": "1 . 2 . 4 . 6 [1]",
+      "Movement (1-4 players) [Base]": "0 . 0 . 0 . 0 [0]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_yuediyang_boss",
+    "name": "Blackface",
+    "hpBase": 40000.0,
+    "hpByPlayers": [
+      24000.0,
+      84000.0,
+      172000.0,
+      232000.0
+    ],
+    "moveBase": 850.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_yuediyang_boss",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Blackface",
+      "Lvl": "20",
+      "HP (1-4 players) [Base]": "24000 . 84000 . 172000 . 232000 [40000]",
+      "Movement (1-4 players) [Base]": "723 . 977 . 1156 . 1343 [850]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_kongxinnanguaren_boss",
+    "name": "Pumpkin",
+    "hpBase": 45000.0,
+    "hpByPlayers": [
+      27000.0,
+      94500.0,
+      193500.0,
+      261000.0
+    ],
+    "moveBase": 800.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_kongxinnanguaren_boss",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Pumpkin",
+      "Lvl": "20",
+      "HP (1-4 players) [Base]": "27000 . 94500 . 193500 . 261000 [45000]",
+      "Movement (1-4 players) [Base]": "680 . 920 . 1088 . 1264 (flying) [800]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_nianshou_boss",
+    "name": "Festival Monster",
+    "hpBase": 40000.0,
+    "hpByPlayers": [
+      24000.0,
+      84000.0,
+      172000.0,
+      232000.0
+    ],
+    "moveBase": 900.0,
+    "flying": false,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_nianshou_boss",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Festival Monster",
+      "Lvl": "20",
+      "HP (1-4 players) [Base]": "24000 . 84000 . 172000 . 232000 [40000]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 [900]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_zard_boss_fly",
+    "name": "Zard-",
+    "hpBase": 100000.0,
+    "hpByPlayers": [
+      60000.0,
+      210000.0,
+      430000.0,
+      580000.0
+    ],
+    "moveBase": 750.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_zard_boss_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Zard-",
+      "Lvl": "30",
+      "HP (1-4 players) [Base]": "60000 . 210000 . 430000 . 580000 [100000]",
+      "Movement (1-4 players) [Base]": "638 . 862 . 1020 . 1185 (flying) [750]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_jinyinhuling_fly1",
+    "name": "Black And White Fox",
+    "hpBase": 10000.0,
+    "hpByPlayers": [
+      6000.0,
+      21000.0,
+      43000.0,
+      58000.0
+    ],
+    "moveBase": 700.0,
+    "flying": true,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_jinyinhuling_fly1",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        }
+      ],
+      "English": "Black And White Fox",
+      "Lvl": "35",
+      "HP (1-4 players) [Base]": "6000 . 21000 . 43000 . 58000 [10000]",
+      "Movement (1-4 players) [Base]": "595 . 805 . 952 . 1106 (flying) [700]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_cuihua1",
+    "name": "Jumo",
+    "hpBase": 85000.0,
+    "hpByPlayers": [
+      51000.0,
+      178500.0,
+      365500.0,
+      493000.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_wumian"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_cuihua1",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_wumian",
+          "Name": "Physical Immune",
+          "Raw": "[INCOMING PHYSICAL DAMAGE: -100%]"
+        }
+      ],
+      "English": "Jumo",
+      "Lvl": "36",
+      "HP (1-4 players) [Base]": "51000 . 178500 . 365500 . 493000 [85000]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_taijiaoxiongdi_tester",
+    "name": "Brother",
+    "hpBase": 2000000.0,
+    "hpByPlayers": [
+      1200000.0,
+      4200000.0,
+      8600000.0,
+      11600000.0
+    ],
+    "moveBase": 99999.0,
+    "flying": true,
+    "armor": 99999.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_taijiaoxiongdi_tester",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        }
+      ],
+      "English": "Brother",
+      "Lvl": "36",
+      "HP (1-4 players) [Base]": "1200000 . 4200000 . 8600000 . 11600000 [2000000]",
+      "Movement (1-4 players) [Base]": "84999 . 114999 . 135999 . 157998 (flying) [99999]",
+      "Armor": "99999",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_yutumeixuan_tester",
+    "name": "Jade Rabbit",
+    "hpBase": 2000000.0,
+    "hpByPlayers": [
+      1200000.0,
+      4200000.0,
+      8600000.0,
+      11600000.0
+    ],
+    "moveBase": 675.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "enemy_momian"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_yutumeixuan_tester",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "enemy_momian",
+          "Name": "magic immunity",
+          "Raw": "[MAGIC IMMUNE: true][MAGICAL RESISTANCE: 100]"
+        }
+      ],
+      "English": "Jade Rabbit",
+      "Lvl": "36",
+      "HP (1-4 players) [Base]": "1200000 . 4200000 . 8600000 . 11600000 [2000000]",
+      "Movement (1-4 players) [Base]": "574 . 776 . 918 . 1067 (flying) [675]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_xiaoxingyue1",
+    "name": "Lilnova",
+    "hpBase": 200000.0,
+    "hpByPlayers": [
+      120000.0,
+      420000.0,
+      860000.0,
+      1160000.0
+    ],
+    "moveBase": 1000.0,
+    "flying": false,
+    "armor": 12.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "riki_permanent_invisibility",
+      "guai_jiaoxieguanghuan"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_xiaoxingyue1",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "riki_permanent_invisibility",
+          "Raw: Special": "[fade_time: 1.0][fade_delay: 2.0][bonus_health_regen: 0]"
+        },
+        {
+          "id": "guai_jiaoxieguanghuan",
+          "Name": "Disarm",
+          "Raw": "Aura: Range 130 150 170 190 Effect: [DISARMED: true]"
+        }
+      ],
+      "English": "Lilnova",
+      "Lvl": "38",
+      "HP (1-4 players) [Base]": "120000 . 420000 . 860000 . 1160000 [200000]",
+      "Movement (1-4 players) [Base]": "850 . 1150 . 1360 . 1580 [1000]",
+      "Armor": "12",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_gugubiao_boss_fly",
+    "name": "Gu-gu",
+    "hpBase": 330000.0,
+    "hpByPlayers": [
+      198000.0,
+      693000.0,
+      1419000.0,
+      1914000.0
+    ],
+    "moveBase": 1200.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_gugubiao_boss_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        }
+      ],
+      "English": "Gu-gu",
+      "Lvl": "40",
+      "HP (1-4 players) [Base]": "198000 . 693000 . 1419000 . 1914000 [330000]",
+      "Movement (1-4 players) [Base]": "1020 . 1380 . 1632 . 1896 (flying) [1200]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_moke_boss_fly",
+    "name": "Mok",
+    "hpBase": 400000.0,
+    "hpByPlayers": [
+      240000.0,
+      840000.0,
+      1720000.0,
+      2320000.0
+    ],
+    "moveBase": 900.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell",
+      "enemy_bukeqinfan",
+      "guai_shanbi",
+      "enemy_recharge"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_moke_boss_fly",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        },
+        {
+          "id": "enemy_recharge",
+          "Name": "Recharge",
+          "Raw": "[HEALTH REGEN: %recharge_life]",
+          "Raw: Special": "[recharge_life: 400 600 800 1000]"
+        }
+      ],
+      "English": "Mok",
+      "Lvl": "43",
+      "HP (1-4 players) [Base]": "240000 . 840000 . 1720000 . 2320000 [400000]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 (flying) [900]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_jumenghaimin_tester",
+    "name": "Toothless Tuskar",
+    "hpBase": 3000000.0,
+    "hpByPlayers": [
+      1800000.0,
+      6300000.0,
+      12900000.0,
+      17400000.0
+    ],
+    "moveBase": 1500.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell",
+      "enemy_bukeqinfan",
+      "guai_shanbi",
+      "enemy_recharge"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_jumenghaimin_tester",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        },
+        {
+          "id": "enemy_bukeqinfan",
+          "Name": "Untouchable",
+          "Raw": "[DISARMED: true][ATTACKSPEED: -300]"
+        },
+        {
+          "id": "guai_shanbi",
+          "Name": "evasion",
+          "Raw": "[EVASION: 50]"
+        },
+        {
+          "id": "enemy_recharge",
+          "Name": "Recharge",
+          "Raw": "[HEALTH REGEN: %recharge_life]",
+          "Raw: Special": "[recharge_life: 400 600 800 1000]"
+        }
+      ],
+      "English": "Toothless Tuskar",
+      "Lvl": "43",
+      "HP (1-4 players) [Base]": "1800000 . 6300000 . 12900000 . 17400000 [3000000]",
+      "Movement (1-4 players) [Base]": "1275 . 1725 . 2040 . 2370 (flying) [1500]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_juniaoduoduo_tester",
+    "name": "Drodo",
+    "hpBase": 20000000.0,
+    "hpByPlayers": [
+      12000000.0,
+      42000000.0,
+      86000000.0,
+      116000000.0
+    ],
+    "moveBase": 1500.0,
+    "flying": true,
+    "armor": 20.0,
+    "magicResist": 10.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "quanpingchenmo"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_juniaoduoduo_tester",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "quanpingchenmo",
+          "Name": "SilenceField",
+          "Tooltip": "All enemies are silenced, so powerful !",
+          "Raw": "Aura: Range 99999 Effect: [SILENCED: true]"
+        }
+      ],
+      "English": "Drodo",
+      "Lvl": "46",
+      "HP (1-4 players) [Base]": "12000000 . 42000000 . 86000000 . 116000000 [20000000]",
+      "Movement (1-4 players) [Base]": "1275 . 1725 . 2040 . 2370 (flying) [1500]",
+      "Armor": "20",
+      "Magic resistance": "10"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_roushan_boss_fly_jin",
+    "name": "Golden Baby Roshan",
+    "hpBase": 1000000.0,
+    "hpByPlayers": [
+      600000.0,
+      2100000.0,
+      4300000.0,
+      5800000.0
+    ],
+    "moveBase": 900.0,
+    "flying": true,
+    "armor": 32.0,
+    "magicResist": 100.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_roushan_boss_fly_jin",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        }
+      ],
+      "English": "Golden Baby Roshan",
+      "Lvl": "50",
+      "HP (1-4 players) [Base]": "600000 . 2100000 . 4300000 . 5800000 [1000000]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 (flying) [900]",
+      "Armor": "32",
+      "Magic resistance": "100"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_roushan_boss_fly_bojin",
+    "name": "Platinum Baby Roshan",
+    "hpBase": 1000000.0,
+    "hpByPlayers": [
+      600000.0,
+      2100000.0,
+      4300000.0,
+      5800000.0
+    ],
+    "moveBase": 900.0,
+    "flying": true,
+    "armor": 9999.0,
+    "magicResist": 20.0,
+    "abilities": [
+      "gemtd_guai_base",
+      "tidehunter_kraken_shell"
+    ],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_roushan_boss_fly_bojin",
+      "abilities": [
+        {
+          "id": "gemtd_guai_base"
+        },
+        {
+          "id": "tidehunter_kraken_shell",
+          "Raw: Special": "[damage_reduction: 0 0 0 0][damage_reset_interval: 10][damage_cleanse: 40000 60000 80000 100000]"
+        }
+      ],
+      "English": "Platinum Baby Roshan",
+      "Lvl": "50",
+      "HP (1-4 players) [Base]": "600000 . 2100000 . 4300000 . 5800000 [1000000]",
+      "Movement (1-4 players) [Base]": "765 . 1035 . 1224 . 1422 (flying) [900]",
+      "Armor": "9999",
+      "Magic resistance": "20"
+    }
+  },
+  {
+    "wave": "other",
+    "code": "gemtd_castle",
+    "name": "Gem Castle",
+    "hpBase": 100.0,
+    "hpByPlayers": [
+      60.0,
+      210.0,
+      430.0,
+      580.0
+    ],
+    "moveBase": 0.0,
+    "flying": true,
+    "armor": 0.0,
+    "magicResist": 10.0,
+    "abilities": [],
+    "raw": {
+      "title": "Others",
+      "code": "gemtd_castle",
+      "abilities": [],
+      "English": "Gem Castle",
+      "Lvl": "100",
+      "HP (1-4 players) [Base]": "60 . 210 . 430 . 580 [100]",
+      "Movement (1-4 players) [Base]": "0 . 0 . 0 . 0 (flying) [0]",
+      "Armor": "0",
+      "Magic resistance": "10"
+    }
+  }
+]
