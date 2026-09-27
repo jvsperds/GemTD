@@ -11,6 +11,7 @@ export interface ScoreRow {
   hpLeft: number;
   timeSec: number;
   difficulty: string;
+  daily?: string; // local date of a daily-challenge run
   seed: number;
   won: boolean;
   date: number;
@@ -19,19 +20,27 @@ export interface ScoreRow {
 }
 export interface Save {
   seed: number;
+  difficulty: string;
+  daily?: string;
   commands: LogEntry[];
   version: number;
 }
 export interface Settings {
   name: string;
   speed: number;
+  volume: number;
+  difficulty: string; // for new games
 }
 export interface Stores {
   scores: ScoreRow[];
   save: Save | null;
   settings: Settings;
 }
-const DEFAULTS: Stores = { scores: [], save: null, settings: { name: 'Player', speed: 1 } };
+const DEFAULTS: Stores = {
+  scores: [],
+  save: null,
+  settings: { name: 'Player', speed: 1, volume: 0.5, difficulty: 'normal' },
+};
 
 let db: Promise<IDBDatabase | null> | null = null;
 function open() {
@@ -74,7 +83,12 @@ export async function set<K extends keyof Stores>(key: K, value: Stores[K]) {
 export type Board = 'score' | 'wave' | 'fastest';
 /** Top rows for a board, optionally filtered by difficulty. Fastest = full clears only. */
 export function board(rows: ScoreRow[], which: Board, difficulty = '') {
-  const r = rows.filter((x) => !difficulty || x.difficulty === difficulty);
+  // Filter is a difficulty name, or "daily:<date>" for that day's challenge runs.
+  const r = rows.filter((x) =>
+    difficulty.startsWith('daily:')
+      ? x.daily === difficulty.slice(6)
+      : !difficulty || x.difficulty === difficulty,
+  );
   if (which === 'score') return r.sort((a, b) => b.score - a.score).slice(0, 20);
   if (which === 'wave')
     return r.sort((a, b) => b.wavesCleared - a.wavesCleared || b.score - a.score).slice(0, 20);

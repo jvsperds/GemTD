@@ -149,6 +149,7 @@ export class WaveSim {
   creeps: Creep[] = [];
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
+  hpMult = 1; // difficulty
   private queue: WaveEntry[] = [];
   private spawnTimer = 0;
   private next: Int32Array[] = []; // per segment: cell index → next cell index on the flow field
@@ -187,7 +188,9 @@ export class WaveSim {
     if (this.phase !== 'build') return false;
     this.refreshRoute();
     this.wave++;
-    const defs = this.waves.filter((w) => w.wave === this.wave);
+    const defs = this.waves
+      .filter((w) => w.wave === this.wave)
+      .map((w) => (this.hpMult === 1 ? w : { ...w, hp: w.hp * this.hpMult }));
     const n = defs.some((d) => d.boss) ? 1 : CREEPS_PER_WAVE;
     this.queue = Array.from({ length: n }, (_, k) => defs[k % defs.length]);
     this.spawnTimer = 0;

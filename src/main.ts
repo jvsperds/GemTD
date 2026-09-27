@@ -1,8 +1,9 @@
 import waves from '../data/waves.json';
 import * as db from './persist';
 import { GEM_COLOR, Renderer } from './render';
-import { DOWNGRADE_COST, score, type Cmd } from './sim/game';
-import { DEFS, newGame } from './sim/setup';
+import * as sfx from './sfx';
+import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
+import { DEFS, newGame, type Difficulty } from './sim/setup';
 import type { GemDef, SpecialDef, Tower } from './sim/towers';
 import { TICK, type WaveEntry } from './sim/waves';
 import { initMenu } from './ui';
@@ -12,9 +13,23 @@ const hud = document.querySelector<HTMLElement>('#hud')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const stress = location.hash === '#stress';
 const settings = await db.get('settings');
-const save = stress ? null : await db.get('save');
-const game = newGame(save?.seed ?? (Math.random() * 2 ** 31) | 0);
+// A fresh start (new game / daily / replay) is handed over the reload in sessionStorage.
+type Start = { seed: number; difficulty: string; daily?: string; replay?: LogEntry[] };
+let start: Start | null = null;
+try {
+  start = JSON.parse(sessionStorage.getItem('gemtd.start') ?? 'null');
+  sessionStorage.removeItem('gemtd.start');
+} catch {
+  /* storage blocked: start a normal game */
+}
+const save = stress || start ? null : await db.get('save');
+const cfg = start ??
+  save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
+const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
 if (save) game.replay(save.commands); // resume: waves before the last command replay headless
+const replaying = start?.replay ?? null; // watch mode: commands are fed live, input is off
+let ri = 0,
+  nextCmdAt = 0;
 const { combat, sim } = game;
 const { maze } = sim;
 (window as unknown as { gemtd: typeof game }).gemtd = game; // for e2e / debugging
@@ -22,16 +37,32 @@ const view = new Renderer(canvas, maze, sim, combat);
 let removing = false; // Remove-stone mode
 let sel: Tower | null = null;
 let speed = settings.speed; // 0 = paused
-const menu = initMenu(settings, game, (s) => (speed = s));
+const menu = initMenu(settings, game, (s) => (speed = s), sfx.setVolume);
 
-game.onCommand = () => db.set('save', { seed: game.seed, commands: game.log, version: db.VERSION });
+const saveNow = () =>
+  db.set('save', {
+    seed: game.seed,
+    difficulty: cfg.difficulty,
+    daily: cfg.daily,
+    commands: game.log,
+    version: db.VERSION,
+  });
+if (!replaying && !stress) {
+  game.onCommand = saveNow;
+  if (start) saveNow(); // so a reload before the first move resumes this game, not the old one
+}
 function run(cmd: Cmd) {
   const ok = game.run(cmd);
+  if (ok) sfx.play(cmd[0] === 'place' ? 'place' : 'keep');
   view.invalidate();
   return ok;
 }
+sfx.setVolume(settings.volume);
+addEventListener('pointerdown', sfx.unlock);
+addEventListener('keydown', sfx.unlock);
 
 canvas.addEventListener('click', (e) => {
+  if (replaying) return;
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
   const hit = combat.towerAt(c, r);
@@ -41,14 +72,18 @@ canvas.addEventListener('click', (e) => {
       ? (sel = hit)
       : game.step === 'place' && run(['place', c, r]);
   removing = false;
-  if (!ok) [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
+  if (!ok) {
+    [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
+    sfx.play('refuse');
+  }
   view.invalidate();
 });
 function act(a: string) {
+  if (a === 'menu') return menu.toggle();
+  if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
+  if (replaying) return;
   if (a === 'stone') removing = !removing;
   else if (a === 'level') run(['level']);
-  else if (a === 'menu') menu.toggle();
-  else if (a === 'pause') speed = speed ? 0 : settings.speed || 1;
   else if (sel) {
     const { c, r } = sel;
     const ok = a.startsWith('combine:')
@@ -106,7 +141,7 @@ if (stress) {
   debug.hidden = false;
 }
 const flyer = (waves as WaveEntry[]).find((w) => w.flying)!;
-let recorded = game.over;
+let recorded = game.over || !!replaying || stress;
 async function recordScore() {
   recorded = true;
   const scores = await db.get('scores');
@@ -116,7 +151,8 @@ async function recordScore() {
     wavesCleared: game.wavesCleared,
     hpLeft: Math.max(0, sim.castleHp),
     timeSec: Math.round(game.seconds),
-    difficulty: 'normal',
+    difficulty: cfg.difficulty,
+    daily: cfg.daily,
     seed: game.seed,
     won: sim.phase === 'won',
     date: Date.now(),
@@ -137,8 +173,31 @@ function topUpStress() {
     shots.push({ from: towers[k % towers.length], to: creeps[k % creeps.length] });
 }
 
-let lastHud = '';
+let prev = { kills: 0, hp: sim.castleHp, phase: sim.phase as string };
+function sounds() {
+  if (stress) return;
+  if (game.kills > prev.kills) sfx.play('kill');
+  if (sim.castleHp < prev.hp) sfx.play('leak');
+  if (sim.phase !== prev.phase)
+    sfx.play(
+      sim.phase === 'wave'
+        ? 'wave'
+        : sim.phase === 'won'
+          ? 'win'
+          : sim.phase === 'lost'
+            ? 'lose'
+            : 'keep',
+    );
+  prev = { kills: game.kills, hp: sim.castleHp, phase: sim.phase };
+}
+
+let lastHud = '',
+  lastLog = -1;
 function updateHud() {
+  if (game.log.length !== lastLog) {
+    lastLog = game.log.length; // any command (click, replay, console) may change the board
+    view.invalidate();
+  }
   const step = game.step;
   const odds = game.odds
     .map((p, q) => (p ? `Q${q + 1} ${p}%` : ''))
@@ -159,7 +218,9 @@ function updateHud() {
             : speed
               ? `wave in progress ×${speed}`
               : 'paused (Space)';
+  const mode = `${replaying ? 'REPLAY · ' : ''}${cfg.daily ? `Daily ${cfg.daily} · ` : ''}${cfg.difficulty} · `;
   const s =
+    mode +
     `Wave ${sim.wave}/${sim.lastWave} · HP ${sim.castleHp} · Gold ${game.gold} · ` +
     `Level ${game.level} (${Math.floor(game.xp)}/${Math.ceil(game.xpFor[game.level] ?? game.xp)} XP) · ` +
     `odds ${odds} · ${Math.floor(game.seconds)}s — ${hint}`;
@@ -206,6 +267,8 @@ function updateHud() {
       down: !!sel && game.canDowngrade(sel),
       stone: sim.phase === 'build',
       level: game.levelCost !== null && game.gold >= game.levelCost,
+      pause: true,
+      menu: true,
     };
     for (const b of buttons) b.disabled = !en[b.dataset.a!];
     buttons[3].textContent = `Downgrade ${DOWNGRADE_COST}g (D)`;
@@ -229,8 +292,15 @@ requestAnimationFrame(function frame(now) {
   acc = Math.min(acc + dt * speed, 0.25 * Math.max(1, speed));
   last = now;
   let ticked = false;
+  if (replaying && sim.phase === 'build' && replaying[ri] && now >= nextCmdAt) {
+    run(replaying[ri++][1]);
+    nextCmdAt = now + 250 / Math.max(1, speed);
+  }
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
+    // Replay: mid-wave commands (level buys) land on the tick they were issued.
+    while (replaying?.[ri] && sim.phase === 'wave' && game.ticks >= replaying[ri][0])
+      run(replaying[ri++][1]);
     game.tick();
     if (stress) topUpStress();
     tickT += performance.now() - t0;
@@ -243,7 +313,8 @@ requestAnimationFrame(function frame(now) {
   drawT += performance.now() - t0;
   frames++;
   if (!stress) updateHud();
-  if (game.over && !recorded && !stress) recordScore();
+  if (game.over && !recorded) recordScore();
+  sounds();
 
   if (now - second >= 1000) {
     Object.assign(perf, {
@@ -264,4 +335,7 @@ requestAnimationFrame(function frame(now) {
   }
   requestAnimationFrame(frame);
 });
+// PWA install/offline cache; service workers don't exist on file:// (the single file works as-is).
+if (location.protocol.startsWith('http') && 'serviceWorker' in navigator)
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 document.body.dataset.ready = '1';

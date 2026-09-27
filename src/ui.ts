@@ -1,8 +1,29 @@
 // Menu overlay: leaderboards (3 boards + difficulty filter), settings, export/import, new game.
 import * as db from './persist';
-import type { Game } from './sim/game';
+import type { Game, LogEntry } from './sim/game';
+import { dailySeed } from './sim/setup';
 
-export function initMenu(settings: db.Settings, game: Game, setSpeed: (s: number) => void) {
+/** Start a new game (or a replay) on the next load. */
+function startNext(o: { seed: number; difficulty: string; daily?: string; replay?: LogEntry[] }) {
+  try {
+    sessionStorage.setItem('gemtd.start', JSON.stringify(o));
+  } catch {
+    /* storage blocked: reload still starts a fresh random game */
+  }
+  location.reload();
+}
+
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+
+export function initMenu(
+  settings: db.Settings,
+  game: Game,
+  setSpeed: (s: number) => void,
+  setVolume: (v: number) => void,
+) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const menu = $<HTMLElement>('menu');
   const which = $<HTMLSelectElement>('board');
@@ -10,8 +31,13 @@ export function initMenu(settings: db.Settings, game: Game, setSpeed: (s: number
   const rows = $<HTMLTableSectionElement>('rows');
   const name = $<HTMLInputElement>('player');
   const speed = $<HTMLSelectElement>('speed');
+  const volume = $<HTMLInputElement>('volume');
+  const newDiff = $<HTMLSelectElement>('newdiff');
   name.value = settings.name;
   speed.value = String(settings.speed);
+  volume.value = String(settings.volume);
+  newDiff.value = settings.difficulty;
+  $<HTMLOptionElement>('dailyopt').value = 'daily:' + today();
 
   async function draw() {
     const all = await db.get('scores');
@@ -33,10 +59,25 @@ export function initMenu(settings: db.Settings, game: Game, setSpeed: (s: number
           td.textContent = String(v);
           tr.append(td);
         }
+        const td = document.createElement('td');
+        if (x.commands) {
+          const b = document.createElement('button');
+          b.textContent = 'Watch';
+          b.onclick = () =>
+            confirmLeave() &&
+            startNext({
+              seed: x.seed,
+              difficulty: x.difficulty,
+              daily: x.daily,
+              replay: x.commands,
+            });
+          td.append(b);
+        }
+        tr.append(td);
         return tr;
       }),
     );
-    if (!list.length) rows.innerHTML = '<tr><td colspan="8">No scores yet</td></tr>';
+    if (!list.length) rows.innerHTML = '<tr><td colspan="9">No scores yet</td></tr>';
   }
   const saveSettings = () => db.set('settings', settings);
 
@@ -50,12 +91,22 @@ export function initMenu(settings: db.Settings, game: Game, setSpeed: (s: number
     setSpeed(settings.speed);
     saveSettings();
   };
-  $('close').onclick = () => (menu.hidden = true);
-  $('newgame').onclick = async () => {
-    if (!game.over && game.log.length && !confirm('Abandon the current game?')) return;
-    await db.set('save', null);
-    location.reload();
+  volume.oninput = () => {
+    settings.volume = +volume.value;
+    setVolume(settings.volume);
+    saveSettings();
   };
+  newDiff.onchange = () => {
+    settings.difficulty = newDiff.value;
+    saveSettings();
+  };
+  const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
+  $('close').onclick = () => (menu.hidden = true);
+  $('newgame').onclick = () =>
+    confirmLeave() &&
+    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+  $('daily').onclick = () =>
+    confirmLeave() && startNext({ seed: dailySeed(), difficulty: 'normal', daily: today() });
   $('export').onclick = async () => {
     const blob = new Blob([JSON.stringify(await db.get('scores'), null, 1)], {
       type: 'application/json',

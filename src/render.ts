@@ -134,7 +134,25 @@ export class Renderer {
       if (!gem) return;
       const c = GEM_COLOR[gem],
         m = s / 2,
-        rad = s * (0.2 + 0.045 * quality);
+        rad = s * (quality ? 0.2 + 0.045 * quality : 0.42);
+      if (!quality) {
+        // Special tower: 8-point star with alternating lit/shaded facets and a white core.
+        for (let i = 0; i < 8; i++) {
+          const a0 = (i / 8) * 6.283,
+            a1 = ((i + 1) / 8) * 6.283,
+            am = (a0 + a1) / 2;
+          g.fillStyle = shade(c, i % 2 ? 0.6 : 1.2 - 0.05 * i);
+          g.beginPath();
+          g.moveTo(m, m);
+          g.lineTo(m + Math.cos(a0) * rad * 0.5, m + Math.sin(a0) * rad * 0.5);
+          g.lineTo(m + Math.cos(am) * rad, m + Math.sin(am) * rad);
+          g.lineTo(m + Math.cos(a1) * rad * 0.5, m + Math.sin(a1) * rad * 0.5);
+          g.fill();
+        }
+        g.fillStyle = '#fff';
+        g.fillRect(m - 1, m - 1, 2, 2);
+        return;
+      }
       // Four facets with baked light from the top-left.
       const facets: [number, number, number][] = [
         [-1, 0, 1.3],
@@ -155,7 +173,7 @@ export class Renderer {
       g.font = `bold ${Math.max(7, s * 0.3)}px sans-serif`;
       g.textAlign = 'right';
       g.textBaseline = 'bottom';
-      g.fillText(quality ? String(quality) : '★', s - 1, s);
+      g.fillText(String(quality), s - 1, s);
     });
   }
 
@@ -239,6 +257,20 @@ export class Renderer {
     this.staticDirty = false;
   }
 
+  /** Cosmetic death burst. */
+  private burst(x: number, y: number, n: number) {
+    const p = this.px;
+    for (let k = 0; k < n && this.particles < MAX_PARTICLES; k++) {
+      const o = this.particles++ * 5,
+        a = (k / n) * 6.283;
+      p[o] = x;
+      p[o + 1] = y - 0.2;
+      p[o + 2] = Math.cos(a) * 3;
+      p[o + 3] = Math.sin(a) * 3;
+      p[o + 4] = 0.5;
+    }
+  }
+
   /** Emit cosmetic hit sparks (call once per sim tick). */
   sparks() {
     const p = this.px;
@@ -289,7 +321,10 @@ export class Renderer {
     // Keep last frame's order (dead creeps dropped, new ones appended) so the sort stays cheap.
     const order = this.order;
     let n = 0;
-    for (const cr of order) if (cr.alive) order[n++] = cr;
+    for (const cr of order)
+      if (cr.alive) order[n++] = cr;
+      else if (cr.hp <= 0)
+        this.burst(cr.x, cr.y - (cr.def.flying ? FLY_Z : 0), cr.def.boss ? 40 : 10);
     order.length = n;
     for (const cr of this.sim.creeps)
       if (!this.seen.has(cr)) {

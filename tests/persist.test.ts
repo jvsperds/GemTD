@@ -38,7 +38,9 @@ test('seed + command log replays to the identical state (save/resume, replays)',
 
 test('score formula', () => {
   const g = play(3, 4);
-  expect(score(g)).toBe(Math.round(g.wavesCleared * 1000 + g.sim.castleHp * 50 - g.seconds));
+  expect(score(g)).toBe(
+    Math.round(g.wavesCleared * (1000 + g.bonusPerWave) + g.sim.castleHp * 50 - g.seconds),
+  );
   expect(g.wavesCleared).toBe(4);
 });
 
@@ -78,4 +80,18 @@ test('import merges without duplicates and rejects junk', () => {
   ]);
   expect(merged).toHaveLength(2);
   expect(() => mergeScores(have, { nope: 1 })).toThrow();
+});
+
+test('difficulty scales creep HP and the score bonus; daily seed is stable per day', async () => {
+  const { newGame: ng, dailySeed } = await import('../src/sim/setup');
+  const hard = ng(1, 'hard');
+  const easy = ng(1, 'easy');
+  for (const g of [hard, easy]) g.sim.startWave();
+  hard.sim.tick();
+  easy.sim.tick();
+  expect(hard.sim.creeps[0].hp / easy.sim.creeps[0].hp).toBeCloseTo(1.5 / 0.7);
+  expect(hard.bonusPerWave).toBeGreaterThan(easy.bonusPerWave);
+  const d = new Date(2026, 8, 27, 9);
+  expect(dailySeed(d)).toBe(dailySeed(new Date(2026, 8, 27, 23)));
+  expect(dailySeed(d)).not.toBe(dailySeed(new Date(2026, 8, 28, 9)));
 });
