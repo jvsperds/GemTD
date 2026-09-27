@@ -1,11 +1,12 @@
 import gems from '../data/gems.json';
 import map from '../data/map.json';
 import quality from '../data/quality_levels.json';
+import towerData from '../data/towers.json';
 import waves from '../data/waves.json';
 import { GEM_COLOR, Renderer } from './render';
 import { DOWNGRADE_COST, Game, type LevelDef } from './sim/game';
 import { Maze, type MapData } from './sim/maze';
-import { Combat, type GemDef } from './sim/towers';
+import { allDefs, Combat, type GemDef, type SpecialDef } from './sim/towers';
 import { TICK, WaveSim, type WaveEntry } from './sim/waves';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
@@ -13,7 +14,10 @@ const hud = document.querySelector<HTMLElement>('#hud')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const maze = new Maze(map as unknown as MapData);
 const sim = new WaveSim(maze, waves as WaveEntry[]);
-const combat = new Combat(sim, gems as Record<string, GemDef>);
+const combat = new Combat(
+  sim,
+  allDefs(gems as Record<string, GemDef>, towerData as unknown as Record<string, SpecialDef>),
+);
 const game = new Game(combat, quality.levels as LevelDef[], (Math.random() * 2 ** 31) | 0);
 const view = new Renderer(canvas, maze, sim, combat);
 const stress = location.hash === '#stress';
@@ -23,11 +27,12 @@ let sel: (typeof game.placed)[number] | null = null;
 canvas.addEventListener('click', (e) => {
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
+  const hit = combat.towerAt(c, r);
   const ok = removing
     ? game.removeStone(c, r)
-    : game.step === 'place'
-      ? game.place(c, r)
-      : (sel = game.placed.find((t) => t.c === c && t.r === r) ?? sel);
+    : hit
+      ? (sel = hit)
+      : game.step === 'place' && game.place(c, r);
   removing = false;
   if (!ok) [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
   view.invalidate();
@@ -36,7 +41,10 @@ function act(a: string) {
   if (a === 'stone') removing = !removing;
   else if (a === 'level') game.buyLevel();
   else if (sel) {
-    if (a === 'down') game.downgrade(sel);
+    if (a.startsWith('combine:')) {
+      if (game.combine(sel, a.slice(8)) && game.step !== 'choose' && game.step !== 'place')
+        sel = null;
+    } else if (a === 'down') game.downgrade(sel);
     else if (a === 'keep' ? game.keep(sel) : game.merge(sel, a === 'merge2' ? 2 : 4)) sel = null;
     view.invalidate();
   }
@@ -51,6 +59,11 @@ const keys: Record<string, string> = {
 };
 const buttons = [...document.querySelectorAll<HTMLButtonElement>('#panel button')];
 for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
+const combos = document.querySelector<HTMLElement>('#combos')!;
+combos.addEventListener('click', (e) => {
+  const a = (e.target as HTMLElement).dataset.a;
+  if (a) act(a);
+});
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   view.setZoom(view.zoom * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX, e.clientY);
@@ -101,7 +114,7 @@ function updateHud() {
       ? `click to place gem ${game.placed.length + 1}/5`
       : step === 'choose'
         ? sel
-          ? `selected ${sel.def.name}`
+          ? `selected ${sel.def.name}${sel.kills ? ` · ${sel.kills} kills` : ''}${sel.mvp ? ` · MVP ×${sel.mvp}` : ''}`
           : 'click one of this round’s gems to select it'
         : step === 'won'
           ? 'You win!'
@@ -112,8 +125,24 @@ function updateHud() {
     `Wave ${sim.wave}/${sim.lastWave} · HP ${sim.castleHp} · Gold ${game.gold} · ` +
     `Level ${game.level} (${Math.floor(game.xp)}/${Math.ceil(game.xpFor[game.level] ?? game.xp)} XP) · ` +
     `odds ${odds} · path ${total.toFixed(1)} — ${hint}`;
-  if (s !== lastHud) {
-    hud.textContent = lastHud = s;
+  const recipes = sel && combat.towers.includes(sel) ? game.recipesFor(sel) : [];
+  const key = s + recipes.map((x) => x.name) + combat.towers.length + sim.phase;
+  if (key !== lastHud) {
+    lastHud = key;
+    hud.textContent = s;
+    combos.replaceChildren(
+      ...recipes.map((x) => {
+        const b = document.createElement('button');
+        b.dataset.a = 'combine:' + x.name;
+        b.textContent = `Combine → ${x.name}`;
+        return b;
+      }),
+    );
+    // Highlight every tower that can combine into something right now.
+    view.hints =
+      sim.phase === 'build'
+        ? combat.towers.filter((t) => game.recipesFor(t).length).map((t) => maze.idx(t.c, t.r))
+        : [];
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
     const en: Record<string, boolean> = {
       keep: !!sel && step === 'choose',
@@ -147,8 +176,7 @@ requestAnimationFrame(function frame(now) {
   let ticked = false;
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
-    sim.tick();
-    combat.tick();
+    game.tick();
     if (stress) topUpStress();
     tickT += performance.now() - t0;
     ticks++;

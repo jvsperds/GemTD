@@ -33,7 +33,16 @@
         gap: 4px;
         max-width: calc(100vw - 16px);
       }
-      #panel button {
+      #combos {
+        position: fixed;
+        bottom: 40px;
+        left: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      #panel button,
+      #combos button {
         font: 13px sans-serif;
       }
       #debug {
@@ -60,6 +69,7 @@
       <button data-a="stone">Remove stone (R)</button>
       <button data-a="level">Buy level (L)</button>
     </div>
+    <div id="combos"></div>
     <pre id="debug" hidden></pre>
     <script type="module" src="/src/main.ts"></script>
   </body>

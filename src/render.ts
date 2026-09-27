@@ -14,6 +14,7 @@ export const GEM_COLOR: Record<string, string> = {
   Q: '#4fe0d8',
   R: '#e03a3a',
   Y: '#f2c52e',
+  S: '#ff7ad9', // special towers
 };
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
@@ -53,6 +54,7 @@ export class Renderer {
   flash = -1; // refused cell index
   flashUntil = 0;
   selected = -1; // selected cell index
+  hints: number[] = []; // cells of towers that can combine now
   private staticLayer = document.createElement('canvas');
   private staticDirty = true;
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
@@ -153,7 +155,7 @@ export class Renderer {
       g.font = `bold ${Math.max(7, s * 0.3)}px sans-serif`;
       g.textAlign = 'right';
       g.textBaseline = 'bottom';
-      g.fillText(String(quality), s - 1, s);
+      g.fillText(quality ? String(quality) : '★', s - 1, s);
     });
   }
 
@@ -267,6 +269,15 @@ export class Renderer {
       ctx.fillRect(X(this.flash % this.maze.w), Y((this.flash / this.maze.w) | 0), s, s);
     }
 
+    ctx.strokeStyle = '#6ff';
+    ctx.lineWidth = 1;
+    for (const h of this.hints)
+      ctx.strokeRect(
+        X(h % this.maze.w) + 2,
+        Y(((h / this.maze.w) | 0) - BLOCK_H) + 2,
+        s - 4,
+        s - 4,
+      );
     if (this.selected >= 0) {
       ctx.strokeStyle = '#ffd24a';
       ctx.lineWidth = 2;
