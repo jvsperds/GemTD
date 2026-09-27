@@ -1,0 +1,1012 @@
+[
+ {
+  "name": "Silver",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "B",
+     "q": 1
+    },
+    {
+     "gem": "Y",
+     "q": 1
+    },
+    {
+     "gem": "D",
+     "q": 1
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Silver Knight",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Silver"
+    },
+    {
+     "gem": "Q",
+     "q": 2
+    },
+    {
+     "gem": "R",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Pink Diamond",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "D",
+     "q": 5
+    },
+    {
+     "gem": "Y",
+     "q": 3
+    },
+    {
+     "gem": "D",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Huge Pink Diamond",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Pink Diamond"
+    },
+    {
+     "tower": "Silver Knight"
+    },
+    {
+     "tower": "Silver"
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Koh-i-noor Diamond",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Huge Pink Diamond"
+    },
+    {
+     "gem": "P",
+     "q": 6
+    },
+    {
+     "gem": "D",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "P",
+     "q": 1
+    },
+    {
+     "gem": "P",
+     "q": 2
+    },
+    {
+     "gem": "P",
+     "q": 3
+    },
+    {
+     "gem": "P",
+     "q": 4
+    },
+    {
+     "gem": "P",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Malachite",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "E",
+     "q": 1
+    },
+    {
+     "gem": "Q",
+     "q": 1
+    },
+    {
+     "gem": "G",
+     "q": 1
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Vivid Malachite",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Malachite"
+    },
+    {
+     "gem": "D",
+     "q": 2
+    },
+    {
+     "gem": "Y",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Uranium-238",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "Y",
+     "q": 5
+    },
+    {
+     "gem": "E",
+     "q": 2
+    },
+    {
+     "gem": "B",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Uranium-235",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Uranium-238"
+    },
+    {
+     "tower": "Vivid Malachite"
+    },
+    {
+     "tower": "Malachite"
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Depleted-Kyparium",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Uranium-235"
+    },
+    {
+     "gem": "Q",
+     "q": 6
+    },
+    {
+     "gem": "Y",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "Q",
+     "q": 1
+    },
+    {
+     "gem": "Q",
+     "q": 2
+    },
+    {
+     "gem": "Q",
+     "q": 3
+    },
+    {
+     "gem": "Q",
+     "q": 4
+    },
+    {
+     "gem": "Q",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Asteriated Ruby",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "R",
+     "q": 2
+    },
+    {
+     "gem": "R",
+     "q": 1
+    },
+    {
+     "gem": "P",
+     "q": 1
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Volcano",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Asteriated Ruby"
+    },
+    {
+     "gem": "R",
+     "q": 4
+    },
+    {
+     "gem": "P",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Bloodstone",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "R",
+     "q": 5
+    },
+    {
+     "gem": "Q",
+     "q": 4
+    },
+    {
+     "gem": "P",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Antique Bloodstone",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Bloodstone"
+    },
+    {
+     "tower": "Volcano"
+    },
+    {
+     "gem": "R",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "The Crown Prince",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Antique Bloodstone"
+    },
+    {
+     "gem": "R",
+     "q": 6
+    },
+    {
+     "gem": "G",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "R",
+     "q": 1
+    },
+    {
+     "gem": "R",
+     "q": 2
+    },
+    {
+     "gem": "R",
+     "q": 3
+    },
+    {
+     "gem": "R",
+     "q": 4
+    },
+    {
+     "gem": "R",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Jade",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "G",
+     "q": 3
+    },
+    {
+     "gem": "E",
+     "q": 3
+    },
+    {
+     "gem": "B",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Quartz",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "G",
+     "q": 4
+    },
+    {
+     "gem": "R",
+     "q": 3
+    },
+    {
+     "gem": "P",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Grey Jade",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Jade"
+    },
+    {
+     "gem": "B",
+     "q": 4
+    },
+    {
+     "gem": "Q",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Monkey King Jade",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Grey Jade"
+    },
+    {
+     "gem": "G",
+     "q": 4
+    },
+    {
+     "gem": "P",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Diamond Cullinan",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Monkey King Jade"
+    },
+    {
+     "gem": "D",
+     "q": 6
+    },
+    {
+     "gem": "B",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "D",
+     "q": 1
+    },
+    {
+     "gem": "D",
+     "q": 2
+    },
+    {
+     "gem": "D",
+     "q": 3
+    },
+    {
+     "gem": "D",
+     "q": 4
+    },
+    {
+     "gem": "D",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Lucky Chinese Jade",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Jade"
+    },
+    {
+     "tower": "Quartz"
+    },
+    {
+     "gem": "G",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Charming Lazurite",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Quartz"
+    },
+    {
+     "gem": "P",
+     "q": 4
+    },
+    {
+     "gem": "Y",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Golden Jubilee",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Charming Lazurite"
+    },
+    {
+     "gem": "Y",
+     "q": 6
+    },
+    {
+     "gem": "R",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "Y",
+     "q": 1
+    },
+    {
+     "gem": "Y",
+     "q": 2
+    },
+    {
+     "gem": "Y",
+     "q": 3
+    },
+    {
+     "gem": "Y",
+     "q": 4
+    },
+    {
+     "gem": "Y",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Gold",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "P",
+     "q": 5
+    },
+    {
+     "gem": "P",
+     "q": 4
+    },
+    {
+     "gem": "D",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Egypt Gold",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Gold"
+    },
+    {
+     "gem": "P",
+     "q": 5
+    },
+    {
+     "gem": "Q",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Dark Emerald",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "G",
+     "q": 5
+    },
+    {
+     "gem": "B",
+     "q": 4
+    },
+    {
+     "gem": "Y",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Emerald Golem",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Gold"
+    },
+    {
+     "tower": "Dark Emerald"
+    },
+    {
+     "gem": "D",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Paraiba Tourmaline",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "Q",
+     "q": 5
+    },
+    {
+     "gem": "E",
+     "q": 4
+    },
+    {
+     "gem": "G",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Elaborately Carved Tourmaline",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Paraiba Tourmaline"
+    },
+    {
+     "tower": "Dark Emerald"
+    },
+    {
+     "gem": "G",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Sapphire Star Of Adam",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Elaborately Carved Tourmaline"
+    },
+    {
+     "gem": "G",
+     "q": 6
+    },
+    {
+     "gem": "P",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "G",
+     "q": 1
+    },
+    {
+     "gem": "G",
+     "q": 2
+    },
+    {
+     "gem": "G",
+     "q": 3
+    },
+    {
+     "gem": "G",
+     "q": 4
+    },
+    {
+     "gem": "G",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Deep Sea Pearl",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "Q",
+     "q": 4
+    },
+    {
+     "gem": "D",
+     "q": 4
+    },
+    {
+     "gem": "E",
+     "q": 2
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Chrysoberyl Cat's Eye",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "E",
+     "q": 5
+    },
+    {
+     "gem": "D",
+     "q": 4
+    },
+    {
+     "gem": "Q",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Red Coral",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Chrysoberyl Cat's Eye"
+    },
+    {
+     "tower": "Deep Sea Pearl"
+    },
+    {
+     "gem": "E",
+     "q": 4
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Natural Zumurud",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Deep Sea Pearl"
+    },
+    {
+     "gem": "G",
+     "q": 5
+    },
+    {
+     "gem": "D",
+     "q": 3
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Carmen-Lucia",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Red Coral"
+    },
+    {
+     "gem": "E",
+     "q": 6
+    },
+    {
+     "gem": "Q",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "E",
+     "q": 1
+    },
+    {
+     "gem": "E",
+     "q": 2
+    },
+    {
+     "gem": "E",
+     "q": 3
+    },
+    {
+     "gem": "E",
+     "q": 4
+    },
+    {
+     "gem": "E",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Yellow Sapphire",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "gem": "B",
+     "q": 5
+    },
+    {
+     "gem": "Y",
+     "q": 4
+    },
+    {
+     "gem": "R",
+     "q": 4
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Northern Saber's Eye",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Yellow Sapphire"
+    },
+    {
+     "tower": "Bloodstone"
+    },
+    {
+     "gem": "B",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Star Sapphire",
+  "secret": false,
+  "inputs": [
+   [
+    {
+     "tower": "Yellow Sapphire"
+    },
+    {
+     "gem": "B",
+     "q": 6
+    },
+    {
+     "gem": "E",
+     "q": 6
+    }
+   ],
+   [
+    {
+     "gem": "B",
+     "q": 1
+    },
+    {
+     "gem": "B",
+     "q": 2
+    },
+    {
+     "gem": "B",
+     "q": 3
+    },
+    {
+     "gem": "B",
+     "q": 4
+    },
+    {
+     "gem": "B",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Obsidian",
+  "secret": true,
+  "inputs": [
+   [
+    {
+     "gem": "B",
+     "q": 5
+    },
+    {
+     "gem": "Y",
+     "q": 5
+    },
+    {
+     "gem": "D",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Agate",
+  "secret": true,
+  "inputs": [
+   [
+    {
+     "gem": "Q",
+     "q": 5
+    },
+    {
+     "gem": "E",
+     "q": 5
+    },
+    {
+     "gem": "G",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Fantastic Miss Shrimp",
+  "secret": true,
+  "inputs": [
+   [
+    {
+     "gem": "R",
+     "q": 5
+    },
+    {
+     "gem": "G",
+     "q": 5
+    },
+    {
+     "gem": "B",
+     "q": 5
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Yaphets Stone",
+  "secret": true,
+  "inputs": [
+   [
+    {
+     "gem": "B",
+     "q": 5
+    },
+    {
+     "gem": "G",
+     "q": 5
+    },
+    {
+     "gem": "B",
+     "q": 4
+    },
+    {
+     "gem": "G",
+     "q": 4
+    }
+   ]
+  ]
+ },
+ {
+  "name": "Burning Stone",
+  "secret": true,
+  "inputs": [
+   [
+    {
+     "gem": "R",
+     "q": 5
+    },
+    {
+     "gem": "P",
+     "q": 5
+    },
+    {
+     "gem": "R",
+     "q": 4
+    },
+    {
+     "gem": "P",
+     "q": 4
+    }
+   ]
+  ]
+ }
+]

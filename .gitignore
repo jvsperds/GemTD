@@ -8,3 +8,5 @@ venv/
 .DS_Store
 Thumbs.db
 docs/wikipages/
+node_modules/
+dist/

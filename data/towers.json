@@ -1,0 +1,837 @@
+[
+ {
+  "name": "Silver",
+  "damage": 30.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_slow2",
+    "raw": "[MOVESPEED: -90]"
+   }
+  ]
+ },
+ {
+  "name": "Silver Knight",
+  "damage": 100.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.8,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_jianshe3",
+    "raw": "On Attack Landed, run script jianshe3 (addon_game_mode.lua) with [Damage: %attack_damage]"
+   },
+   {
+    "id": "tower_slow3",
+    "raw": "[MOVESPEED: -120]"
+   }
+  ]
+ },
+ {
+  "name": "Pink Diamond",
+  "damage": 30.0,
+  "bonusDamage": 80.0,
+  "attackRate": 1.0,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_baoji1",
+    "raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]"
+   },
+   {
+    "id": "tower_attack3",
+    "raw": "[BASEATTACK BONUSDAMAGE: 80]"
+   }
+  ]
+ },
+ {
+  "name": "Huge Pink Diamond",
+  "damage": 150.0,
+  "bonusDamage": 160.0,
+  "attackRate": 0.8,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_jianshe3",
+    "raw": "On Attack Landed, run script jianshe3 (addon_game_mode.lua) with [Damage: %attack_damage]"
+   },
+   {
+    "id": "tower_baoji1",
+    "raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]"
+   },
+   {
+    "id": "tower_attack4",
+    "raw": "[BASEATTACK BONUSDAMAGE: 160]"
+   },
+   {
+    "id": "tower_slow3",
+    "raw": "[MOVESPEED: -120]"
+   }
+  ]
+ },
+ {
+  "name": "Koh-i-noor Diamond",
+  "damage": 660.0,
+  "bonusDamage": 640.0,
+  "attackRate": 0.6,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_jianshe3",
+    "raw": "On Attack Landed, run script jianshe3 (addon_game_mode.lua) with [Damage: %attack_damage]"
+   },
+   {
+    "id": "tower_baoji1",
+    "raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]"
+   },
+   {
+    "id": "tower_attack6",
+    "raw": "[BASEATTACK BONUSDAMAGE: 640]"
+   },
+   {
+    "id": "tower_jianjia6",
+    "raw": "On Attack Landed, [PHYSICAL ARMOR: -64]"
+   },
+   {
+    "id": "e301",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Malachite",
+  "damage": 15.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.8,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_fenliejian",
+    "raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [Damage: %attack_damage, attack_count: 2]"
+   }
+  ]
+ },
+ {
+  "name": "Vivid Malachite",
+  "damage": 50.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.7,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_fenliejian_xianyan",
+    "raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [attack_count: 4]"
+   }
+  ]
+ },
+ {
+  "name": "Uranium-238",
+  "damage": 120.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.7,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_fenliejian_you",
+    "raw": "On Attack, run script DuoChongGongJi_you (fenliejian.lua) with [attack_count: 10]"
+   }
+  ]
+ },
+ {
+  "name": "Uranium-235",
+  "damage": 60.0,
+  "bonusDamage": 160.0,
+  "attackRate": 0.7,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_fenliejian_you",
+    "raw": "On Attack, run script DuoChongGongJi_you (fenliejian.lua) with [attack_count: 10]"
+   },
+   {
+    "id": "tower_attack4",
+    "raw": "[BASEATTACK BONUSDAMAGE: 160]"
+   }
+  ]
+ },
+ {
+  "name": "Depleted-Kyparium",
+  "damage": 90.0,
+  "bonusDamage": 320.0,
+  "attackRate": 0.4,
+  "range": 5000.0,
+  "abilities": [
+   {
+    "id": "tower_attack5",
+    "raw": "[BASEATTACK BONUSDAMAGE: 320]"
+   },
+   {
+    "id": "tower_fenliejian_you",
+    "raw": "On Attack, run script DuoChongGongJi_you (fenliejian.lua) with [attack_count: 10]"
+   },
+   {
+    "id": "e10003",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Asteriated Ruby",
+  "damage": 0.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_huiyao",
+    "raw": "Aura: Range 400 Effect: during 1 seconds, every 0.5 seconds, deals 30 magic damage."
+   }
+  ]
+ },
+ {
+  "name": "Volcano",
+  "damage": 0.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_huiyao2",
+    "raw": "Aura: Range 500 Effect: during 1 seconds, every 0.5 seconds, deals 160 magic damage."
+   }
+  ]
+ },
+ {
+  "name": "Bloodstone",
+  "damage": 35.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_shandianlian",
+    "raw": "On Attack Landed, [30%]run script jn_D3_00 (shandianlian.lua) with [Damage: 150, Radius: 1000, AttackCount: 1, Count: 5]"
+   }
+  ]
+ },
+ {
+  "name": "Antique Bloodstone",
+  "damage": 70.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_chazhuangshandian",
+    "raw": "On Attack Landed, [25%]run script Shock (shock.lua) with []"
+   },
+   {
+    "id": "tower_huiyao2",
+    "raw": "Aura: Range 500 Effect: during 1 seconds, every 0.5 seconds, deals 160 magic damage."
+   }
+  ]
+ },
+ {
+  "name": "The Crown Prince",
+  "damage": 70.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_chazhuangshandian",
+    "raw": "On Attack Landed, [25%]run script Shock (shock.lua) with []"
+   },
+   {
+    "id": "tower_huiyao3",
+    "raw": "Aura: Range 800 Effect: during 1 seconds, every 2 seconds, deals 5000 magic damage."
+   },
+   {
+    "id": "tower_du6",
+    "raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 128 magic damage."
+   },
+   {
+    "id": "e10002",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Jade",
+  "damage": 10.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_du4",
+    "raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 16 magic damage."
+   }
+  ]
+ },
+ {
+  "name": "Quartz",
+  "damage": 15.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.6,
+  "range": 500.0,
+  "abilities": [
+   {
+    "id": "tower_zheyi",
+    "raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -10][MOVESPEED: -250]"
+   }
+  ]
+ },
+ {
+  "name": "Grey Jade",
+  "damage": 30.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_shechengguanghuan",
+    "raw": "Aura: Range 290 Effect: [ATTACK RANGE: 300]"
+   },
+   {
+    "id": "tower_du5",
+    "raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 32 magic damage."
+   }
+  ]
+ },
+ {
+  "name": "Monkey King Jade",
+  "damage": 80.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 1000.0,
+  "abilities": [
+   {
+    "id": "tower_du5",
+    "raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 32 magic damage."
+   },
+   {
+    "id": "tower_shechengguanghuan",
+    "raw": "Aura: Range 290 Effect: [ATTACK RANGE: 300]"
+   },
+   {
+    "id": "tower_jingzhun",
+    "raw": "Aura: Range 300 Effect: [CANNOT MISS: true]"
+   }
+  ]
+ },
+ {
+  "name": "Diamond Cullinan",
+  "damage": 2514.0,
+  "bonusDamage": 640.0,
+  "attackRate": 0.8,
+  "range": 1200.0,
+  "abilities": [
+   {
+    "id": "tower_jingzhun",
+    "raw": "Aura: Range 300 Effect: [CANNOT MISS: true]"
+   },
+   {
+    "id": "tower_shechengguanghuan",
+    "raw": "Aura: Range 290 Effect: [ATTACK RANGE: 300]"
+   },
+   {
+    "id": "tower_attack6",
+    "raw": "[BASEATTACK BONUSDAMAGE: 640]"
+   },
+   {
+    "id": "tower_baoji1",
+    "raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]"
+   },
+   {
+    "id": "e10005",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Lucky Chinese Jade",
+  "damage": 30.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 900.0,
+  "abilities": [
+   {
+    "id": "tower_du5",
+    "raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 32 magic damage."
+   },
+   {
+    "id": "tower_zhongguoyu",
+    "raw": "On Attack Landed, [1%]run script huichun (huichun.lua) with []"
+   },
+   {
+    "id": "tower_zheyi",
+    "raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -10][MOVESPEED: -250]"
+   }
+  ]
+ },
+ {
+  "name": "Charming Lazurite",
+  "damage": 30.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.6,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_zheyi2",
+    "raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -10][MOVESPEED: -250][MAGICAL RESISTANCE: -50]"
+   }
+  ]
+ },
+ {
+  "name": "Golden Jubilee",
+  "damage": 1.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.7,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_zheyi2",
+    "raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -10][MOVESPEED: -250][MAGICAL RESISTANCE: -50]"
+   },
+   {
+    "id": "tower_ranjin",
+    "raw": "On Attack Landed, run script ranjin (addon_game_mode.lua) with [Damage: %attack_damage]"
+   },
+   {
+    "id": "e10006",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Gold",
+  "damage": 60.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.8,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_jin",
+    "raw": "On Attack Landed, [PHYSICAL ARMOR: -32]"
+   }
+  ]
+ },
+ {
+  "name": "Egypt Gold",
+  "damage": 100.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.8,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_jin2",
+    "raw": "On Attack Landed, [PHYSICAL ARMOR: -48]"
+   },
+   {
+    "id": "tower_tanlan",
+    "raw": "Aura: Range 800 Effect:"
+   }
+  ]
+ },
+ {
+  "name": "Dark Emerald",
+  "damage": 80.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_10jiyun",
+    "raw": "On Attack Landed, [10%][Stun 2 seconds]"
+   }
+  ]
+ },
+ {
+  "name": "Emerald Golem",
+  "damage": 170.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_10jiyun",
+    "raw": "On Attack Landed, [10%][Stun 2 seconds]"
+   },
+   {
+    "id": "tower_jin",
+    "raw": "On Attack Landed, [PHYSICAL ARMOR: -32]"
+   },
+   {
+    "id": "tower_5shihua",
+    "raw": "On Attack Landed, [1%]run script shihua (addon_game_mode.lua) with []"
+   }
+  ]
+ },
+ {
+  "name": "Paraiba Tourmaline",
+  "damage": 30.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.6,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_bixi",
+    "raw": "Aura: Range 800 Effect: [PHYSICAL ARMOR: -15]"
+   }
+  ]
+ },
+ {
+  "name": "Elaborately Carved Tourmaline",
+  "damage": 130.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.6,
+  "range": 700.0,
+  "abilities": [
+   {
+    "id": "tower_10jiyun",
+    "raw": "On Attack Landed, [10%][Stun 2 seconds]"
+   },
+   {
+    "id": "tower_bixi2",
+    "raw": "Aura: Range 1200 Effect: [PHYSICAL ARMOR: -30]"
+   }
+  ]
+ },
+ {
+  "name": "Sapphire Star Of Adam",
+  "damage": 42.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_du6",
+    "raw": "On Attack Landed, during 5 seconds, every 1 seconds, deals 128 magic damage."
+   },
+   {
+    "id": "tower_jianjia6",
+    "raw": "On Attack Landed, [PHYSICAL ARMOR: -64]"
+   },
+   {
+    "id": "tower_bixi2",
+    "raw": "Aura: Range 1200 Effect: [PHYSICAL ARMOR: -30]"
+   },
+   {
+    "id": "tower_jihan",
+    "raw": "On Attack Landed, [Duration: 3] [Splash: 300][MOVESPEED: -50%][DISABLE HEALING: 1]"
+   },
+   {
+    "id": "e10004",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Deep Sea Pearl",
+  "damage": 80.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.6,
+  "range": 500.0,
+  "abilities": [
+   {
+    "id": "tower_chenmoguanghuan",
+    "raw": "Aura: Range 600 Effect: [MAGIC IMMUNE: true]"
+   }
+  ]
+ },
+ {
+  "name": "Chrysoberyl Cat's Eye",
+  "damage": 6.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 500.0,
+  "abilities": [
+   {
+    "id": "tower_speed_aura5",
+    "raw": "Aura: Range 664 Effect: [ATTACKSPEED: 60]"
+   },
+   {
+    "id": "tower_true_sight",
+    "raw": ""
+   },
+   {
+    "id": "tower_maoyan",
+    "raw": "Aura: Range 500 Effect: [DAMAGEOUTGOING: 50%]"
+   }
+  ]
+ },
+ {
+  "name": "Red Coral",
+  "damage": 120.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.6,
+  "range": 500.0,
+  "abilities": [
+   {
+    "id": "tower_speed_aura5",
+    "raw": "Aura: Range 664 Effect: [ATTACKSPEED: 60]"
+   },
+   {
+    "id": "tower_speed_aura4",
+    "raw": "Aura: Range 664 Effect: [ATTACKSPEED: 50]"
+   },
+   {
+    "id": "tower_true_sight",
+    "raw": ""
+   },
+   {
+    "id": "tower_maoyan",
+    "raw": "Aura: Range 500 Effect: [DAMAGEOUTGOING: 50%]"
+   },
+   {
+    "id": "tower_chenmoguanghuan",
+    "raw": "Aura: Range 600 Effect: [MAGIC IMMUNE: true]"
+   }
+  ]
+ },
+ {
+  "name": "Natural Zumurud",
+  "damage": 80.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 500.0,
+  "abilities": []
+ },
+ {
+  "name": "Carmen-Lucia",
+  "damage": 6.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 500.0,
+  "abilities": [
+   {
+    "id": "tower_chenmoguanghuan",
+    "raw": "Aura: Range 600 Effect: [MAGIC IMMUNE: true]"
+   },
+   {
+    "id": "tower_maoyan",
+    "raw": "Aura: Range 500 Effect: [DAMAGEOUTGOING: 50%]"
+   },
+   {
+    "id": "tower_speed_aura_guichu",
+    "raw": "Aura: Range 200 Effect: [ATTACKSPEED: 200]"
+   },
+   {
+    "id": "tower_speed_aura6",
+    "raw": "Aura: Range 664 Effect: [ATTACKSPEED: 70]"
+   },
+   {
+    "id": "tower_true_sight",
+    "raw": ""
+   },
+   {
+    "id": "e10009",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Yellow Sapphire",
+  "damage": 20.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_lanbaoshi",
+    "raw": "Aura: Range 300 Effect: [MOVESPEED: -70%]"
+   }
+  ]
+ },
+ {
+  "name": "Northern Saber's Eye",
+  "damage": 60.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 500.0,
+  "abilities": [
+   {
+    "id": "tower_lanbaoshi",
+    "raw": "Aura: Range 300 Effect: [MOVESPEED: -70%]"
+   },
+   {
+    "id": "tower_chain_frost",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Star Sapphire",
+  "damage": 20.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_true_sight",
+    "raw": ""
+   },
+   {
+    "id": "tower_speed_aura6",
+    "raw": "Aura: Range 664 Effect: [ATTACKSPEED: 70]"
+   },
+   {
+    "id": "tower_slow6",
+    "raw": "[MOVESPEED: -480]"
+   },
+   {
+    "id": "tower_lanbaoshi2",
+    "raw": "Aura: Range 556 Effect: [MOVESPEED: -75%]"
+   },
+   {
+    "id": "e10001",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Obsidian",
+  "damage": 180.0,
+  "bonusDamage": 640.0,
+  "attackRate": 0.8,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_jianshe5",
+    "raw": "On Attack Landed, run script jianshe5 (addon_game_mode.lua) with [Damage: %attack_damage]"
+   },
+   {
+    "id": "tower_slow5",
+    "raw": "[MOVESPEED: -180]"
+   },
+   {
+    "id": "e10011",
+    "raw": ""
+   },
+   {
+    "id": "tower_attack6",
+    "raw": "[BASEATTACK BONUSDAMAGE: 640]"
+   }
+  ]
+ },
+ {
+  "name": "Agate",
+  "damage": 110.0,
+  "bonusDamage": 320.0,
+  "attackRate": 0.3,
+  "range": 5000.0,
+  "abilities": [
+   {
+    "id": "tower_fenliejian_xianyan",
+    "raw": "On Attack, run script DuoChongGongJi (fenliejian.lua) with [attack_count: 4]"
+   },
+   {
+    "id": "e10012",
+    "raw": ""
+   },
+   {
+    "id": "tower_attack5",
+    "raw": "[BASEATTACK BONUSDAMAGE: 320]"
+   }
+  ]
+ },
+ {
+  "name": "Fantastic Miss Shrimp",
+  "damage": 585.0,
+  "bonusDamage": 640.0,
+  "attackRate": 0.5,
+  "range": 1000.0,
+  "abilities": [
+   {
+    "id": "tower_aojiao",
+    "raw": "On Attack Start, [3%] [Duration: 5][DISARMED: true]"
+   },
+   {
+    "id": "tower_shandianlian",
+    "raw": "On Attack Landed, [30%]run script jn_D3_00 (shandianlian.lua) with [Damage: 150, Radius: 1000, AttackCount: 1, Count: 5]"
+   },
+   {
+    "id": "tower_chazhuangshandian",
+    "raw": "On Attack Landed, [25%]run script Shock (shock.lua) with []"
+   },
+   {
+    "id": "e10008",
+    "raw": ""
+   },
+   {
+    "id": "tower_attack6",
+    "raw": "[BASEATTACK BONUSDAMAGE: 640]"
+   }
+  ]
+ },
+ {
+  "name": "Yaphets Stone",
+  "damage": 140.0,
+  "bonusDamage": 0.0,
+  "attackRate": 1.0,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_bixi2",
+    "raw": "Aura: Range 1200 Effect: [PHYSICAL ARMOR: -30]"
+   },
+   {
+    "id": "tower_jianjia6",
+    "raw": "On Attack Landed, [PHYSICAL ARMOR: -64]"
+   },
+   {
+    "id": "tower_zheyi3",
+    "raw": "Aura: Range 600 Effect: [PHYSICAL ARMOR: -64][MOVESPEED: -480][MAGICAL RESISTANCE: -100]"
+   },
+   {
+    "id": "e10013",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "Burning Stone",
+  "damage": 0.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.5,
+  "range": 600.0,
+  "abilities": [
+   {
+    "id": "tower_huiyao3",
+    "raw": "Aura: Range 800 Effect: during 1 seconds, every 2 seconds, deals 5000 magic damage."
+   },
+   {
+    "id": "e10010",
+    "raw": ""
+   }
+  ]
+ },
+ {
+  "name": "The Great Stone",
+  "damage": 1369.0,
+  "bonusDamage": 640.0,
+  "attackRate": 1.0,
+  "range": 800.0,
+  "abilities": [
+   {
+    "id": "tower_baoji1",
+    "raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]"
+   },
+   {
+    "id": "tower_attack6",
+    "raw": "[BASEATTACK BONUSDAMAGE: 640]"
+   },
+   {
+    "id": "tower_jianshe6",
+    "raw": "On Attack Landed, run script jianshe6 (addon_game_mode.lua) with [Damage: %attack_damage]"
+   },
+   {
+    "id": "e10007",
+    "raw": ""
+   }
+  ]
+ }
+]
