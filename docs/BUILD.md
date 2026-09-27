@@ -83,13 +83,13 @@ Notation: letter = gem, digit = quality (e.g. `B1` = Chipped Sapphire).
 | `guai_shanbi` | evasion |
 | `enemy_momian` | magic immune |
 | `enemy_wumian` | physical immune |
-| `enemy_zheguang` | Refraction — blocks damage instances ⚠️ values |
-| `enemy_bukeqinfan` | Untouchable ⚠️ values |
+| `enemy_zheguang` | Refraction — 20% per turn: blocks 7 attack instances ✅ (original source) |
+| `enemy_bukeqinfan` | Untouchable — 50% per hit: attacker disarmed 1 s ✅ (original source) |
 | `enemy_high_armor` | high armor |
 | `shredder_reactive_armor` | armor stacks when hit |
 | `guai_jiaoxieguanghuan` | Disarm — disables nearby towers briefly |
 | `runrunrun` | Rush — speed burst |
-| `enemy_recharge` | regenerates |
+| `enemy_recharge` | regenerates 0.3% max HP/s ✅ (original source) |
 | `enemy_shanshuo` | Blink forward |
 | `tidehunter_kraken_shell` | damage block, purges debuffs |
 | `guai_xietong` | synergy with pack ⚠️ |
@@ -324,11 +324,12 @@ Decided (2026-09-27):
 - Scope v1: **core game only**. Hero skills, pedals, quests and MVP-aura extras go to Phase 7 or later. The MVP damage stack stays in the core game.
 
 Still open (sensible defaults until playtests):
-1. Exact numbers for Refraction / Untouchable / Recharge / Disarm / Thief.
+1. ~~Refraction / Untouchable / Recharge~~ done from the original source. Thief (steals 1% gold on leak) is unused by our wave data.
 2. XP curve per level (start: XP = creep base HP / 10; tune in Phase 8).
 3. Project name for anything public.
 
 ## 7. Sources
+- Original addon source (Lua + KV): https://github.com/customgamessourcecode/GemTD
 - Dota 2 Wiki, Gem TD (saved: `docs/wikipages/dota2/`): build-phase actions, MVP, skills, waves, quests
 - Gem Tower Defense Wiki, Upgrading chances (saved): quality odds table
 - Maze Builder screenshot (map layout)

@@ -25,18 +25,21 @@ export const LEAK_DAMAGE = 1;
 export const BOSS_LEAK_DAMAGE = 10;
 export const MIN_SPEED = 100; // Dota move-speed floor under slows
 // Creep attributes (BUILD.md �2.6). Numbers from creeps.json "Raw" (1-player column);
-// ponytail: turn-trigger chances and rush/blink sizes are defaults (Lua scripts not in the data).
+// Refraction / Untouchable / Recharge / trigger chances from the original addon (customgamessourcecode/GemTD);
+// ponytail: rush/blink sizes are still defaults.
 export const EVASION = 0.5;
 export const DISARM_RANGE = 130;
 export const HIGH_ARMOR = 20;
 export const REACTIVE_ARMOR = 1; // per hit
 export const REACTIVE_MAX = 5; // stacks � bonus_armor 5 used as the stack cap
 export const REACTIVE_TIME = 5;
-export const RECHARGE = 400; // hp/s
+export const RECHARGE = 0.003; // share of max hp per second (0.3%/s)
 export const KRAKEN_CLEANSE = 40000; // damage taken within the interval purges debuffs
 export const KRAKEN_INTERVAL = 10;
-export const UNTOUCHABLE_AS = -300;
-export const TURN_CHANCE = 0.3; // rush / refraction / blink on direction change
+export const UNTOUCHABLE = { chance: 0.5, time: 1 }; // attacker disarmed
+export const REFRACTION = { chance: 0.2, instances: 7 };
+export const BLINK_CHANCE = 0.1;
+export const RUSH_CHANCE = 0.2;
 export const RUSH = 0.5;
 export const RUSH_TIME = 2;
 export const BLINK_CELLS = 3;
@@ -277,18 +280,20 @@ export class WaveSim {
     if (cr.reactiveT <= 0) cr.reactive = 0;
     if ((cr.krakenT -= TICK) <= 0) [cr.kraken, cr.krakenT] = [0, KRAKEN_INTERVAL];
     if (hasAbility(cr, 'enemy_recharge') && cr.noHealT <= 0)
-      cr.hp = Math.min(cr.def.hp, cr.hp + RECHARGE * TICK);
+      cr.hp = Math.min(cr.def.hp, cr.hp + cr.def.hp * RECHARGE * TICK);
   }
 
   /** Direction change: Rush, Refraction and Blink may trigger. */
   private turn(cr: Creep) {
-    if (hasAbility(cr, 'runrunrun') && this.rand() < TURN_CHANCE) cr.rushT = RUSH_TIME;
-    if (hasAbility(cr, 'enemy_zheguang') && this.rand() < TURN_CHANCE) cr.shield = 1;
-    if (hasAbility(cr, 'enemy_shanshuo') && !cr.def.flying && this.rand() < TURN_CHANCE)
+    // Original rolls these as an else-if chain: at most one per turn.
+    if (hasAbility(cr, 'enemy_zheguang') && cr.shield <= 0 && this.rand() < REFRACTION.chance)
+      cr.shield = REFRACTION.instances;
+    else if (hasAbility(cr, 'enemy_shanshuo') && !cr.def.flying && this.rand() < BLINK_CHANCE)
       for (let k = 0; k < BLINK_CELLS && cr.alive; k++) {
         [cr.x, cr.y] = [cr.tc + 0.5, cr.tr + 0.5];
         this.advance(cr, this.maze.waypoints, false);
       }
+    else if (hasAbility(cr, 'runrunrun') && cr.rushT <= 0 && this.rand() < RUSH_CHANCE) cr.rushT = RUSH_TIME;
   }
 
   /** Creep reached its current target point: pick the next one, or leak at the castle. */

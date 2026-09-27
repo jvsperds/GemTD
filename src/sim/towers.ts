@@ -13,7 +13,7 @@ import {
   rng,
   TICK,
   UNITS_PER_CELL,
-  UNTOUCHABLE_AS,
+  UNTOUCHABLE,
   type Creep,
   type WaveSim,
 } from './waves';
@@ -306,10 +306,9 @@ export class Combat {
     return t.def.range + t.aura.range;
   }
 
-  /** Attack speed: own +AS plus the strongest AS aura in range; Untouchable targets slow it. */
+  /** Attack speed: own +AS plus the strongest AS aura in range. */
   attacksPerSec(t: Tower) {
-    let bonus = this.fx(t.def).as + t.aura.as;
-    if (t.target && hasAbility(t.target, 'enemy_bukeqinfan')) bonus += UNTOUCHABLE_AS;
+    const bonus = this.fx(t.def).as + t.aura.as;
     return Math.max(20, 100 + bonus) / 100 / t.def.attackRate;
   }
 
@@ -351,8 +350,10 @@ export class Combat {
     const d = t.def,
       f = this.fx(d);
     this.shots.push({ from: t, to: cr });
-    // Evasion (unless an aim aura covers the tower); Refraction blocks one instance.
+    // Evasion (unless an aim aura covers the tower); Refraction blocks whole instances.
     if (hasAbility(cr, 'guai_shanbi') && !t.aura.aim && this.rand() < EVASION) return;
+    if (hasAbility(cr, 'enemy_bukeqinfan') && this.rand() < UNTOUCHABLE.chance)
+      t.disarmT = Math.max(t.disarmT, UNTOUCHABLE.time);
     if (cr.shield > 0) {
       cr.shield--;
       return;
