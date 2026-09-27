@@ -34,7 +34,7 @@ Legend: ✅ confirmed (wiki extract in `docs/wikipages`, parsed to `data/raw/*.j
 ### 2.2 Map and maze ✅ (`data/map.json`, from the Maze Builder screenshot)
 - **37 × 37 grid**. Spawn at (4,4), top-left; castle at (32,32), bottom-right. Route: **S → 1(4,18) → 2(32,18) → 3(32,4) → 4(18,4) → 5(18,32) → E**.
 - The 9×9 spawn and castle corners can't be built on. Fixed black **walls** run along the centre lines out to the map edges. A grey centre **cross** (row 18 and column 18, cells 9–27) is assumed walkable but not buildable; verify this.
-- On the empty map the path lengths are **14 / 29 / 14 / 14 / 29 / 14 = 114**. This becomes a pathfinding test: whichever movement rule reproduces it is the right one.
+- On the empty map the path lengths are **14 / 29 / 14 / 14 / 29 / 14 = 114**. ✅ Reproduced (Phase 1) by **8-direction movement, diagonal cost √2, diagonal refused only when both orthogonal neighbours are blocked**; lengths rounded per segment. 4-direction gives 30 on the long legs.
 - Any placement that blocks the route is refused ✅. Flying creeps ignore the maze ✅.
 - 1 cell = 128 Dota units, so range 500 ≈ 4 cells. The wiki's "range 600 = radius of 2 tiles" suggests MVP/aura ranges are measured differently; keep all ranges in units and convert in one place.
 
