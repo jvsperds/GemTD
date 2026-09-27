@@ -24,6 +24,32 @@ export const CASTLE_HP = 100;
 export const LEAK_DAMAGE = 1;
 export const BOSS_LEAK_DAMAGE = 10;
 export const MIN_SPEED = 100; // Dota move-speed floor under slows
+// Creep attributes (BUILD.md �2.6). Numbers from creeps.json "Raw" (1-player column);
+// ponytail: turn-trigger chances and rush/blink sizes are defaults (Lua scripts not in the data).
+export const EVASION = 0.5;
+export const DISARM_RANGE = 130;
+export const HIGH_ARMOR = 20;
+export const REACTIVE_ARMOR = 1; // per hit
+export const REACTIVE_MAX = 5; // stacks � bonus_armor 5 used as the stack cap
+export const REACTIVE_TIME = 5;
+export const RECHARGE = 400; // hp/s
+export const KRAKEN_CLEANSE = 40000; // damage taken within the interval purges debuffs
+export const KRAKEN_INTERVAL = 10;
+export const UNTOUCHABLE_AS = -300;
+export const TURN_CHANCE = 0.3; // rush / refraction / blink on direction change
+export const RUSH = 0.5;
+export const RUSH_TIME = 2;
+export const BLINK_CELLS = 3;
+
+/** Seeded PRNG (mulberry32) so the sim is deterministic. */
+export function rng(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 export interface Creep {
   def: WaveEntry;
@@ -44,7 +70,75 @@ export interface Creep {
   poison: number; // magic dps
   poisonT: number;
   poisonBy: Tower | null;
+  slowPct: number; // fraction, from Frost-type hits
+  slowPctT: number;
+  stunT: number;
+  noHealT: number;
+  ampT: number; // takes +100% physical damage (Gaze)
+  // Recomputed every tick from tower auras.
+  auraArmor: number;
+  auraSlowPct: number;
+  auraSlow: number;
+  auraMr: number;
+  // Attributes.
+  shield: number; // Refraction: damage instances to block
+  rushT: number;
+  reactive: number;
+  reactiveT: number;
+  kraken: number;
+  krakenT: number;
+  dir: number; // last step direction (dc*3+dr), for turn triggers
+  lastHit: Tower | null;
 }
+
+export function newCreep(def: WaveEntry, x: number, y: number): Creep {
+  return {
+    def,
+    x,
+    y,
+    px: x,
+    py: y,
+    hp: def.hp,
+    seg: 1,
+    tc: Math.floor(x),
+    tr: Math.floor(y),
+    alive: true,
+    slow: 0,
+    slowT: 0,
+    armorRed: 0,
+    armorT: 0,
+    poison: 0,
+    poisonT: 0,
+    poisonBy: null,
+    slowPct: 0,
+    slowPctT: 0,
+    stunT: 0,
+    noHealT: 0,
+    ampT: 0,
+    auraArmor: 0,
+    auraSlowPct: 0,
+    auraSlow: 0,
+    auraMr: 0,
+    shield: 0,
+    rushT: 0,
+    reactive: 0,
+    reactiveT: 0,
+    kraken: 0,
+    krakenT: 0,
+    dir: -99,
+    lastHit: null,
+  };
+}
+
+export const hasAbility = (cr: Creep, id: string) => cr.def.abilities.includes(id);
+
+/** Current armor: base (+High armor, +Reactive) minus debuffs and auras. */
+export const armorOf = (cr: Creep) =>
+  cr.def.armor +
+  (hasAbility(cr, 'enemy_high_armor') ? HIGH_ARMOR : 0) +
+  cr.reactive -
+  cr.armorRed -
+  cr.auraArmor;
 
 export type Phase = 'build' | 'wave' | 'won' | 'lost';
 
@@ -54,6 +148,7 @@ export class WaveSim {
   castleHp = CASTLE_HP;
   creeps: Creep[] = [];
   onKill: ((cr: Creep) => void) | null = null;
+  rand: () => number;
   private queue: WaveEntry[] = [];
   private spawnTimer = 0;
   private next: Int32Array[] = []; // per segment: cell index → next cell index on the flow field
@@ -61,7 +156,10 @@ export class WaveSim {
   constructor(
     readonly maze: Maze,
     readonly waves: WaveEntry[],
-  ) {}
+    seed = 1,
+  ) {
+    this.rand = rng(seed ^ 0xc4ee);
+  }
 
   get lastWave() {
     return this.waves.at(-1)!.wave;
@@ -99,29 +197,21 @@ export class WaveSim {
 
   spawn(def: WaveEntry) {
     const [c, r] = this.maze.waypoints[0];
-    this.creeps.push({
-      def,
-      x: c + 0.5,
-      y: r + 0.5,
-      px: c + 0.5,
-      py: r + 0.5,
-      hp: def.hp,
-      seg: 1,
-      tc: c,
-      tr: r,
-      alive: true,
-      slow: 0,
-      slowT: 0,
-      armorRed: 0,
-      armorT: 0,
-      poison: 0,
-      poisonT: 0,
-      poisonBy: null,
-    });
+    const cr = newCreep(def, c + 0.5, r + 0.5);
+    this.creeps.push(cr);
+    return cr;
   }
 
   damage(creep: Creep, amount: number) {
     creep.hp -= amount;
+    if (
+      hasAbility(creep, 'tidehunter_kraken_shell') &&
+      (creep.kraken += amount) >= KRAKEN_CLEANSE
+    ) {
+      // Kraken Shell: purge tower debuffs.
+      creep.kraken = 0;
+      creep.slow = creep.slowPct = creep.armorRed = creep.poison = creep.stunT = creep.ampT = 0;
+    }
     if (creep.hp <= 0 && creep.alive) {
       creep.alive = false;
       this.onKill?.(creep);
@@ -140,7 +230,9 @@ export class WaveSim {
       if (!cr.alive) continue;
       cr.px = cr.x;
       cr.py = cr.y;
-      let step = (Math.max(cr.def.speed - cr.slow, MIN_SPEED) / UNITS_PER_CELL) * TICK;
+      this.timers(cr);
+      if (cr.stunT > 0) continue;
+      let step = (this.speed(cr) / UNITS_PER_CELL) * TICK;
       while (step > 0 && cr.alive) {
         let tx: number, ty: number;
         if (cr.def.flying) {
@@ -168,8 +260,36 @@ export class WaveSim {
       this.phase = this.wave >= this.lastWave ? 'won' : 'build';
   }
 
+  /** Move speed after rush, % slows (strongest) and flat slows, floored at MIN_SPEED. */
+  speed(cr: Creep) {
+    const pct = Math.max(cr.slowPct, cr.auraSlowPct);
+    const v = cr.def.speed * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) - cr.slow - cr.auraSlow;
+    return Math.max(v, MIN_SPEED);
+  }
+
+  private timers(cr: Creep) {
+    for (const k of ['slowPctT', 'stunT', 'noHealT', 'ampT', 'rushT', 'reactiveT'] as const)
+      if (cr[k] > 0) cr[k] -= TICK;
+    if (cr.slowPctT <= 0) cr.slowPct = 0;
+    if (cr.reactiveT <= 0) cr.reactive = 0;
+    if ((cr.krakenT -= TICK) <= 0) [cr.kraken, cr.krakenT] = [0, KRAKEN_INTERVAL];
+    if (hasAbility(cr, 'enemy_recharge') && cr.noHealT <= 0)
+      cr.hp = Math.min(cr.def.hp, cr.hp + RECHARGE * TICK);
+  }
+
+  /** Direction change: Rush, Refraction and Blink may trigger. */
+  private turn(cr: Creep) {
+    if (hasAbility(cr, 'runrunrun') && this.rand() < TURN_CHANCE) cr.rushT = RUSH_TIME;
+    if (hasAbility(cr, 'enemy_zheguang') && this.rand() < TURN_CHANCE) cr.shield = 1;
+    if (hasAbility(cr, 'enemy_shanshuo') && !cr.def.flying && this.rand() < TURN_CHANCE)
+      for (let k = 0; k < BLINK_CELLS && cr.alive; k++) {
+        [cr.x, cr.y] = [cr.tc + 0.5, cr.tr + 0.5];
+        this.advance(cr, this.maze.waypoints, false);
+      }
+  }
+
   /** Creep reached its current target point: pick the next one, or leak at the castle. */
-  private advance(cr: Creep, wp: Cell[]) {
+  private advance(cr: Creep, wp: Cell[], turns = true) {
     const [gc, gr] = wp[cr.seg];
     const atGoal = cr.def.flying || (cr.tc === gc && cr.tr === gr);
     if (atGoal) {
@@ -179,10 +299,17 @@ export class WaveSim {
         return;
       }
       cr.seg++;
-      if (cr.def.flying) return;
+      if (cr.def.flying) return turns && this.turn(cr);
     }
     const n = this.next[cr.seg - 1][this.maze.idx(cr.tc, cr.tr)];
-    cr.tc = n % this.maze.w;
-    cr.tr = (n / this.maze.w) | 0;
+    const nc = n % this.maze.w,
+      nr = (n / this.maze.w) | 0;
+    const dir = (nc - cr.tc) * 3 + (nr - cr.tr);
+    [cr.tc, cr.tr] = [nc, nr];
+    if (dir !== cr.dir) {
+      const first = cr.dir === -99;
+      cr.dir = dir;
+      if (turns && !first) this.turn(cr);
+    }
   }
 }

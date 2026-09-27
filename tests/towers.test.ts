@@ -4,7 +4,14 @@ import map from '../data/map.json';
 import waves from '../data/waves.json';
 import { Maze, type MapData } from '../src/sim/maze';
 import { armorMult, Combat, DEBUFF_TIME, type GemDef } from '../src/sim/towers';
-import { CASTLE_HP, MIN_SPEED, WaveSim, type Creep, type WaveEntry } from '../src/sim/waves';
+import {
+  CASTLE_HP,
+  MIN_SPEED,
+  newCreep,
+  WaveSim,
+  type Creep,
+  type WaveEntry,
+} from '../src/sim/waves';
 
 const G = gems as Record<string, GemDef>;
 const setup = () => {
@@ -23,25 +30,7 @@ const def: WaveEntry = {
   abilities: [],
 };
 function creep(sim: WaveSim, x: number, y: number, over: Partial<WaveEntry> = {}): Creep {
-  const cr = {
-    def: { ...def, ...over },
-    x,
-    y,
-    px: x,
-    py: y,
-    hp: over.hp ?? def.hp,
-    seg: 1,
-    tc: 0,
-    tr: 0,
-    alive: true,
-    slow: 0,
-    slowT: 0,
-    armorRed: 0,
-    armorT: 0,
-    poison: 0,
-    poisonT: 0,
-    poisonBy: null,
-  };
+  const cr = newCreep({ ...def, ...over }, x, y);
   sim.creeps.push(cr);
   return cr;
 }
