@@ -52,6 +52,7 @@ export class Renderer {
   panY = 0;
   flash = -1; // refused cell index
   flashUntil = 0;
+  selected = -1; // selected cell index
   private staticLayer = document.createElement('canvas');
   private staticDirty = true;
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
@@ -264,6 +265,14 @@ export class Renderer {
     if (this.flash >= 0 && now < this.flashUntil) {
       ctx.fillStyle = 'rgba(220,50,50,0.6)';
       ctx.fillRect(X(this.flash % this.maze.w), Y((this.flash / this.maze.w) | 0), s, s);
+    }
+
+    if (this.selected >= 0) {
+      ctx.strokeStyle = '#ffd24a';
+      ctx.lineWidth = 2;
+      const sc = this.selected % this.maze.w,
+        sr = (this.selected / this.maze.w) | 0;
+      ctx.strokeRect(X(sc), Y(sr - BLOCK_H), s, s * (1 + BLOCK_H));
     }
 
     // Keep last frame's order (dead creeps dropped, new ones appended) so the sort stays cheap.

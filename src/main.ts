@@ -1,7 +1,9 @@
 import gems from '../data/gems.json';
 import map from '../data/map.json';
+import quality from '../data/quality_levels.json';
 import waves from '../data/waves.json';
 import { GEM_COLOR, Renderer } from './render';
+import { DOWNGRADE_COST, Game, type LevelDef } from './sim/game';
 import { Maze, type MapData } from './sim/maze';
 import { Combat, type GemDef } from './sim/towers';
 import { TICK, WaveSim, type WaveEntry } from './sim/waves';
@@ -12,21 +14,43 @@ const debug = document.querySelector<HTMLElement>('#debug')!;
 const maze = new Maze(map as unknown as MapData);
 const sim = new WaveSim(maze, waves as WaveEntry[]);
 const combat = new Combat(sim, gems as Record<string, GemDef>);
+const game = new Game(combat, quality.levels as LevelDef[], (Math.random() * 2 ** 31) | 0);
 const view = new Renderer(canvas, maze, sim, combat);
 const stress = location.hash === '#stress';
-let gemType = ''; // '' = rock mode
-let gemQuality = 1;
+let removing = false; // Remove-stone mode
+let sel: (typeof game.placed)[number] | null = null;
 
 canvas.addEventListener('click', (e) => {
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
-  if (sim.phase !== 'build') return;
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
-  const ok =
-    combat.remove(c, r) ||
-    (gemType ? combat.place(gemType + gemQuality, c, r) : maze.placeRock(c, r));
+  const ok = removing
+    ? game.removeStone(c, r)
+    : game.step === 'place'
+      ? game.place(c, r)
+      : (sel = game.placed.find((t) => t.c === c && t.r === r) ?? sel);
+  removing = false;
   if (!ok) [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
   view.invalidate();
 });
+function act(a: string) {
+  if (a === 'stone') removing = !removing;
+  else if (a === 'level') game.buyLevel();
+  else if (sel) {
+    if (a === 'down') game.downgrade(sel);
+    else if (a === 'keep' ? game.keep(sel) : game.merge(sel, a === 'merge2' ? 2 : 4)) sel = null;
+    view.invalidate();
+  }
+}
+const keys: Record<string, string> = {
+  k: 'keep',
+  m: 'merge2',
+  n: 'merge4',
+  d: 'down',
+  r: 'stone',
+  l: 'level',
+};
+const buttons = [...document.querySelectorAll<HTMLButtonElement>('#panel button')];
+for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   view.setZoom(view.zoom * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX, e.clientY);
@@ -37,13 +61,10 @@ canvas.addEventListener('pointermove', (e) => {
 });
 addEventListener('resize', () => view.resize());
 addEventListener('keydown', (e) => {
-  if (e.code === 'Space') sim.startWave();
-  else if (e.key === 'F3') {
+  if (e.key === 'F3') {
     e.preventDefault();
     debug.hidden = !debug.hidden;
-  } else if (e.key === 'x') gemType = '';
-  else if (/^[1-6]$/.test(e.key)) gemQuality = +e.key;
-  else if (GEM_COLOR[e.key.toUpperCase()]) gemType = e.key.toUpperCase();
+  } else if (keys[e.key]) act(keys[e.key]);
 });
 
 if (stress) {
@@ -69,11 +90,43 @@ function topUpStress() {
 let lastHud = '';
 function updateHud() {
   const total = maze.segmentLengths(maze.route()!).reduce((a, b) => a + b);
-  const mode = gemType ? `${gemType}${gemQuality}` : 'rock';
+  const step = game.step;
+  const odds = game.odds
+    .map((p, q) => (p ? `Q${q + 1} ${p}%` : ''))
+    .filter(Boolean)
+    .join(' ');
+  const hint = removing
+    ? 'click a stone to remove it'
+    : step === 'place'
+      ? `click to place gem ${game.placed.length + 1}/5`
+      : step === 'choose'
+        ? sel
+          ? `selected ${sel.def.name}`
+          : 'click one of this round’s gems to select it'
+        : step === 'won'
+          ? 'You win!'
+          : step === 'lost'
+            ? 'Game over'
+            : 'wave in progress';
   const s =
-    `Wave ${sim.wave} · ${sim.phase} · HP ${sim.castleHp} · path ${total.toFixed(1)} · ` +
-    `placing ${mode} — click place/remove, Space wave, wheel zoom, right-drag pan, F3 debug`;
-  if (s !== lastHud) hud.textContent = lastHud = s;
+    `Wave ${sim.wave}/${sim.lastWave} · HP ${sim.castleHp} · Gold ${game.gold} · ` +
+    `Level ${game.level} (${Math.floor(game.xp)}/${Math.ceil(game.xpFor[game.level] ?? game.xp)} XP) · ` +
+    `odds ${odds} · path ${total.toFixed(1)} — ${hint}`;
+  if (s !== lastHud) {
+    hud.textContent = lastHud = s;
+    view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
+    const en: Record<string, boolean> = {
+      keep: !!sel && step === 'choose',
+      merge2: !!sel && game.canMerge(sel, 2),
+      merge4: !!sel && game.canMerge(sel, 4),
+      down: !!sel && game.canDowngrade(sel),
+      stone: sim.phase === 'build',
+      level: game.levelCost !== null && game.gold >= game.levelCost,
+    };
+    for (const b of buttons) b.disabled = !en[b.dataset.a!];
+    buttons[3].textContent = `Downgrade ${DOWNGRADE_COST}g (D)`;
+    buttons[5].textContent = `Buy level ${game.levelCost ?? '—'}g (L)`;
+  }
 }
 
 // Perf stats, averaged per second; also exposed for the e2e budget check.
