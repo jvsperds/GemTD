@@ -278,8 +278,20 @@ export class Combat {
     return best;
   }
 
-  /** O(towers²); once per tick and on placement. */
+  private auraDefs: GemDef[] = [];
+
+  /** Recompute ally auras only when a tower was added, removed or changed type. */
+  private aurasStale() {
+    const t = this.towers,
+      d = this.auraDefs;
+    let stale = t.length !== d.length;
+    for (let i = 0; i < t.length && !stale; i++) stale = t[i].def !== d[i];
+    return stale;
+  }
+
+  /** O(towers²); on placement and whenever the tower set changes. */
   refreshAuras() {
+    this.auraDefs = this.towers.map((t) => t.def);
     for (const t of this.towers) {
       const a = t.aura;
       a.range = this.allyAura(t, (f) => [f.rangeAura, 300]);
@@ -438,7 +450,7 @@ export class Combat {
   tick() {
     this.shots.length = 0;
     const creeps = this.sim.creeps;
-    this.refreshAuras();
+    if (this.aurasStale()) this.refreshAuras();
     this.auras();
     // Debuff timers and poison (magic damage).
     for (const cr of creeps) {

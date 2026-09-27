@@ -34,7 +34,9 @@ export function score(g: Game) {
 }
 
 export const GREED = { chance: 0.05, mult: 10 };
-export const killGold = (wave: number, boss: boolean) => (wave + 1) * (boss ? 10 : 1);
+// Tuned with `npm run balance` (8 seeds): a level-buying bot is at level 6–8 by wave ~22.
+export const killGold = (wave: number, boss: boolean) =>
+  (1 + Math.floor(wave / 2)) * (boss ? 10 : 1);
 
 export class Game {
   gold = 0;
