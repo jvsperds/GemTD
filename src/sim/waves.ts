@@ -53,6 +53,7 @@ export class WaveSim {
   wave = 0; // last wave started
   castleHp = CASTLE_HP;
   creeps: Creep[] = [];
+  onKill: ((cr: Creep) => void) | null = null;
   private queue: WaveEntry[] = [];
   private spawnTimer = 0;
   private next: Int32Array[] = []; // per segment: cell index → next cell index on the flow field
@@ -121,7 +122,10 @@ export class WaveSim {
 
   damage(creep: Creep, amount: number) {
     creep.hp -= amount;
-    if (creep.hp <= 0) creep.alive = false;
+    if (creep.hp <= 0 && creep.alive) {
+      creep.alive = false;
+      this.onKill?.(creep);
+    }
   }
 
   tick() {

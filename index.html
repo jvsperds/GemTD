@@ -24,6 +24,18 @@
         font: 14px sans-serif;
         pointer-events: none;
       }
+      #panel {
+        position: fixed;
+        bottom: 8px;
+        left: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        max-width: calc(100vw - 16px);
+      }
+      #panel button {
+        font: 13px sans-serif;
+      }
       #debug {
         position: fixed;
         top: 32px;
@@ -40,6 +52,14 @@
   <body>
     <canvas id="game"></canvas>
     <div id="hud"></div>
+    <div id="panel">
+      <button data-a="keep">Keep (K)</button>
+      <button data-a="merge2">Merge ^ (M)</button>
+      <button data-a="merge4">Merge ^^ (N)</button>
+      <button data-a="down">Downgrade 200g (D)</button>
+      <button data-a="stone">Remove stone (R)</button>
+      <button data-a="level">Buy level (L)</button>
+    </div>
     <pre id="debug" hidden></pre>
     <script type="module" src="/src/main.ts"></script>
   </body>
