@@ -191,9 +191,11 @@ canvas.addEventListener('click', (e) => {
     ? run(['stone', c, r])
     : hit
       ? (sel = hit)
-      : game.step === 'place'
-        ? run(['place', c, r])
-        : ((sel = null), true); // clicking empty ground returns to the hero view
+      : game.pedals.length
+        ? run(['pedal', c, r])
+        : game.step === 'place'
+          ? run(['place', c, r])
+          : ((sel = null), true); // clicking empty ground returns to the hero view
   removing = false;
   if (!ok) {
     [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
@@ -343,7 +345,7 @@ async function recordScore() {
     difficulty: cfg.difficulty,
     daily: cfg.daily,
     seed: game.seed,
-    won: sim.phase === 'won',
+    won: game.wavesCleared >= sim.lastWave,
     date: Date.now(),
     version: db.VERSION,
     commands: game.log,
@@ -352,10 +354,10 @@ async function recordScore() {
   });
   await db.set('scores', scores);
   await db.set('save', null);
-  const shells = shellsFor(game.wavesCleared, sim.phase === 'won');
+  const shells = shellsFor(game.wavesCleared, game.wavesCleared >= sim.lastWave);
   const h = await db.get('hero');
   await db.set('hero', { ...h, shells: h.shells + shells });
-  menu.show({ score: score(game), won: sim.phase === 'won', shells });
+  menu.show({ score: score(game), won: game.wavesCleared >= sim.lastWave, shells });
 }
 function topUpStress() {
   for (let k = sim.creeps.length; k < 400; k++) {
@@ -376,10 +378,10 @@ function sounds() {
     sfx.play(
       sim.phase === 'wave'
         ? 'wave'
-        : sim.phase === 'won'
-          ? 'win'
-          : sim.phase === 'lost'
-            ? 'lose'
+        : sim.phase === 'lost'
+          ? 'lose'
+          : sim.wave === sim.lastWave
+            ? 'win'
             : 'keep',
     );
   prev = { kills: game.kills, hp: sim.castleHp, phase: sim.phase };
@@ -774,19 +776,21 @@ function updateHud() {
       ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
       : removing
         ? 'Click a stone to shatter it'
-        : step === 'place'
-          ? `Place gem ${game.placed.length + 1} of 5`
-          : step === 'choose'
-            ? sel
-              ? `Selected ${sel.def.name}: keep, merge or combine it`
-              : 'Click one of this round’s gems to select it'
-            : step === 'won'
-              ? `You win! Score ${score(game)}`
-              : step === 'lost'
-                ? `Game over. Score ${score(game)}`
-                : speed
-                  ? `Wave in progress ×${speed}`
-                  : 'Paused (Space)';
+        : game.pedals.length
+          ? `Lay your ${game.pedals[0]} on the path: creeps set it off by stepping on it`
+          : step === 'place'
+            ? `Place gem ${game.placed.length + 1} of 5`
+            : step === 'choose'
+              ? sel
+                ? `Selected ${sel.def.name}: keep, merge or combine it`
+                : 'Click one of this round’s gems to select it'
+              : step === 'won'
+                ? `You win! Score ${score(game)}`
+                : step === 'lost'
+                  ? `Game over. Score ${score(game)}`
+                  : speed
+                    ? `Wave in progress ×${speed}`
+                    : 'Paused (Space)';
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
@@ -801,7 +805,7 @@ function updateHud() {
     tags.map((t) => `<span class="tag">${t}</span>`).join('') +
     (builder
       ? ''
-      : `<span class="chip"><b>Wave</b> ${sim.wave}/${sim.lastWave}</span>` +
+      : `<span class="chip"><b>Wave</b> ${sim.wave > sim.lastWave ? `${sim.wave} ∞` : `${sim.wave}/${sim.lastWave}`}</span>` +
         `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
         (game.pray
           ? `<span class="chip" title="Pray: ${game.pray.chance}% chance for the next gem">🙏 ${game.pray.chance}%</span>`
@@ -840,6 +844,7 @@ function updateHud() {
     game.kills +
     recipes.map((x) => x.name) +
     combat.towers.length +
+    game.pedals.length +
     sim.phase +
     live?.def.name +
     (live ? maze.idx(live.c, live.r) : '') + // same-type towers differ only by cell

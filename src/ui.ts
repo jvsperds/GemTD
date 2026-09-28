@@ -224,6 +224,11 @@ export function initMenu(
     a.click();
     URL.revokeObjectURL(a.href);
   };
+  $('clearScores').onclick = async () => {
+    if (!confirm('Delete all saved scores? Export them first to keep a copy.')) return;
+    await db.set('scores', []);
+    draw();
+  };
   const file = $<HTMLInputElement>('importfile');
   $('import').onclick = () => file.click();
   file.onchange = async () => {

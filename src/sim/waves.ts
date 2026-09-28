@@ -43,6 +43,9 @@ export const RUSH_CHANCE = 0.2;
 export const RUSH = 0.5;
 export const RUSH_TIME = 2;
 export const BLINK_CELLS = 3;
+// Endless: after the last wave, the last 10 waves repeat with hp and armor scaled per extra wave.
+// ponytail: growth rates are guesses until playtests.
+export const ENDLESS = { hp: 1.15, armor: 1 };
 
 /** Seeded PRNG (mulberry32) so the sim is deterministic. */
 export function rng(seed: number) {
@@ -213,9 +216,15 @@ export class WaveSim {
     }
     this.refreshRoute();
     this.wave++;
+    const last = this.lastWave,
+      extra = Math.max(0, this.wave - last);
+    const base = extra ? last - 9 + ((extra - 1) % 10) : this.wave;
+    const mult = this.hpMult * ENDLESS.hp ** extra;
     const defs = this.waves
-      .filter((w) => w.wave === this.wave)
-      .map((w) => (this.hpMult === 1 ? w : { ...w, hp: w.hp * this.hpMult }));
+      .filter((w) => w.wave === base)
+      .map((w) =>
+        mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra },
+      );
     const n = defs.some((d) => d.boss) ? 1 : CREEPS_PER_WAVE;
     this.queue = Array.from({ length: n }, (_, k) => defs[k % defs.length]);
     this.spawnTimer = 0;
@@ -286,7 +295,7 @@ export class WaveSim {
     this.creeps = this.creeps.filter((c) => c.alive);
     if (this.castleHp <= 0) this.phase = 'lost';
     else if (!this.queue.length && !this.creeps.length) {
-      this.phase = this.wave >= this.lastWave ? 'won' : 'build';
+      this.phase = 'build'; // endless: waves never run out
       if (this.candy) {
         this.maze.waypoints.splice(this.maze.waypoints.indexOf(this.candy), 1);
         this.candy = null;

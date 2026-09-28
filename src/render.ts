@@ -2,7 +2,7 @@
 // Static layer (ground, route, blocks) is an offscreen canvas redrawn only on maze/zoom change;
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
-import { PEDALS, TIERS } from './sim/pedals';
+import { PEDAL, PEDALS, SPELL, TIERS } from './sim/pedals';
 import type { Combat, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
@@ -148,6 +148,7 @@ for (const d of Object.values(PEDALS)) {
   RUNE_GLYPH.set(slug(d.name), Object.keys(SPELL_COLOR).indexOf(spell) * 10 + tier);
 }
 export const hasModel = (key: string) => key in MODELS;
+const spellColor = (spell: string) => SPELL_COLOR[spell[0].toUpperCase() + spell.slice(1)];
 
 /** Draw a special tower's head centred at (mx, my) within radius r. False if it has none. */
 function towerModel(g: CanvasRenderingContext2D, key: string, mx: number, my: number, r: number) {
@@ -844,7 +845,7 @@ export class Renderer {
   pending: number[] = []; // this round's gems, one of which must be picked to finish it
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
-  showRanges = true; // aura range rings (Volcano, Asteriated Ruby...)
+  showRanges = true; // every tower's attack range and aura rings; the selected one always shows
   private staticLayer = document.createElement('canvas');
   private staticDirty = true;
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
@@ -1219,6 +1220,64 @@ export class Renderer {
       }
       ctx.restore();
     }
+    // Attack ranges: all towers when Ranges is on, the selected one always.
+    const selT =
+      this.selected >= 0
+        ? this.combat.towerAt(this.selected % this.maze.w, (this.selected / this.maze.w) | 0)
+        : undefined;
+    ctx.lineWidth = this.dpr;
+    for (const t of this.combat.towers) {
+      if (t.def.pedal || (t !== selT && !this.showRanges)) continue;
+      const on = t === selT;
+      ctx.strokeStyle = on ? 'rgba(255,210,74,0.9)' : 'rgba(255,255,255,0.14)';
+      ctx.fillStyle = 'rgba(255,210,74,0.08)';
+      ctx.beginPath();
+      ctx.arc(X(t.c + 0.5), Y(t.r + 0.5), (this.combat.range(t) / UNITS_PER_CELL) * s, 0, 7);
+      if (on) ctx.fill();
+      ctx.stroke();
+    }
+
+    // Pedals lie flat on the path: glowing while armed, dim with a refill arc while cooling down,
+    // and a shock ring in the spell's colour when a creep sets one off.
+    for (const t of this.combat.towers) {
+      const pd = this.combat.fx(t.def).pedal;
+      if (!pd) continue;
+      const [spell, k] = pd,
+        col = spellColor(spell),
+        cx = X(t.c + 0.5),
+        cy = Y(t.r + 0.5),
+        key = towerKey(t.def);
+      const sp = this.sprite(`p${key}`, s, s, (g) => towerModel(g, key, s / 2, s / 2, s * 0.4));
+      const since = PEDAL.cooldown - t.cooldown; // seconds since it last went off
+      ctx.save();
+      if (t.cooldown > 0) ctx.globalAlpha = 0.45;
+      else {
+        ctx.shadowColor = col;
+        ctx.shadowBlur = s * (0.3 + 0.2 * Math.sin(now / 250));
+      }
+      ctx.drawImage(sp, cx - s / 2, cy - s / 2);
+      ctx.restore();
+      if (t.cooldown > 0) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(1, s / 12);
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.46, -1.571, -1.571 + (since / PEDAL.cooldown) * 6.283);
+        ctx.stroke();
+      }
+      if (t.cooldown > 0 && since < 0.8) {
+        const def = SPELL[spell] as { radius?: number | readonly number[] };
+        const rad = typeof def.radius === 'number' ? def.radius : (def.radius?.[k] ?? 128);
+        const f = since / 0.8;
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = 1 - f;
+        ctx.lineWidth = Math.max(2, s / 6) * (1 - f);
+        ctx.beginPath();
+        ctx.arc(cx, cy, (rad / UNITS_PER_CELL) * s * (0.2 + 0.8 * f), 0, 7);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
     if (this.selected >= 0) {
       ctx.strokeStyle = '#ffd24a';
       ctx.lineWidth = 2 * this.dpr;
@@ -1269,6 +1328,26 @@ export class Renderer {
         ctx.ellipse(X(x), Y(y + bob + 0.3), sp.width * 0.4, sp.width * 0.16, 0, 0, 7);
         ctx.stroke();
       }
+      // Pedal debuffs: a coloured ring at the feet of the strongest one (stun/root first).
+      const debuff =
+        cr.stunT > 0
+          ? 'ensnare'
+          : cr.terrorT > 0
+            ? 'terrorize'
+            : cr.mrT > 0
+              ? 'decrepify'
+              : cr.armorRed > 0
+                ? 'acid'
+                : cr.slowPctT > 0
+                  ? 'gale'
+                  : '';
+      if (debuff) {
+        ctx.strokeStyle = debuff === 'ensnare' ? '#ffe066' : spellColor(debuff);
+        ctx.lineWidth = Math.max(2, s / 10);
+        ctx.beginPath();
+        ctx.ellipse(X(x), Y(y + bob + 0.3), sp.width * 0.35, sp.width * 0.13, 0, 0, 7);
+        ctx.stroke();
+      }
       ctx.drawImage(sp, X(x) - sp.width / 2, Y(y) - sp.height / 2);
       // Health bar once damaged (always for the selected creep).
       if (cr.hp < cr.def.hp || cr === this.creep) {
@@ -1316,6 +1395,22 @@ export class Renderer {
       ctx.stroke();
     }
     ctx.shadowBlur = 0;
+
+    // Howl-buffed towers: a pulsing red-bronze glow round the head.
+    ctx.save();
+    ctx.strokeStyle = SPELL_COLOR.Howl;
+    ctx.shadowColor = '#ff6a3a';
+    ctx.shadowBlur = s / 2;
+    ctx.lineWidth = Math.max(2, s / 8);
+    for (const t of this.combat.towers) {
+      if (t.howl.t <= 0) continue;
+      const [x, y] = head(t);
+      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now / 150);
+      ctx.beginPath();
+      ctx.arc(x, y, s * 0.45, 0, 7);
+      ctx.stroke();
+    }
+    ctx.restore();
 
     // Disarmed towers: a purple shackle ring spinning round the head.
     ctx.strokeStyle = '#c06aff';
