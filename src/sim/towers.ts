@@ -55,7 +55,7 @@ export interface Tower {
   crit: { v: number; t: number };
   bonds: { v: number; t: number };
   howl: { v: number; t: number }; // Howl pedal: +damage fraction
-  // Strongest ally auras covering this tower, refreshed each tick (same aura doesn't stack).
+  // Ally auras covering this tower (distinct gem types stack; copies too on easy), refreshed when towers change.
   aura: { range: number; as: number; dmg: number; aim: number; calm: number };
 }
 
@@ -227,10 +227,16 @@ const magicImmune = (cr: Creep) => hasAbility(cr, 'enemy_momian');
 export class Combat {
   towers: Tower[] = [];
   heroAs = 0; // hero passive: +% attack speed for every tower
+  stackCopies = false; // easy mode: identical gems' buffs/debuffs stack too (else Dota rule: distinct types only)
   shots: { from: Tower; to: Creep }[] = [];
   onHeal: (() => void) | null = null;
   private rand: () => number;
   private fxCache = new Map<GemDef, Fx>();
+
+  /** Stacking key for a tower's effects: its gem type, or the tower itself when copies stack. */
+  private stackKey(t: Tower): Tower | string {
+    return this.stackCopies ? t : t.def.name;
+  }
 
   constructor(
     readonly sim: WaveSim,
@@ -295,14 +301,18 @@ export class Combat {
     return Math.hypot(a.c - b.c, a.r - b.r) * UNITS_PER_CELL;
   }
 
-  /** Strongest value of an ally aura covering `t` (same aura doesn't stack). */
+  /** Ally auras covering `t`: different gem types stack, copies of one type don't. */
   private allyAura(t: Tower, pick: (f: Fx) => [range: number, value: number] | null) {
-    let best = 0;
+    const seen = new Set<Tower | string>();
+    let sum = 0;
     for (const o of this.towers) {
       const a = pick(this.fx(o.def));
-      if (a && a[0] && this.tdist(o, t) <= a[0]) best = Math.max(best, a[1]);
+      if (a && a[0] && !seen.has(this.stackKey(o)) && this.tdist(o, t) <= a[0]) {
+        seen.add(this.stackKey(o));
+        sum += a[1];
+      }
     }
-    return best;
+    return sum;
   }
 
   private auraDefs: GemDef[] = [];
@@ -399,19 +409,13 @@ export class Combat {
     let dmg = (d.damage + d.bonusDamage) * this.damageMult(t);
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
     if (t.crit.t > 0 && this.rand() < SKILL_CRIT_CHANCE) dmg *= t.crit.v;
-    // Debuffs land before damage so armor reduction counts on this hit. Strongest wins, timer refreshes.
-    if (f.armor) {
-      cr.armorRed = Math.max(cr.armorRed, f.armor);
-      cr.armorT = DEBUFF_TIME;
-    }
-    if (f.slow) {
-      cr.slow = Math.max(cr.slow, f.slow);
-      cr.slowT = DEBUFF_TIME;
-    }
-    if (f.poison && !magicImmune(cr)) {
-      cr.poison = Math.max(cr.poison, f.poison);
-      cr.poisonT = DEBUFF_TIME;
-      cr.poisonBy = t;
+    // Debuffs land before damage so armor reduction counts on this hit. One stack per gem type, timer refreshes.
+    const poison = magicImmune(cr) ? 0 : f.poison;
+    if (f.armor || f.slow || poison) {
+      cr.stacks.set(this.stackKey(t), { slow: f.slow, armor: f.armor, poison, t: DEBUFF_TIME, by: t });
+      cr.slow = sumStacks(cr, 'slow');
+      cr.armorRed = sumStacks(cr, 'armor');
+      cr.poison = sumStacks(cr, 'poison');
     }
     if (f.stun && this.rand() < f.stun) cr.stunT = Math.max(cr.stunT, STUN_TIME);
     if (f.frost)
@@ -486,8 +490,15 @@ export class Combat {
       case 'acid': {
         const s = SPELL.acid;
         for (const o of this.near(cr, s.radius)) {
-          o.armorRed = Math.max(o.armorRed, s.armor[k]);
-          o.armorT = Math.max(o.armorT, s.time[k]);
+          const old = o.stacks.get('acid');
+          o.stacks.set('acid', {
+            slow: 0,
+            armor: Math.max(old?.armor ?? 0, s.armor[k]),
+            poison: 0,
+            t: Math.max(old?.t ?? 0, s.time[k]),
+            by: t,
+          });
+          o.armorRed = sumStacks(o, 'armor');
         }
         break;
       }
@@ -534,17 +545,23 @@ export class Combat {
     for (const cr of this.sim.creeps) {
       cr.auraArmor = cr.auraSlowPct = cr.auraSlow = cr.auraMr = 0;
     }
+    const seen = new Set<Tower | string>();
     for (const t of this.towers) {
+      // Different gem types stack; copies of one type add nothing (their burn still ticks).
+      const key = this.stackKey(t);
+      const dup = seen.has(key);
+      seen.add(key);
       for (const a of this.fx(t.def).enemy)
         for (const cr of this.sim.creeps) {
           if (!cr.alive || this.dist(t, cr) > a.range) continue;
           if (a.flyingOnly && !cr.def.flying) continue;
           const immune = magicImmune(cr) && !a.pierceImmune;
-          if (a.armor && !immune) cr.auraArmor = Math.max(cr.auraArmor, a.armor);
-          if (a.slowPct && !immune) cr.auraSlowPct = Math.max(cr.auraSlowPct, a.slowPct);
-          if (a.slow) cr.auraSlow = Math.max(cr.auraSlow, a.slow);
-          if (a.mr) cr.auraMr = Math.max(cr.auraMr, a.mr);
           if (a.dps) this.magic(t, cr, a.dps * TICK);
+          if (dup) continue;
+          if (a.armor && !immune) cr.auraArmor += a.armor;
+          if (a.slowPct && !immune) cr.auraSlowPct = 1 - (1 - cr.auraSlowPct) * (1 - a.slowPct);
+          if (a.slow) cr.auraSlow += a.slow;
+          if (a.mr) cr.auraMr += a.mr;
         }
       if (t.disarmT > 0) t.disarmT -= TICK;
     }
@@ -563,12 +580,13 @@ export class Combat {
     // Debuff timers and poison (magic damage).
     for (const cr of creeps) {
       if (!cr.alive) continue;
-      if (cr.poisonT > 0) {
-        this.magic(cr.poisonBy, cr, cr.poison * TICK);
-        if ((cr.poisonT -= TICK) <= 0) cr.poison = 0;
+      for (const [id, d] of cr.stacks) {
+        if (d.poison) this.magic(d.by, cr, d.poison * TICK);
+        if ((d.t -= TICK) <= 0) cr.stacks.delete(id);
       }
-      if (cr.slowT > 0 && (cr.slowT -= TICK) <= 0) cr.slow = 0;
-      if (cr.armorT > 0 && (cr.armorT -= TICK) <= 0) cr.armorRed = 0;
+      cr.slow = sumStacks(cr, 'slow');
+      cr.armorRed = sumStacks(cr, 'armor');
+      cr.poison = sumStacks(cr, 'poison');
     }
     for (const t of this.towers) {
       t.cooldown = Math.max(0, t.cooldown - TICK);
@@ -611,4 +629,10 @@ export class Combat {
       if (!t.target.alive) t.target = null;
     }
   }
+}
+
+function sumStacks(cr: Creep, k: 'slow' | 'armor' | 'poison') {
+  let v = 0;
+  for (const d of cr.stacks.values()) v += d[k];
+  return v;
 }

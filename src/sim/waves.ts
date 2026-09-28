@@ -72,14 +72,12 @@ export interface Creep {
   tc: number; // ground: target cell centre
   tr: number;
   alive: boolean;
-  // Debuffs from towers (strongest applies, timers in seconds).
+  // Tower debuffs, one stack per source (different types add up). Timers in seconds.
+  stacks: Map<Tower | string, DebuffStack>; // keyed by gem name, tower (easy: copies stack) or spell
+  // Sums of `stacks`, recomputed every tick.
   slow: number;
-  slowT: number;
   armorRed: number;
-  armorT: number;
   poison: number; // magic dps
-  poisonT: number;
-  poisonBy: Tower | null;
   slowPct: number; // fraction, from Frost-type hits
   slowPctT: number;
   stunT: number;
@@ -105,6 +103,14 @@ export interface Creep {
   lastHit: Tower | null;
 }
 
+export interface DebuffStack {
+  slow: number;
+  armor: number;
+  poison: number;
+  t: number;
+  by: Tower;
+}
+
 export function newCreep(def: WaveEntry, x: number, y: number): Creep {
   return {
     def,
@@ -117,13 +123,10 @@ export function newCreep(def: WaveEntry, x: number, y: number): Creep {
     tc: Math.floor(x),
     tr: Math.floor(y),
     alive: true,
+    stacks: new Map(),
     slow: 0,
-    slowT: 0,
     armorRed: 0,
-    armorT: 0,
     poison: 0,
-    poisonT: 0,
-    poisonBy: null,
     slowPct: 0,
     slowPctT: 0,
     stunT: 0,
@@ -259,6 +262,7 @@ export class WaveSim {
     ) {
       // Kraken Shell: purge tower debuffs.
       creep.kraken = 0;
+      creep.stacks.clear();
       creep.slow = creep.slowPct = creep.armorRed = creep.poison = creep.stunT = creep.ampT = 0;
       creep.terror = creep.mrRed = 0;
     }
