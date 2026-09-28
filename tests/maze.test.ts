@@ -11,10 +11,12 @@ test('empty map reproduces the Maze Builder path fixture', () => {
   expect(lengths.reduce((a, b) => a + b)).toBe(map.emptyMapPathFixture.total);
 });
 
-test('walls, no-build zones and waypoints refuse rocks', () => {
+test('only waypoints are no-build; preset walls are removable stones', () => {
   const m = fresh();
-  expect(m.placeRock(18, 2)).toBe(false); // wall
-  expect(m.placeRock(2, 2)).toBe(false); // spawn area
+  expect(m.placeRock(4, 4)).toBe(false); // spawn
+  expect(m.placeRock(18, 2)).toBe(false); // preset wall (occupied)
+  expect(m.removeRock(18, 2)).toBe(true);
+  expect(m.placeRock(2, 2)).toBe(true); // old spawn area
   expect(m.placeRock(18, 12)).toBe(true); // centre cross is buildable
   expect(m.placeRock(10, 10)).toBe(true);
   expect(m.placeRock(10, 10)).toBe(false); // occupied
