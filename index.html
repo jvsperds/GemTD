@@ -153,6 +153,67 @@
           filter: drop-shadow(0 0 6px var(--accent));
         }
       }
+      #banner {
+        position: fixed;
+        top: 90px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 22px 8px 10px;
+        pointer-events: none;
+        animation: banner 3s forwards;
+      }
+      #banner img {
+        width: 56px;
+        height: 56px;
+      }
+      #banner b {
+        display: block;
+        font-size: 24px;
+        letter-spacing: 3px;
+        color: var(--accent);
+      }
+      #banner[hidden] {
+        display: none;
+      }
+      #newdlg {
+        width: min(560px, calc(100vw - 32px));
+        box-sizing: border-box;
+        padding: 16px 20px;
+        color: var(--text);
+        border-color: var(--edge);
+      }
+      #newdlg::backdrop {
+        background: #000a;
+      }
+      #newdlg h2 {
+        margin: 0 0 10px;
+        text-align: center;
+        font-weight: normal;
+        letter-spacing: 4px;
+        color: var(--accent);
+      }
+      #newdlg .begin {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      @keyframes banner {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -16px);
+        }
+        12%,
+        80% {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+        100% {
+          opacity: 0;
+        }
+      }
       #hint {
         position: fixed;
         top: 48px;
@@ -1118,6 +1179,7 @@
       <button id="menubtn" data-a="menu" title="Menu (B)">☰ Menu <kbd>B</kbd></button>
     </header>
     <div id="hint"></div>
+    <div id="banner" class="glass" hidden></div>
     <nav id="dock" class="glass">
       <button data-a="guide" title="Maze guide (G)"><i>🗺</i><span>Guide</span></button>
       <button data-a="path" title="Show path (P)"><i>〰</i><span>Path</span></button>
@@ -1170,12 +1232,33 @@
       </header>
       <div id="dmglist"></div>
     </aside>
+    <dialog id="newdlg" class="glass">
+      <h2>✦ NEW GAME ✦</h2>
+      <p>Choose your trial:</p>
+      <div class="cards" id="diffcards">
+        <button data-diff="easy">🟢 Easy<small>For apprentices</small></button>
+        <button data-diff="normal">🔵 Normal<small>The true path</small></button>
+        <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
+      </div>
+      <p>
+        Hero &amp; skills: <b id="loadout">—</b>
+        <button id="changeloadout">Change</button>
+      </p>
+      <p class="cards">
+        <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
+        <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
+      </p>
+      <p class="begin">
+        <button id="cancelnew">Cancel</button>
+        <button id="newgame" class="on">⚔ Begin</button>
+      </p>
+    </dialog>
     <div id="menu" class="glass" hidden>
       <h2>✦ GEM TD ✦</h2>
       <div id="gameover" hidden></div>
       <div class="tabs">
         <button data-tab="scores" class="on">Scores</button>
-        <button data-tab="play">New game</button>
+        <button id="opennew">New game</button>
         <button data-tab="hero">Hero</button>
         <button data-tab="settings">Settings</button>
         <span style="flex: 1"></span>
@@ -1225,27 +1308,10 @@
           <input id="importfile" type="file" accept="application/json" hidden />
         </p>
       </section>
-      <section data-pane="play" hidden>
-        <p>Choose your trial:</p>
-        <div class="cards" id="diffcards">
-          <button data-diff="easy">🟢 Easy<small>For apprentices</small></button>
-          <button data-diff="normal">🔵 Normal<small>The true path</small></button>
-          <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
-        </div>
-        <p>
-          Hero &amp; skills: <b id="loadout">—</b>
-          <button id="changeloadout">Change</button>
-        </p>
-        <p class="cards">
-          <button id="newgame">⚔ Begin new game</button>
-          <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
-          <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
-        </p>
-      </section>
       <section data-pane="hero" hidden>
         <p>
-          🐚 <b id="shells">0</b> shells — earned each game (1 per 3 waves cleared, +4 for a win, max 20).
-          Your hero and skills apply from your next new game.
+          🐚 <b id="shells">0</b> shells — earned each game (1 per 3 waves cleared, +4 for a win,
+          max 20). Your hero and skills apply from your next new game.
         </p>
         <h3>Hero</h3>
         <div id="herolist"></div>

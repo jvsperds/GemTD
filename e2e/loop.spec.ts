@@ -4,6 +4,9 @@ import { resolve } from 'node:path';
 
 test('place 5 gems, keep one, wave starts', async ({ page }) => {
   await page.goto(pathToFileURL(resolve('dist/index.html')).href);
+  await expect(page.locator('#newdlg')).toBeVisible(); // fresh visit: new-game dialog
+  await page.locator('#newgame').click();
+  await expect(page.locator('#newdlg')).toBeHidden();
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
   const box = (await page.locator('canvas').boundingBox())!;
   const cell = Math.min(box.width, box.height) / 37;

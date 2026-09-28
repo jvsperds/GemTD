@@ -54,6 +54,7 @@ export function initMenu(
   const cards = [...document.querySelectorAll<HTMLButtonElement>('#diffcards button')];
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')];
   const over = $<HTMLElement>('gameover');
+  const dlg = $<HTMLDialogElement>('newdlg');
   name.value = settings.name;
   speed.value = String(settings.speed);
   volume.value = String(settings.volume);
@@ -229,8 +230,15 @@ export function initMenu(
     };
   const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
   $('close').onclick = () => (menu.hidden = true);
-  $('changeloadout').onclick = () => tab('hero');
-  $('newgame').onclick = () => newGame();
+  $('changeloadout').onclick = () => {
+    dlg.close();
+    show();
+    tab('hero');
+  };
+  $('newgame').onclick = () =>
+    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+  $('cancelnew').onclick = () => dlg.close();
+  $('opennew').onclick = () => newGame();
   $('builder').onclick = () =>
     confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });
   $('daily').onclick = () =>
@@ -264,9 +272,14 @@ export function initMenu(
     file.value = '';
   };
 
-  const newGame = () =>
-    confirmLeave() &&
-    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+  /** The new-game dialog: difficulty, loadout, then Begin. */
+  const newGame = () => {
+    if (!confirmLeave()) return;
+    menu.hidden = true;
+    markDiff();
+    drawShop();
+    dlg.showModal();
+  };
   /** Open the menu; with a result it leads with the game-over banner. */
   const show = (result?: { score: number; won: boolean; shells: number }) => {
     menu.hidden = false;
@@ -287,5 +300,5 @@ export function initMenu(
     }
     draw();
   };
-  return { show, toggle: () => (menu.hidden ? show() : (menu.hidden = true)) };
+  return { show, newGame, toggle: () => (menu.hidden ? show() : (menu.hidden = true)) };
 }

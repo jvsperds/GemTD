@@ -222,6 +222,11 @@ export class Game {
       if (d > best) [mvp, best] = [t, d];
     }
     if (mvp) mvp.mvp++;
+    // Endless: past the last wave there are no build rounds; the next wave follows at once.
+    if (this.sim.phase === 'build' && this.sim.wave >= this.sim.lastWave) {
+      this.dmg0 = new Map(this.combat.towers.map((o) => [o, o.damageDealt]));
+      this.sim.startWave();
+    }
   }
 
   /** Special towers whose recipe includes `t` and whose other ingredients are on the board. */

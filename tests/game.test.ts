@@ -266,3 +266,17 @@ test('rate passives: Reaper at 100% kills with every shot', () => {
   expect(run(1)).toBe(1); // one shot per kill
   expect(run(0)).toBeGreaterThan(1);
 });
+
+test('endless: after the last wave, waves run back to back with no build round', () => {
+  const g = setup();
+  g.sim.wave = g.sim.lastWave - 1;
+  placeRound(g);
+  g.keep(g.placed[0]);
+  expect(g.sim.wave).toBe(g.sim.lastWave);
+  g.sim.creeps = [];
+  g.sim['queue'] = [];
+  g.tick();
+  expect(g.sim.phase).toBe('wave');
+  expect(g.sim.wave).toBe(g.sim.lastWave + 1);
+  expect(g.sim.current?.name).toBeTruthy();
+});
