@@ -9,7 +9,8 @@ No server, no network calls, no runtime dependencies. Design notes: [docs/BUILD.
 1. Get `index.html`: download a release, or build it yourself (`npm install && npm run build` →
    `dist/index.html`).
 2. Open `index.html` in Chrome, Edge or Firefox straight from disk (double-click / `file://`).
-   That single file is the whole game and works with the network off.
+   That single file is the whole game and works with the network off: you don't need npm,
+   Node or a server to play. npm is only needed to change the game and rebuild it.
 3. Always open it **from the same path**: scores, settings and your saved game live in the
    browser's storage for that file location. Moving the file starts a fresh leaderboard, so use
    **Scores & settings → Export scores** first and **Import scores** afterwards.
