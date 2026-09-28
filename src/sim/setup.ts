@@ -28,6 +28,7 @@ export function newGame(seed: number, difficulty: Difficulty = 'normal') {
   sim.hpMult = DIFFICULTY[difficulty].hp;
   const g = new Game(new Combat(sim, DEFS, seed), quality.levels as LevelDef[], seed);
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
+  g.combat.stackCopies = difficulty === 'easy';
   return g;
 }
 

@@ -69,3 +69,20 @@ test('a creep stepping on the pedal sets it off, then it cools down; howl buffs 
   combat.tick();
   expect(combat.damageMult(gem)).toBeCloseTo(before + SPELL.howl.dmg[2]);
 });
+
+test('Chain Frost: a pedal trigger next to Northern Saber\'s Eye bounces a frost ball', () => {
+  const { combat } = newGame(1);
+  combat.place("Northern Saber's Eye", 10, 10);
+  combat.place('Ensnare Pedal', 11, 10);
+  (combat as unknown as { rand: () => number }).rand = () => 0;
+  const crs = [0, 1, 2].map((k) => {
+    const cr = newCreep(base, 11.5 + k * 0.5, 10.5);
+    combat.sim.creeps.push(cr);
+    return cr;
+  });
+  combat.tick();
+  for (const cr of crs) {
+    expect(cr.hp).toBeLessThan(1e6);
+    expect(cr.slowPct).toBeGreaterThan(0);
+  }
+});

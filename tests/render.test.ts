@@ -16,7 +16,7 @@ test('every special tower has a model', () => {
 
 test('shot kinds: named beams and lightning, slow towers shoot frost', () => {
   const combat = {
-    fx: (d: { name: string }) => ({ slow: d.name === 'B1' ? 20 : 0, frost: false }),
+    tfx: (t: { def: { name: string } }) => ({ slow: t.def.name === 'B1' ? 20 : 0, frost: false }),
   };
   const kind = (name: string) => shotKind(combat as never, { def: { name } } as never);
   expect(['Silver Knight', 'Pink Diamond', 'B1', 'R1'].map(kind)).toEqual([

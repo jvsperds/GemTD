@@ -98,13 +98,15 @@ test('ruby cleaves nearby creeps, topaz hits three targets', () => {
   expect(hits.filter((h) => h.hp < 1e6)).toHaveLength(3);
 });
 
-test('opal aura speeds towers in range without stacking; aquamarine has +AS', () => {
+test('opal aura speeds towers in range, distinct levels stack; aquamarine has +AS', () => {
   const { combat } = setup();
   const d = combat.place('D1', 10, 10)!;
   expect(combat.attacksPerSec(d)).toBe(1);
   combat.place('E1', 11, 10);
   combat.place('E3', 12, 10);
-  expect(combat.attacksPerSec(d)).toBeCloseTo(1.4); // max aura (+40), not 20+40
+  expect(combat.attacksPerSec(d)).toBeCloseTo(1.6); // different levels stack: 20+40
+  combat.place('E3', 10, 11);
+  expect(combat.attacksPerSec(d)).toBeCloseTo(1.6); // a second copy of E3 adds nothing
   const q = combat.place('Q1', 10, 12)!;
   expect(combat.attacksPerSec(q)).toBeGreaterThanOrEqual(3);
 });
@@ -133,4 +135,28 @@ test('a hand-placed tower set clears the first five waves without leaks', () => 
   }
   expect(sim.wave).toBe(5);
   expect(sim.castleHp).toBe(CASTLE_HP);
+});
+
+test('debuffs from different gem levels stack; copies of one level do not', () => {
+  const { sim, combat } = setup();
+  combat.place('B1', 10, 10);
+  combat.place('B2', 10, 12);
+  combat.place('B2', 12, 10);
+  const cr = creep(sim, 11.5, 11.5);
+  combat.tick();
+  expect(cr.slow).toBe(60 + 90);
+});
+
+test('easy mode: copies of one gem stack too', () => {
+  const { sim, combat } = setup();
+  combat.stackCopies = true;
+  const d = combat.place('D1', 10, 10)!;
+  combat.place('E1', 11, 10);
+  combat.place('E1', 10, 11);
+  expect(combat.attacksPerSec(d)).toBeCloseTo(1.4);
+  combat.place('B2', 10, 12);
+  combat.place('B2', 12, 10);
+  const cr = creep(sim, 11.5, 11.5);
+  combat.tick();
+  expect(cr.slow).toBe(180);
 });
