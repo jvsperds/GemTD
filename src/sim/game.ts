@@ -36,6 +36,7 @@ export const LEVEL_EVERY_WAVES = 4.5; // never-buying player reaches level 9 at 
 export type Cmd =
   | ['place' | 'keep' | 'merge2' | 'merge4' | 'down' | 'stone', number, number]
   | ['combine', number, number, string]
+  | ['pedal', number, number] // lay the oldest pedal in hand on free ground
   // Target cell (the tower for tower skills; ignored by castle skills), then an optional picked cell.
   | ['skill', number, number, string, number?, number?]
   | ['level'];
@@ -65,6 +66,7 @@ export class Game {
   log: LogEntry[] = [];
   skills: Loadout = {}; // hero skills brought to this game; saved with it so replays match
   pray: { gem?: string; quality?: number; chance: number } | null = null; // for the next gem
+  pedals: string[] = []; // combined pedals waiting to be laid
   hero = ''; // hero id; '' = no hero (tests, old saves)
   get perk(): Perk {
     return HEROES[this.hero]?.perk ?? {};
@@ -167,18 +169,20 @@ export class Game {
           ? this.removeStone(c, r)
           : op === 'level'
             ? this.buyLevel()
-            : cmd[0] === 'skill'
-              ? this.cast(name, c, r, cmd[4], cmd[5])
-              : !!t &&
-                (op === 'keep'
-                  ? this.keep(t)
-                  : op === 'merge2'
-                    ? this.merge(t, 2)
-                    : op === 'merge4'
-                      ? this.merge(t, 4)
-                      : op === 'down'
-                        ? this.downgrade(t)
-                        : this.combine(t, name));
+            : op === 'pedal'
+              ? this.layPedal(c, r)
+              : cmd[0] === 'skill'
+                ? this.cast(name, c, r, cmd[4], cmd[5])
+                : !!t &&
+                  (op === 'keep'
+                    ? this.keep(t)
+                    : op === 'merge2'
+                      ? this.merge(t, 2)
+                      : op === 'merge4'
+                        ? this.merge(t, 4)
+                        : op === 'down'
+                          ? this.downgrade(t)
+                          : this.combine(t, name));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
@@ -199,7 +203,7 @@ export class Game {
     if (this.sim.phase !== 'wave') return;
     this.ticks++;
     const { guard, evade } = this.sim;
-    const buffs = this.combat.towers.flatMap((t) => [t.haste, t.aim, t.crit, t.bonds]);
+    const buffs = this.combat.towers.flatMap((t) => [t.haste, t.aim, t.crit, t.bonds, t.howl]);
     for (const b of [guard, evade, this.sim.revenge, ...buffs]) if (b.t > 0) b.t -= TICK;
     this.sim.tick();
     this.combat.tick();
@@ -251,11 +255,22 @@ export class Game {
     const r = this.recipesFor(t).find((x) => x.name === name);
     if (!r) return false;
     const usesRound = r.parts.some((p) => this.placed.includes(p));
-    const stones = new Set(r.parts.filter((p) => p !== t));
+    const def = this.combat.gems[name];
+    // Gems combined into a pedal all become stones; the pedal goes into the hand.
+    const fromGems = def.pedal && !t.def.pedal;
+    const stones = new Set(r.parts.filter((p) => fromGems || p !== t));
     this.combat.towers = this.combat.towers.filter((o) => !stones.has(o));
-    t.def = this.combat.gems[name];
+    if (fromGems) this.pedals.push(name);
+    t.def = def;
     t.target = null;
     return usesRound ? this.finish(t) : true;
+  }
+
+  layPedal(c: number, r: number) {
+    if (this.over || !this.pedals.length || !this.combat.placePedal(this.pedals[0], c, r))
+      return false;
+    this.pedals.shift();
+    return true;
   }
 
   private rollQuality() {

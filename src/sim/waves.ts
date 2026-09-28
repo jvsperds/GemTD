@@ -78,6 +78,10 @@ export interface Creep {
   stunT: number;
   noHealT: number;
   ampT: number; // takes +100% physical damage (Gaze)
+  terror: number; // Terrorize pedal: +fraction damage taken
+  terrorT: number;
+  mrRed: number; // Decrepify pedal: magic resist reduction
+  mrT: number;
   // Recomputed every tick from tower auras.
   auraArmor: number;
   auraSlowPct: number;
@@ -118,6 +122,10 @@ export function newCreep(def: WaveEntry, x: number, y: number): Creep {
     stunT: 0,
     noHealT: 0,
     ampT: 0,
+    terror: 0,
+    terrorT: 0,
+    mrRed: 0,
+    mrT: 0,
     auraArmor: 0,
     auraSlowPct: 0,
     auraSlow: 0,
@@ -231,6 +239,7 @@ export class WaveSim {
       // Kraken Shell: purge tower debuffs.
       creep.kraken = 0;
       creep.slow = creep.slowPct = creep.armorRed = creep.poison = creep.stunT = creep.ampT = 0;
+      creep.terror = creep.mrRed = 0;
     }
     if (creep.hp <= 0 && creep.alive) {
       creep.alive = false;
@@ -293,7 +302,16 @@ export class WaveSim {
   }
 
   private timers(cr: Creep) {
-    for (const k of ['slowPctT', 'stunT', 'noHealT', 'ampT', 'rushT', 'reactiveT'] as const)
+    for (const k of [
+      'slowPctT',
+      'stunT',
+      'noHealT',
+      'ampT',
+      'rushT',
+      'reactiveT',
+      'terrorT',
+      'mrT',
+    ] as const)
       if (cr[k] > 0) cr[k] -= TICK;
     if (cr.slowPctT <= 0) cr.slowPct = 0;
     if (cr.reactiveT <= 0) cr.reactive = 0;

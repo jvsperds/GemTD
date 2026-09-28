@@ -17,6 +17,7 @@ import {
   type Creep,
   type WaveSim,
 } from './waves';
+import { PEDAL, pedalOf, SPELL, type Spell } from './pedals';
 
 export { rng };
 
@@ -29,6 +30,7 @@ export interface GemDef {
   attackRate: number; // seconds between attacks (Dota BAT)
   range: number; // Dota units
   abilities: string[];
+  pedal?: boolean; // casts a spell on creeps that come near instead of attacking
 }
 
 export interface SpecialDef extends Omit<GemDef, 'type' | 'quality'> {
@@ -52,6 +54,7 @@ export interface Tower {
   aim: { v: number; t: number };
   crit: { v: number; t: number };
   bonds: { v: number; t: number };
+  howl: { v: number; t: number }; // Howl pedal: +damage fraction
   // Strongest ally auras covering this tower, refreshed each tick (same aura doesn't stack).
   aura: { range: number; as: number; dmg: number; aim: number; calm: number };
 }
@@ -132,6 +135,7 @@ export interface Fx {
   calmAura: number; // range, immune to Disarm
   greedAura: number; // range, 5% ×10 gold
   enemy: EnemyAura[];
+  pedal: [Spell, number] | null; // spell and tier
 }
 
 const lvl = (id: string) => +(id.match(/(\d)$/)?.[1] ?? 1);
@@ -161,10 +165,13 @@ export function parseFx(d: GemDef): Fx {
     calmAura: 0,
     greedAura: 0,
     enemy: [],
+    pedal: null,
   };
   for (const id of d.abilities) {
     const n = lvl(id);
-    if (id.startsWith('tower_slow')) f.slow = SLOW[n - 1];
+    const p = pedalOf(id);
+    if (p) f.pedal = p;
+    else if (id.startsWith('tower_slow')) f.slow = SLOW[n - 1];
     else if (id.startsWith('tower_jianjia')) f.armor = ARMOR[n - 1];
     else if (id === 'tower_jin') f.armor = 32;
     else if (id === 'tower_jin2') f.armor = 48;
@@ -240,8 +247,20 @@ export class Combat {
   }
 
   place(code: string, c: number, r: number): Tower | null {
+    if (this.towerAt(c, r) || !this.sim.maze.placeRock(c, r)) return null;
+    return this.add(code, c, r);
+  }
+
+  /** Lay a pedal on free ground (no rock, wall or other pedal); it doesn't block the route. */
+  placePedal(code: string, c: number, r: number): Tower | null {
+    const { maze } = this.sim;
+    if (!maze.walkable(c, r) || this.towerAt(c, r)) return null;
+    return this.add(code, c, r);
+  }
+
+  private add(code: string, c: number, r: number): Tower | null {
     const def = this.gems[code];
-    if (!def || !this.sim.maze.placeRock(c, r)) return null;
+    if (!def) return null;
     const t: Tower = {
       def,
       c,
@@ -257,6 +276,7 @@ export class Combat {
       aim: { v: 0, t: 0 },
       crit: { v: 0, t: 0 },
       bonds: { v: 0, t: 0 },
+      howl: { v: 0, t: 0 },
       aura: { range: 0, as: 0, dmg: 0, aim: 0, calm: 0 },
     };
     this.towers.push(t);
@@ -333,7 +353,7 @@ export class Combat {
     // Revenge hero skill: +1% damage per castle HP below its threshold.
     const { revenge, castleHp } = this.sim;
     const rev = revenge.t > 0 ? Math.max(0, revenge.v - castleHp) / 100 : 0;
-    return 1 + t.mvp * MVP_BONUS + kills + t.aura.dmg + rev;
+    return 1 + t.mvp * MVP_BONUS + kills + t.aura.dmg + rev + (t.howl.t > 0 ? t.howl.v : 0);
   }
 
   /** Physical hit on a creep; returns damage dealt. */
@@ -351,12 +371,18 @@ export class Combat {
   /** Magic damage, reduced by magic resist (+aura reduction); none to magic immune. */
   magic(t: Tower | null, cr: Creep, amount: number) {
     if (magicImmune(cr)) return;
-    this.deal(t, cr, amount * (1 - Math.max(-1, cr.def.magicResist - cr.auraMr) / 100), true);
+    this.deal(
+      t,
+      cr,
+      amount * (1 - Math.max(-1, cr.def.magicResist - Math.max(cr.auraMr, cr.mrRed)) / 100),
+      true,
+    );
   }
 
   private deal(t: Tower | null, cr: Creep, dmg: number, magic = false) {
     if (!cr.alive) return;
     if (t) cr.lastHit = t;
+    if (cr.terrorT > 0) dmg *= 1 + cr.terror;
     this.sim.damage(cr, dmg);
     if (t) {
       t.damageDealt += dmg;
@@ -433,6 +459,67 @@ export class Combat {
     if (f.melancholy && this.rand() < MELANCHOLY.chance) t.disarmT = MELANCHOLY.time;
   }
 
+  /** Cast pedal `t`'s spell at tier k on creep `cr`. Spell-immune creeps resist unless it pierces. */
+  private pedal(t: Tower, cr: Creep, spell: Spell, k: number) {
+    const ok = (o: Creep, pierce = false) => pierce || !magicImmune(o);
+    const stun = (o: Creep, s: number) => (o.stunT = Math.max(o.stunT, s));
+    const slow = (o: Creep, pct: number, time: number) => {
+      o.slowPct = Math.max(o.slowPct, pct);
+      o.slowPctT = Math.max(o.slowPctT, time);
+    };
+    switch (spell) {
+      case 'ensnare':
+        if (ok(cr, k > 0)) stun(cr, SPELL.ensnare.root[k]);
+        break;
+      case 'gale': {
+        const s = SPELL.gale;
+        for (const o of this.near(cr, s.radius)) if (ok(o)) slow(o, s.slowPct[k], s.time[k]);
+        break;
+      }
+      case 'torrent': {
+        const s = SPELL.torrent;
+        for (const o of this.near(cr, s.radius))
+          if (ok(o)) {
+            stun(o, s.stun[k]);
+            slow(o, s.slowPct[k], s.stun[k] + s.slowTime[k]);
+          }
+        break;
+      }
+      case 'howl':
+        for (const o of this.towers)
+          if (this.tdist(o, t) <= SPELL.howl.radius[k] && o.howl.v <= SPELL.howl.dmg[k])
+            [o.howl.v, o.howl.t] = [SPELL.howl.dmg[k], SPELL.howl.time];
+        break;
+      case 'acid': {
+        const s = SPELL.acid;
+        for (const o of this.near(cr, s.radius)) {
+          o.armorRed = Math.max(o.armorRed, s.armor[k]);
+          o.armorT = Math.max(o.armorT, s.time[k]);
+        }
+        break;
+      }
+      case 'paralysis': {
+        const s = SPELL.paralysis;
+        const hit = [cr, ...this.near(cr, s.range).filter((o) => o !== cr)];
+        for (const o of hit.slice(0, s.bounces[k])) if (ok(o, k > 0)) stun(o, s.stun);
+        break;
+      }
+      case 'terrorize':
+        cr.terror = Math.max(cr.terrorT > 0 ? cr.terror : 0, SPELL.terrorize.amp[k]);
+        cr.terrorT = SPELL.terrorize.time[k];
+        slow(cr, SPELL.terrorize.slowPct, SPELL.terrorize.time[k]);
+        break;
+      case 'decrepify': {
+        const s = SPELL.decrepify;
+        if (!ok(cr)) break;
+        slow(cr, s.slowPct[k], s.time[k]);
+        cr.mrRed = Math.max(cr.mrT > 0 ? cr.mrRed : 0, s.mr[k]);
+        cr.mrT = s.time[k];
+        break;
+      }
+    }
+  }
+
   private near(cr: Creep, radius: number) {
     return this.sim.creeps.filter(
       (o) => o.alive && Math.hypot(o.x - cr.x, o.y - cr.y) * UNITS_PER_CELL <= radius,
@@ -492,6 +579,16 @@ export class Combat {
     }
     for (const t of this.towers) {
       t.cooldown = Math.max(0, t.cooldown - TICK);
+      const spell = this.fx(t.def).pedal;
+      if (spell) {
+        const cr =
+          t.cooldown > 0 ? null : creeps.find((o) => o.alive && this.dist(t, o) <= PEDAL.trigger);
+        if (cr) {
+          t.cooldown = PEDAL.cooldown;
+          this.pedal(t, cr, ...spell);
+        }
+        continue;
+      }
       if (t.disarmT > 0) continue;
       if (t.target && !this.canHit(t, t.target)) t.target = null;
       if (!t.target) {
