@@ -487,7 +487,7 @@ function drawTower(
   const T = s * TALL;
   const [, c, a] = quality ? ['', shade(GEM_COLOR[gem], 0.5), GEM_COLOR[gem]] : MODELS[key];
   // Gem-cut stone: dark gem-tinted block, top face cut into four lit facets around a
-  // table, small inlaid gems at the corners and studs along the front face.
+  // table.
   const st = mix(a, '#6b6b6b', 0.55);
   g.fillStyle = shade(st, 0.7);
   g.fillRect(0, T + s, s, s * TOWER_H);
@@ -503,15 +503,6 @@ function drawTower(
   tri([s, 0, s, s, s - q, s - q, s - q, q], shade(st, 0.85));
   tri([0, s, q, s - q, s - q, s - q, s, s], shade(st, 0.7));
   tri([q, q, s - q, q, s - q, s - q, q, s - q], st);
-  for (const [x, y] of [
-    [q / 2, q / 2],
-    [s - q / 2, q / 2],
-    [q / 2, s - q / 2],
-    [s - q / 2, s - q / 2],
-  ])
-    gemFacets(g, a, x, T + y, s * 0.08);
-  for (let i = 1; i <= 3; i++)
-    gemFacets(g, a, (i * s) / 4, T + s * (1 + TOWER_H / 2), s * TOWER_H * 0.35);
   const cx = s / 2,
     foot = T + s * 0.62,
     head = s * (quality ? 0.24 + 0.035 * quality : 0.46);
