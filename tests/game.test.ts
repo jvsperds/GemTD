@@ -252,7 +252,7 @@ test('rate passives: Reaper at 100% kills with every shot', () => {
   const run = (execute: number) => {
     const g = setup(7);
     g.combat.heroProc.execute = execute;
-    g.sim.waves = g.sim.waves.map((d) => ({ ...d, hp: d.hp * 100 })); // needs many shots
+    for (const d of g.sim.waves) d.hp *= 100; // needs many shots
     for (let k = 0; k < GEMS_PER_ROUND; k++) g.place(5 + k, 16); // beside the row-18 leg
     g.keep(g.placed[0]);
     let shots = 0;
@@ -260,6 +260,7 @@ test('rate passives: Reaper at 100% kills with every shot', () => {
       g.tick();
       shots += g.combat.shots.length;
     }
+    for (const d of g.sim.waves) d.hp /= 100; // shared wave data
     return shots / g.kills;
   };
   expect(run(1)).toBe(1); // one shot per kill
