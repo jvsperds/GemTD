@@ -290,6 +290,38 @@ export const PASSIVES: Record<string, PassiveDef> = {
     value: [25, 50, 75, 100],
     perk: 'bossGold',
   },
+  reaper: {
+    name: 'Reaper',
+    icon: '💀',
+    tip: '{v}% chance a tower hit kills a non-boss creep instantly',
+    shells: [20, 40, 80, 160],
+    value: [0.25, 0.5, 0.75, 1],
+    perk: 'execute',
+  },
+  lucky: {
+    name: 'Lucky Strike',
+    icon: '🍀',
+    tip: '{v}% chance a tower hit deals triple damage',
+    shells: TOWER,
+    value: [2, 3, 4, 5],
+    perk: 'luckyCrit',
+  },
+  bash: {
+    name: 'Bash',
+    icon: '🔨',
+    tip: '{v}% chance a tower hit stuns the creep',
+    shells: TOWER,
+    value: [1, 2, 3, 4],
+    perk: 'bash',
+  },
+  midas: {
+    name: 'Midas Touch',
+    icon: '🤑',
+    tip: '{v}% chance a kill pays triple gold',
+    shells: CASTLE,
+    value: [3, 5, 7, 10],
+    perk: 'midas',
+  },
 };
 /** Perk units: fractions, except these flat amounts. */
 const FLAT = new Set(['bossBite', 'attackSpeed', 'startGold']);

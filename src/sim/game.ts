@@ -77,6 +77,8 @@ export class Game {
     this.gold += this.perk.startGold ?? 0;
     this.sim.bossBite = this.perk.bossBite ?? 0;
     this.combat.heroAs = this.perk.attackSpeed ?? 0;
+    const { execute = 0, luckyCrit = 0, bash = 0 } = this.perk;
+    this.combat.heroProc = { execute, luckyCrit, bash };
   }
   /** Gold per cast of skill `id` after the hero's discount. */
   skillGold(id: string) {
@@ -119,7 +121,8 @@ export class Game {
       const gold =
         killGold(sim.wave, cr.def.boss) *
         (greedy ? GREED.mult : 1) *
-        (cr.def.boss ? 1 + (this.perk.bossGold ?? 0) : 1);
+        (cr.def.boss ? 1 + (this.perk.bossGold ?? 0) : 1) *
+        (this.perk.midas && this.rand() < this.perk.midas ? 3 : 1);
       this.gold += Math.round(gold * (1 + (this.perk.killGold ?? 0)));
       this.xp += cr.def.hp * XP_PER_HP * (1 + (this.perk.xp ?? 0));
       this.kills++;
