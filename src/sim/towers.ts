@@ -249,8 +249,13 @@ export class Combat {
   place(code: string, c: number, r: number): Tower | null {
     const def = this.gems[code];
     if (!def || this.towerAt(c, r) || !this.sim.maze.placeRock(c, r)) return null;
+    return this.placePedal(code, c, r);
+  }
+
+  /** Add a tower without touching the maze: pedals lie on open path cells. */
+  placePedal(code: string, c: number, r: number): Tower {
     const t: Tower = {
-      def,
+      def: this.gems[code],
       c,
       r,
       cooldown: 0,
@@ -569,8 +574,14 @@ export class Combat {
       t.cooldown = Math.max(0, t.cooldown - TICK);
       const spell = this.fx(t.def).pedal;
       if (spell) {
+        // Triggered by a ground creep stepping onto the pedal's cell.
         const cr =
-          t.cooldown > 0 ? null : creeps.find((o) => o.alive && this.dist(t, o) <= PEDAL.trigger);
+          t.cooldown > 0
+            ? null
+            : creeps.find(
+                (o) =>
+                  o.alive && !o.def.flying && Math.floor(o.x) === t.c && Math.floor(o.y) === t.r,
+              );
         if (cr) {
           t.cooldown = PEDAL.cooldown;
           this.pedal(t, cr, ...spell);

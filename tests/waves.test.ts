@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import map from '../data/map.json';
 import waves from '../data/waves.json';
 import { Maze, type MapData } from '../src/sim/maze';
-import { CASTLE_HP, CREEPS_PER_WAVE, WaveSim, type WaveEntry } from '../src/sim/waves';
+import { CASTLE_HP, CREEPS_PER_WAVE, ENDLESS, WaveSim, type WaveEntry } from '../src/sim/waves';
 
 const sim = () => new WaveSim(new Maze(map as unknown as MapData), waves as WaveEntry[]);
 
@@ -62,4 +62,15 @@ test('castle falls → lost; killed creeps do not leak', () => {
   expect(s.castleHp).toBe(CASTLE_HP);
   while (s.phase === 'build' || s.phase === 'wave') runWave(s);
   expect(s.phase).toBe('lost');
+});
+
+test('endless: past the last wave, earlier waves return with scaled hp and armor', () => {
+  const s = sim();
+  s.wave = s.lastWave;
+  s.startWave();
+  expect(s.phase).toBe('wave');
+  const cr = s.spawn(s['queue'][0]);
+  const orig = (waves as WaveEntry[]).find((w) => w.wave === s.lastWave - 9)!;
+  expect(cr.def.hp).toBeCloseTo(orig.hp * ENDLESS.hp);
+  expect(cr.def.armor).toBe(orig.armor + ENDLESS.armor);
 });
