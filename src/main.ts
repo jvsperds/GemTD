@@ -417,8 +417,7 @@ const cards = document.querySelector<HTMLElement>('#cards')!;
 const statusEl = document.querySelector<HTMLElement>('#status')!;
 /** Auras and debuffs currently on a tower: [icon id, level badge, tooltip, is a debuff]. */
 function statuses(t: Tower): [string, string, string, boolean][] {
-  const a = t.aura,
-    out: [string, string, string, boolean][] = [];
+  const out: [string, string, string, boolean][] = [];
   // One card per aura source, so stacked auras read as [1] [2] [4] rather than a merged total.
   for (const { kind, value, from } of t.aura.src) {
     const by = `

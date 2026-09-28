@@ -145,7 +145,7 @@ test('untouchable disarms attackers; disarm aura stops adjacent towers unless a 
   const { sim, combat } = setup();
   const t = combat.place('D1', 10, 10)!;
   const cr = creep(sim, 13.5, 10.5, { abilities: ['enemy_bukeqinfan'] });
-  combat.rand = () => 0; // untouchable procs
+  (combat as unknown as { rand: () => number }).rand = () => 0; // untouchable procs
   ticks(combat, 30 * 2);
   expect(t.target).toBe(cr);
   expect(t.disarmT).toBeGreaterThan(0);
