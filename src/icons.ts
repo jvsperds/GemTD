@@ -21,6 +21,15 @@ type Kind =
 
 // Ability id → family (ids come from the Dota custom game's data; status_* are tower statuses).
 const KINDS: [RegExp, Kind][] = [
+  // Creep abilities and statuses first: their ids overlap the tower patterns below.
+  [/invisibility|shanbi|shanshuo|runrunrun|status_rush/, 'speed'],
+  [/jiaoxie|bukeqinfan/, 'disarm'],
+  [/momian|wumian|armor|kraken|zheguang|status_shield/, 'calm'],
+  [/recharge/, 'aura'],
+  [/xietong|status_slow/, 'frost'],
+  [/status_poison/, 'poison'],
+  [/status_stun/, 'stun'],
+  [/status_amp|status_armor/, 'pierce'],
   [/^status_range/, 'range'],
   [/^status_aim/, 'aim'],
   [/^status_calm/, 'calm'],

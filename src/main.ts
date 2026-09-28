@@ -3,12 +3,31 @@ import * as db from './persist';
 import rawAdvanced from '../data/raw/advanced_towers.json';
 import rawBase from '../data/raw/base_towers.json';
 import { skillIcon } from './icons';
-import { GEM_COLOR, Renderer, towerIcon } from './render';
+import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { newGame, type Difficulty } from './sim/setup';
 import { AURA, type Tower } from './sim/towers';
-import { CASTLE_HP, TICK, type WaveEntry } from './sim/waves';
+import {
+  BLINK_CELLS,
+  BLINK_CHANCE,
+  CASTLE_HP,
+  DISARM_RANGE,
+  EVASION,
+  HIGH_ARMOR,
+  KRAKEN_CLEANSE,
+  KRAKEN_INTERVAL,
+  RECHARGE,
+  REFRACTION,
+  RUSH,
+  RUSH_CHANCE,
+  RUSH_TIME,
+  TICK,
+  UNTOUCHABLE,
+  armorOf,
+  type Creep,
+  type WaveEntry,
+} from './sim/waves';
 import { initBook, mazeRows, measure, type Guide } from './book';
 import { initMenu } from './ui';
 
@@ -48,6 +67,7 @@ const { maze } = sim;
 const view = new Renderer(canvas, maze, sim, combat);
 let removing = false; // Remove-stone mode
 let sel: Tower | null = null;
+let selCreep: Creep | null = null;
 let speed = settings.speed; // 0 = paused
 const menu = initMenu(
   settings,
@@ -112,6 +132,9 @@ canvas.addEventListener('click', (e) => {
     sfx.play(ok ? 'place' : 'refuse');
     return view.invalidate();
   }
+  const cr = removing ? null : view.creepAt(e.clientX, e.clientY);
+  selCreep = cr;
+  if (cr) return void (sel = null);
   const hit = combat.towerAt(c, r);
   const ok = removing
     ? run(['stone', c, r])
@@ -144,7 +167,7 @@ function act(a: string) {
     return view.invalidate();
   }
   if (a === 'path') return ((view.showPath = !view.showPath), view.invalidate());
-  if (a === 'deselect') return ((sel = null), (removing = false));
+  if (a === 'deselect') return ((sel = selCreep = null), (removing = false));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
   if (a === 'speed') {
     speed = settings.speed = { 1: 2, 2: 4 }[settings.speed] ?? 1;
@@ -308,6 +331,106 @@ function statuses(t: Tower): [string, string, string, boolean][] {
     out.push(['status_disarm', '', `Disarmed\nCannot attack for ${t.disarmT.toFixed(1)}s`, true]);
   return out;
 }
+// Creep abilities as the sim implements them (the wiki extract has few tooltips).
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+const CREEP_ABILITY: Record<string, [string, string]> = {
+  riki_permanent_invisibility: ['Invisible', 'Only towers with true sight can target it.'],
+  guai_shanbi: ['Evasion', `${pct(EVASION)} of attacks miss, unless the tower has Aim.`],
+  guai_jiaoxieguanghuan: ['Disarm aura', `Towers within ${DISARM_RANGE} range cannot attack.`],
+  enemy_zheguang: [
+    'Refraction',
+    `${pct(REFRACTION.chance)} chance on turning to gain a shield that blocks ${REFRACTION.instances} hits.`,
+  ],
+  enemy_momian: ['Magic immunity', 'Immune to magic damage and magic debuffs.'],
+  enemy_bukeqinfan: [
+    'Untouchable',
+    `Attackers have a ${pct(UNTOUCHABLE.chance)} chance to be disarmed for ${UNTOUCHABLE.time}s.`,
+  ],
+  runrunrun: [
+    'Rush',
+    `${pct(RUSH_CHANCE)} chance on turning to run +${pct(RUSH)} faster for ${RUSH_TIME}s.`,
+  ],
+  enemy_high_armor: ['High armor', `+${HIGH_ARMOR} armor.`],
+  enemy_wumian: ['Physical immunity', 'Takes no physical damage.'],
+  shredder_reactive_armor: ['Reactive armor', 'Each hit taken grants +1 armor (stacks, decays).'],
+  enemy_recharge: ['Recharge', `Regenerates ${pct(RECHARGE)} of max HP per second.`],
+  enemy_shanshuo: [
+    'Blink',
+    `${pct(BLINK_CHANCE)} chance on turning to blink ${BLINK_CELLS} cells ahead.`,
+  ],
+  tidehunter_kraken_shell: [
+    'Kraken shell',
+    `Purges its debuffs after taking ${KRAKEN_CLEANSE} damage within ${KRAKEN_INTERVAL}s.`,
+  ],
+  guai_xietong: ['Synergy', 'Aura (range 9999): -150 move speed.'],
+};
+/** Debuffs and buffs currently on a creep, in the same shape as tower statuses. */
+function creepStatuses(cr: Creep): [string, string, string, boolean][] {
+  const out: [string, string, string, boolean][] = [];
+  const slow = Math.max(cr.slowPct, cr.auraSlowPct);
+  const flat = cr.slow + cr.auraSlow;
+  if (slow || flat)
+    out.push([
+      'status_slow',
+      '',
+      `Slowed\n${[slow && `-${pct(slow)}`, flat && `-${flat}`].filter(Boolean).join(' ')} move speed`,
+      true,
+    ]);
+  if (cr.poison)
+    out.push(['status_poison', '', `Poisoned\n${cr.poison} magic damage per second`, true]);
+  if (cr.armorRed || cr.auraArmor)
+    out.push(['status_armor', '', `Armor reduced\n-${cr.armorRed + cr.auraArmor} armor`, true]);
+  if (cr.stunT > 0) out.push(['status_stun', '', `Stunned\n${cr.stunT.toFixed(1)}s`, true]);
+  if (cr.ampT > 0) out.push(['status_amp', '', 'Gazed\nTakes +100% physical damage', true]);
+  if (cr.noHealT > 0) out.push(['status_poison', '', 'Wounded\nCannot regenerate', true]);
+  if (cr.shield > 0)
+    out.push([
+      'status_shield',
+      String(cr.shield),
+      `Refraction shield\nBlocks ${cr.shield} more hits`,
+      false,
+    ]);
+  if (cr.rushT > 0) out.push(['status_rush', '', `Rushing\n+${pct(RUSH)} move speed`, false]);
+  if (cr.reactive)
+    out.push([
+      'shredder_reactive_armor',
+      String(cr.reactive),
+      `Reactive armor\n+${cr.reactive} armor`,
+      false,
+    ]);
+  return out;
+}
+/** Selected creep: portrait, health, defences, ability cards. */
+function drawCreep(cr: Creep) {
+  const d = cr.def;
+  setPortrait(creepIcon(d.name), '●');
+  nameEl.textContent = d.name + (d.boss ? ' (boss)' : '');
+  const armor = armorOf(cr);
+  setAttrs([
+    ['❤ HP', `${Math.ceil(cr.hp)} / ${Math.ceil(d.hp)}`],
+    ['🛡 Armor', armor === d.armor ? String(d.armor) : `${+armor.toFixed(1)} (${d.armor})`],
+    ['✧ Magic res', `${d.magicResist - cr.auraMr}%`],
+    ['➤ Speed', `${Math.round(sim.speed(cr))}`],
+    ['⚑ Wave', String(sim.wave)],
+  ]);
+  const bg = 'radial-gradient(circle, #4a566488, #0e1115)';
+  cards.replaceChildren(
+    card(
+      d.flying ? '🪽' : '🐾',
+      d.flying ? 'Flying' : 'Ground',
+      d.flying ? 'Flies straight over the maze' : 'Walks the maze',
+      bg,
+    ),
+    ...d.abilities.map((id) => {
+      const [name, tip] = CREEP_ABILITY[id] ?? [id, ''];
+      return card(skillIcon(id), name, `${name}: ${tip}`, bg);
+    }),
+  );
+  const f = Math.max(0, cr.hp / d.hp) * 100;
+  barFill.style.width = `${f}%`;
+  barText.textContent = `${Math.ceil(cr.hp)} / ${Math.ceil(d.hp)} HP`;
+  combos.replaceChildren();
+}
 const barFill = document.querySelector<HTMLElement>('#bar i')!;
 const barText = document.querySelector<HTMLElement>('#bar span')!;
 const el = (tag: string, cls = '', text = '') => {
@@ -366,7 +489,7 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
         '◆',
         `${p}%`,
         `Chance of a quality ${q + 1} gem`,
-        `radial-gradient(circle, ${QUALITY_COLOR[q]}${p ? 'aa' : '22'}, #120d19)`,
+        `radial-gradient(circle, ${QUALITY_COLOR[q]}${p ? 'aa' : '22'}, #0e1115)`,
       ),
     ),
   );
@@ -396,7 +519,7 @@ function drawBuilder() {
         String(n),
         names[i],
         `Leg ${names[i]}: ${n} cells`,
-        'radial-gradient(circle, #3b2c50, #120d19)',
+        'radial-gradient(circle, #2c343e, #0e1115)',
       ),
     ),
   );
@@ -429,7 +552,7 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
           skillIcon(id),
           name,
           `${name}: ${a.tip ?? ''}`,
-          `radial-gradient(circle, ${colour}88, #120d19)`,
+          `radial-gradient(circle, ${colour}88, #0e1115)`,
         );
       }),
   );
@@ -490,6 +613,8 @@ function updateHud() {
         `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`);
   const live = sel && combat.towers.includes(sel) ? sel : null;
   if (!live) sel = null;
+  const creep = selCreep?.alive ? selCreep : null;
+  selCreep = view.creep = creep;
   const recipes = live ? game.recipesFor(live) : [];
   const total = combat.towers.reduce((n, t) => n + t.damageDealt, 0) || 1;
   const share = live ? Math.round((live.damageDealt / total) * 100) : 0;
@@ -512,7 +637,10 @@ function updateHud() {
     live?.def.name +
     live?.kills +
     share +
-    (live ? statuses(live).map((x) => x[0] + x[1]) : '');
+    (live ? statuses(live).map((x) => x[0] + x[1]) : '') +
+    (creep
+      ? `${Math.ceil(creep.hp)}` + creepStatuses(creep).map((x) => x[0] + x[1]) + sim.speed(creep)
+      : '');
   if (key !== lastHud) {
     lastHud = key;
     hud.innerHTML = s;
@@ -520,21 +648,24 @@ function updateHud() {
     if (game.gold > prevGold) flashEl('gold', 'pop');
     if (hp < prevHp) flashEl('hp', 'hit');
     [prevGold, prevHp] = [game.gold, hp];
-    panel.dataset.view = builder ? 'builder' : live ? 'tower' : 'hero';
+    panel.dataset.view = builder ? 'builder' : live ? 'tower' : creep ? 'creep' : 'hero';
     if (builder) drawBuilder();
     else if (live) drawTower(live, recipes, share);
+    else if (creep) drawCreep(creep);
     else drawHero(xpPct, lvlTo);
     statusEl.replaceChildren(
-      ...(live && !builder ? statuses(live) : []).map(([id, badge, tip, bad]) => {
-        const b = el('span', bad ? 'bad' : '');
-        const im = document.createElement('img');
-        im.src = skillIcon(id);
-        im.alt = tip.split('\n')[0];
-        b.append(im);
-        if (badge) b.append(el('b', '', badge));
-        b.title = tip;
-        return b;
-      }),
+      ...(builder ? [] : live ? statuses(live) : creep ? creepStatuses(creep) : []).map(
+        ([id, badge, tip, bad]) => {
+          const b = el('span', bad ? 'bad' : '');
+          const im = document.createElement('img');
+          im.src = skillIcon(id);
+          im.alt = tip.split('\n')[0];
+          b.append(im);
+          if (badge) b.append(el('b', '', badge));
+          b.title = tip;
+          return b;
+        },
+      ),
     );
     book.draw();
     // Highlight every tower that can combine into something right now.

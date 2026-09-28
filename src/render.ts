@@ -5,22 +5,13 @@ import { ROCK, WALL, type Maze } from './sim/maze';
 import type { Combat, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
-// Portrait sprites baked by tools/build_sprites.py (gitignored; empty glob = drawn fallbacks).
-const SPRITE_URLS = import.meta.glob<string>('./sprites/*.webp', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-});
 export const slug = (name: string) =>
   name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
-/** Portrait URL: `gem-B`, a special tower's slug, or `creep-<slug>`. */
-export const portrait = (key: string): string | undefined => SPRITE_URLS[`./sprites/${key}.webp`];
 export const towerKey = (d: { name: string; type: string; quality: number }) =>
   d.quality ? `gem-${d.type}` : slug(d.name);
-const images = new Map<string, HTMLImageElement>();
 
 export const GEM_COLOR: Record<string, string> = {
   B: '#3a6bff',
@@ -520,6 +511,265 @@ export function towerIcon(d: { name: string; type: string; quality: number }) {
   return url;
 }
 
+// Original creep models: a body archetype + body/accent colours, drawn facing right and lit
+// from the top-left like the towers. Every wave creep needs an entry (tests check it).
+type Shape = 'hog' | 'blob' | 'bird' | 'fish' | 'wyrm' | 'bot' | 'spook' | 'crab';
+const CREEPS: Record<string, [Shape, string, string]> = {
+  'frenzied-pig': ['hog', '#e89a9a', '#7a3a3a'],
+  'swift-frog': ['blob', '#5ab04a', '#e8e060'],
+  'sturdy-yak': ['hog', '#6a4a3a', '#e8e0d0'],
+  'smart-robot': ['bot', '#9aa0a8', '#3fb0ff'],
+  'baby-panda': ['hog', '#f0f0f0', '#2a2a2a'],
+  'balloon-badger': ['hog', '#6a6a70', '#e84a4a'],
+  'tardy-stump': ['blob', '#7a5a3a', '#5a9a3a'],
+  'satisfied-lizard': ['hog', '#7ab04a', '#e0c040'],
+  'invisible-spider': ['crab', '#3a3040', '#c04ae0'],
+  dusky: ['bird', '#4a3a6a', '#e0a040'],
+  'invincible-dog': ['hog', '#c89050', '#3a2a20'],
+  sheep: ['blob', '#f0ece0', '#3a3030'],
+  'funny-alpaca': ['hog', '#e8d8b0', '#c06a8a'],
+  'pig-princess': ['hog', '#f0a8c0', '#f2c52e'],
+  bulldog: ['hog', '#b08050', '#e8e0d0'],
+  'cat-dog': ['hog', '#e0a040', '#6a6a70'],
+  'bamboo-addict': ['hog', '#e8e8e8', '#2fbf5a'],
+  'young-demon': ['spook', '#c03a3a', '#f2c52e'],
+  'belted-chicken': ['bird', '#f0ece0', '#e03a3a'],
+  bajie: ['hog', '#f0a8b0', '#3a6bff'],
+  'exquisite-rabbit': ['hog', '#f4f0f4', '#ff7ad9'],
+  'donkey-trio': ['hog', '#8a8a90', '#3a3030'],
+  shakbag: ['blob', '#b09060', '#e05a20'],
+  ripper: ['bot', '#8a5a3a', '#d8dde6'],
+  crab: ['crab', '#e0603a', '#f0d0a0'],
+  lockjaw: ['fish', '#4a8a9a', '#f0e0d0'],
+  flopjaw: ['fish', '#5a9a4a', '#f0e0d0'],
+  trapjaw: ['fish', '#8a5a8a', '#f0e0d0'],
+  'mech-donkey': ['bot', '#b08a40', '#555555'],
+  machjaw: ['fish', '#7a7a88', '#e0a020'],
+  demolisher: ['bot', '#6a5a4a', '#e05a20'],
+  corsair: ['spook', '#3a4a6a', '#e0b040'],
+  'skateboard-flamingo': ['bird', '#ff8ab0', '#3a3030'],
+  'lgd-goldfish': ['fish', '#f0a020', '#fff0c0'],
+  jellyfish: ['spook', '#b08ae0', '#ff7ad9'],
+  'ig-dragon': ['wyrm', '#e03a3a', '#f2c52e'],
+  timbersaw: ['bot', '#8a6a3a', '#d8dde6'],
+  'vg-fox': ['hog', '#e07030', '#f0ece0'],
+  'parrot-boatman': ['bird', '#2fbf5a', '#e03a3a'],
+  'carpet-rider': ['spook', '#8a3ab0', '#f2c52e'],
+  bookwyrm: ['wyrm', '#8a5a3a', '#e0d0a0'],
+  'otter-dragon': ['wyrm', '#8a6a4a', '#4fa0e0'],
+  'rechargeable-shark': ['fish', '#6a8aa8', '#3fb0ff'],
+  'ribboned-zombie': ['spook', '#7a9a6a', '#e84a8a'],
+  'baby-dp': ['spook', '#3a3a50', '#4fe0d8'],
+  'baby-bloody': ['spook', '#8a2020', '#e8e0d0'],
+  'bounty-apprentice': ['hog', '#c09040', '#f2c52e'],
+  'black-and-white-fox': ['hog', '#f0f0f0', '#2a2a2a'],
+  jumo: ['blob', '#6a4ab0', '#f2c52e'],
+  baekho: ['hog', '#f0f0f0', '#3a6bff'],
+  lilnova: ['spook', '#f2c52e', '#ff7ad9'],
+  'mermaid-rider': ['fish', '#3ab0a0', '#ff7ad9'],
+  newt: ['hog', '#e08040', '#3a3030'],
+  'thrilling-ghost': ['spook', '#d8e0f0', '#4fe0d8'],
+  'jade-dragon': ['wyrm', '#2fbf5a', '#e0b040'],
+  azuremir: ['wyrm', '#3a6bff', '#e8f4ff'],
+  kupu: ['blob', '#e0a0c0', '#3a3030'],
+  'furry-fish': ['fish', '#e0c080', '#3a6bff'],
+  shroomy: ['blob', '#e03a3a', '#f0ece0'],
+  chirpy: ['bird', '#f2c52e', '#e05a20'],
+  boooofus: ['spook', '#9a6a4a', '#e8e0d0'],
+  'swift-donkey': ['hog', '#9a9098', '#e8e0d0'],
+  crummy: ['blob', '#c08a4a', '#6a3a20'],
+  wabbit: ['hog', '#e8e0d8', '#ff7ad9'],
+  'g1-courier': ['bot', '#3a4a6a', '#f0a030'],
+  drodo: ['bird', '#8a8a70', '#e0a040'],
+  'baby-roshan': ['hog', '#6a5a4a', '#e05a20'],
+};
+export const hasCreepModel = (key: string) => key in CREEPS;
+
+/** Draw a creep centred at (m, m), body radius r, facing right. */
+function drawCreep(
+  g: CanvasRenderingContext2D,
+  key: string,
+  m: number,
+  r: number,
+  flying: boolean,
+  boss: boolean,
+) {
+  const [shape, c, a] = CREEPS[key] ?? ['blob', '#e08040', '#3a3030'];
+  const P = (x: number, y: number) => [m + x * r, m + y * r] as const;
+  // Body part in the towers' flat two-tone: a shadow ellipse with the lit one set up-left.
+  const part = (x: number, y: number, rx: number, ry: number, col: string) => {
+    g.fillStyle = shade(col, 0.7);
+    g.beginPath();
+    g.ellipse(...P(x, y), rx * r, ry * r, 0, 0, 7);
+    g.fill();
+    g.fillStyle = col;
+    g.beginPath();
+    g.ellipse(...P(x - rx * 0.08, y - ry * 0.1), rx * r * 0.88, ry * r * 0.86, 0, 0, 7);
+    g.fill();
+  };
+  const poly = (pts: number[], col: string) => {
+    g.fillStyle = col;
+    g.beginPath();
+    for (let i = 0; i < pts.length; i += 2) g.lineTo(...P(pts[i], pts[i + 1]));
+    g.fill();
+  };
+  // Same build as the tower eye (dark rim, iris, pupil, glint), in creature colours.
+  const eye = (x: number, y: number, k = 1) => {
+    const er = r * 0.12 * k;
+    const disc = (dx: number, dy: number, rr: number, fill: string) => {
+      g.fillStyle = fill;
+      g.beginPath();
+      g.arc(...(P(x, y).map((v, i) => v + (i ? dy : dx)) as [number, number]), rr, 0, 7);
+      g.fill();
+    };
+    disc(0, 0, er * 1.2, '#1a1410');
+    disc(0, 0, er, '#f4efe4');
+    disc(er * 0.2, 0, er * 0.6, shade(a, 0.9));
+    disc(er * 0.25, 0, er * 0.3, '#0a0808');
+    disc(-er * 0.2, -er * 0.35, er * 0.2, '#fff');
+  };
+  // Inlaid faceted gem in the accent colour, like the gems set into the tower stones.
+  const gem = (x: number, y: number, k = 0.16) => gemFacets(g, a, ...P(x, y), r * k);
+  const legs = (xs: number[], y: number, len: number, col: string) => {
+    g.strokeStyle = col;
+    g.lineWidth = Math.max(1, r * 0.14);
+    g.lineCap = 'round';
+    g.beginPath();
+    for (const x of xs) {
+      g.moveTo(...P(x, y));
+      g.lineTo(...P(x, y + len));
+    }
+    g.stroke();
+  };
+  // Flyers without their own wings get a pair of accent wings behind the body.
+  if (flying && !['bird', 'wyrm', 'spook'].includes(shape)) {
+    part(-0.35, -0.55, 0.45, 0.22, mix(a, '#ffffff', 0.4));
+    part(0.05, -0.65, 0.4, 0.2, mix(a, '#ffffff', 0.2));
+  }
+  switch (shape) {
+    case 'hog':
+      legs([-0.45, -0.2, 0.2, 0.45], 0.3, 0.45, shade(c, 0.5));
+      part(-0.1, 0.15, 0.7, 0.45, c);
+      part(0.4, -0.5, 0.1, 0.18, a);
+      part(0.55, -0.2, 0.38, 0.35, c);
+      part(0.88, -0.08, 0.16, 0.12, mix(c, a, 0.5));
+      eye(0.62, -0.28);
+      gem(-0.15, 0.05);
+      break;
+    case 'blob':
+      part(0, 0.15, 0.8, 0.65, c);
+      part(-0.3, -0.25, 0.14, 0.1, a);
+      part(0.05, -0.4, 0.1, 0.08, a);
+      eye(0.2, -0.05);
+      eye(0.52, -0.02);
+      gem(0.35, 0.35, 0.14);
+      break;
+    case 'bird':
+      poly([-0.5, 0, -0.95, -0.2, -0.85, 0.25], shade(a, 0.8));
+      legs([-0.1, 0.15], 0.45, 0.35, a);
+      part(-0.1, 0.1, 0.55, 0.45, c);
+      part(-0.15, 0.1, 0.35, 0.22, shade(c, 0.8));
+      part(0.4, -0.38, 0.3, 0.28, c);
+      poly([0.62, -0.45, 0.95, -0.32, 0.62, -0.25], a);
+      eye(0.48, -0.45);
+      gem(0.1, 0.25, 0.13);
+      break;
+    case 'fish':
+      poly([-0.6, 0, -1.05, -0.45, -1.05, 0.45], a);
+      poly([-0.2, -0.35, 0.15, -0.75, 0.3, -0.35], shade(c, 0.75));
+      part(0, 0, 0.8, 0.48, c);
+      g.strokeStyle = shade(c, 0.45);
+      g.lineWidth = Math.max(1, r * 0.06);
+      g.beginPath();
+      g.moveTo(...P(0.8, 0.1));
+      g.lineTo(...P(0.45, 0.18));
+      g.stroke();
+      eye(0.45, -0.12);
+      gem(-0.1, 0.05);
+      break;
+    case 'wyrm':
+      poly([-0.2, -0.2, -0.75, -0.95, 0.05, -0.35], mix(a, c, 0.3));
+      part(-0.75, 0.35, 0.22, 0.2, c);
+      part(-0.4, 0.2, 0.32, 0.28, c);
+      part(0.05, 0.05, 0.42, 0.36, c);
+      poly([0.45, -0.45, 0.35, -0.9, 0.6, -0.5], a);
+      part(0.55, -0.2, 0.36, 0.3, c);
+      eye(0.68, -0.28);
+      gem(0.05, 0.05, 0.14);
+      break;
+    case 'bot':
+      g.fillStyle = '#222';
+      for (const x of [-0.4, 0.4]) {
+        g.beginPath();
+        g.arc(...P(x, 0.62), r * 0.2, 0, 7);
+        g.fill();
+      }
+      part(0, 0.2, 0.68, 0.45, c);
+      part(0.15, -0.4, 0.42, 0.3, shade(c, 1.1));
+      poly([0.2, -0.5, 0.55, -0.5, 0.55, -0.32, 0.2, -0.32], a);
+      legs([0], -0.95, 0.25, shade(c, 0.6));
+      gem(0, -0.95, 0.12);
+      gem(-0.1, 0.25);
+      break;
+    case 'spook':
+      g.fillStyle = c;
+      g.beginPath();
+      g.arc(...P(0, -0.1), r * 0.7, Math.PI, 0);
+      for (let i = 0; i <= 6; i++) g.lineTo(...P(0.7 - (i * 1.4) / 6, 0.55 + (i % 2) * 0.25));
+      g.fill();
+      part(-0.15, -0.3, 0.3, 0.22, mix(c, '#ffffff', 0.25));
+      part(0, 0.3, 0.55, 0.12, shade(a, 0.9));
+      eye(0.15, -0.15, 1.2);
+      eye(0.45, -0.12, 1.2);
+      gem(0, 0.3, 0.14);
+      break;
+    case 'crab':
+      g.strokeStyle = shade(c, 0.6);
+      g.lineWidth = Math.max(1, r * 0.1);
+      g.beginPath();
+      for (const s of [-1, 1])
+        for (const k of [0, 1, 2]) {
+          g.moveTo(...P(s * 0.3, 0.15 + k * 0.1));
+          g.lineTo(...P(s * (0.8 + k * 0.1), 0.35 + k * 0.2));
+          g.lineTo(...P(s * (0.9 + k * 0.1), 0.7));
+        }
+      g.stroke();
+      part(0, 0.15, 0.7, 0.42, c);
+      part(-0.75, -0.25, 0.22, 0.2, a);
+      part(0.75, -0.25, 0.22, 0.2, a);
+      legs([-0.18, 0.18], -0.55, 0.35, shade(c, 0.7));
+      eye(-0.18, -0.55);
+      eye(0.18, -0.55);
+      gem(0, 0.1);
+      break;
+  }
+  if (boss)
+    poly(
+      [-0.3, -0.75, -0.3, -1.1, -0.15, -0.9, 0, -1.15, 0.15, -0.9, 0.3, -1.1, 0.3, -0.75],
+      '#f2c52e',
+    );
+  // Rounding wash over the whole creep, as on the tower heads.
+  const gl = g.createRadialGradient(...P(-0.4, -0.5), 0, ...P(0, 0), r * 1.2);
+  gl.addColorStop(0, 'rgba(255,255,255,0.18)');
+  gl.addColorStop(0.6, 'rgba(255,255,255,0)');
+  gl.addColorStop(1, 'rgba(0,0,0,0.3)');
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = gl;
+  g.fillRect(0, 0, m * 2, m * 2);
+  g.globalCompositeOperation = 'source-over';
+}
+
+/** Creep portrait for the panel, as a cached data URL. */
+export function creepIcon(name: string) {
+  const key = 'creep' + name;
+  let url = icons.get(key);
+  if (!url) {
+    url = bake(96, 96, (g) => drawCreep(g, slug(name), 48, 36, false, false)).toDataURL();
+    icons.set(key, url);
+  }
+  return url;
+}
+
 export class Renderer {
   cell = 0; // px per cell at current zoom
   zoom = 1;
@@ -528,6 +778,7 @@ export class Renderer {
   flash = -1; // refused cell index
   flashUntil = 0;
   selected = -1; // selected cell index
+  creep: Creep | null = null; // selected creep
   hints: number[] = []; // cells of towers that can combine now
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
@@ -536,8 +787,45 @@ export class Renderer {
   private staticDirty = true;
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
   private sprites = new Map<string, HTMLCanvasElement>();
+  private terrainPat: [number, CanvasPattern] | null = null;
+
+  /** Out-of-bounds ground: a repeating tile of dark stone blocks at random heights. */
+  private terrain() {
+    const s = this.cell;
+    if (this.terrainPat?.[0] === s) return this.terrainPat[1];
+    const N = 24; // tile size in cells; ponytail: periodic, a bigger N if the repeat shows
+    const hash = (c: number, r: number) => {
+      const n = Math.sin((((c % N) + N) % N) * 127.1 + (((r % N) + N) % N) * 311.7) * 43758.5;
+      return n - Math.floor(n);
+    };
+    const tile = bake(N * s, N * s, (g) => {
+      g.fillStyle = '#141210';
+      g.fillRect(0, 0, N * s, N * s);
+      // Back to front so each row's tops cover the front faces of the row behind; one row past
+      // each edge so faces that cross the seam wrap.
+      for (let r = -1; r <= N + 1; r++)
+        for (let c = 0; c < N; c++) {
+          const v = hash(c, r),
+            h = Math.floor(v * 4) * 0.18 * s,
+            base = mix('#2a2622', '#4a443c', v);
+          const y = r * s - h;
+          g.fillStyle = shade(base, 0.55);
+          g.fillRect(c * s, y + s, s, h);
+          g.fillStyle = base;
+          g.fillRect(c * s, y, s, s);
+          g.fillStyle = shade(base, 1.2);
+          g.fillRect(c * s, y, s, Math.max(1, s / 12));
+          g.fillStyle = 'rgba(0,0,0,0.25)';
+          g.fillRect(c * s + s - 1, y, 1, s);
+        }
+    });
+    const pat = this.ctx.createPattern(tile, 'repeat')!;
+    this.terrainPat = [s, pat];
+    return pat;
+  }
   private order: Creep[] = [];
   private seen = new WeakSet<Creep>();
+  private facingLeft = new WeakMap<Creep, boolean>();
   private px = new Float32Array(MAX_PARTICLES * 6); // x, y, vx, vy, life, colour index
   particles = 0;
   private ctx: CanvasRenderingContext2D;
@@ -562,7 +850,7 @@ export class Renderer {
   /** Zoom keeping the world point under (sx, sy) fixed. */
   setZoom(zoom: number, sx: number, sy: number, recentre = false) {
     const base = Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) / this.maze.w;
-    const cell = Math.max(4, Math.floor(base * Math.min(4, Math.max(0.5, zoom))));
+    const cell = Math.max(4, Math.floor(base * Math.min(4, Math.max(1, zoom))));
     this.zoom = cell / base;
     if (recentre) {
       this.panX = Math.floor((innerWidth - cell * this.maze.w) / 2);
@@ -583,6 +871,20 @@ export class Renderer {
     this.panY += dy;
   }
 
+  /** Live creep drawn under a screen point, nearest first. */
+  creepAt(x: number, y: number) {
+    const wx = (x - this.panX) / this.cell,
+      wy = (y - this.panY) / this.cell;
+    let best: Creep | null = null,
+      bd = 0.6; // cells
+    for (const cr of this.sim.creeps) {
+      if (!cr.alive) continue;
+      const d = Math.hypot(cr.x - wx, cr.y - (cr.def.flying ? FLY_Z : 0.15) - wy);
+      if (d < bd) [best, bd] = [cr, d];
+    }
+    return best;
+  }
+
   screenToCell(x: number, y: number): [number, number] {
     return [Math.floor((x - this.panX) / this.cell), Math.floor((y - this.panY) / this.cell)];
   }
@@ -590,44 +892,6 @@ export class Renderer {
   /** Call when the maze or towers change. */
   invalidate() {
     this.staticDirty = true;
-  }
-
-  /** Loaded portrait image, or null while loading / missing (a load re-bakes every sprite). */
-  private img(key: string) {
-    const url = portrait(key);
-    if (!url) return null;
-    let im = images.get(key);
-    if (!im) {
-      images.set(key, (im = new Image()));
-      im.onload = () => {
-        this.sprites.clear();
-        this.staticDirty = true;
-      };
-      im.src = url;
-    }
-    return im.complete && im.naturalWidth ? im : null;
-  }
-
-  /** Round portrait token with a coloured ring. */
-  private token(
-    g: CanvasRenderingContext2D,
-    im: HTMLImageElement,
-    cx: number,
-    cy: number,
-    rad: number,
-    ring: string,
-  ) {
-    g.save();
-    g.beginPath();
-    g.arc(cx, cy, rad, 0, 7);
-    g.clip();
-    g.drawImage(im, cx - rad, cy - rad, rad * 2, rad * 2);
-    g.restore();
-    g.strokeStyle = ring;
-    g.lineWidth = Math.max(1, rad / 6);
-    g.beginPath();
-    g.arc(cx, cy, rad, 0, 7);
-    g.stroke();
   }
 
   private sprite(key: string, w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
@@ -657,24 +921,13 @@ export class Renderer {
     });
   }
 
-  private creepSprite(cr: Creep) {
-    const color = cr.def.flying ? '#9cf' : cr.slow ? '#88f' : cr.poison ? '#6c6' : '#e84';
+  /** Creep model at the current zoom; `flip` faces it left. */
+  private creepSprite(cr: Creep, flip: boolean) {
     const rad = this.cell * (cr.def.boss ? 0.6 : 0.4);
-    const key = 'creep-' + slug(cr.def.name);
-    const im = this.img(key);
-    if (im)
-      return this.sprite(`c${key}${color}${rad}`, rad * 2 + 2, rad * 2 + 2, (g) =>
-        this.token(g, im, rad + 1, rad + 1, rad, cr.def.boss ? '#ff4040' : color),
-      );
-    return this.sprite(`c${color}${rad}`, rad * 2, rad * 2, (g) => {
-      const grad = g.createRadialGradient(rad * 0.7, rad * 0.6, rad * 0.1, rad, rad, rad);
-      grad.addColorStop(0, '#fff');
-      grad.addColorStop(0.35, color);
-      grad.addColorStop(1, shade(color.length === 4 ? expand(color) : color, 0.4));
-      g.fillStyle = grad;
-      g.beginPath();
-      g.arc(rad, rad, rad, 0, 7);
-      g.fill();
+    const m = rad * 1.25;
+    return this.sprite(`c${cr.def.name}${rad}${flip}`, m * 2, m * 2, (g) => {
+      if (flip) g.setTransform(-1, 0, 0, 1, m * 2, 0);
+      drawCreep(g, slug(cr.def.name), m, rad, cr.def.flying, cr.def.boss);
     });
   }
 
@@ -696,6 +949,8 @@ export class Renderer {
     L.height = maze.h * s + top;
     const g = L.getContext('2d')!;
     g.translate(0, top);
+    g.fillStyle = '#111'; // grid lines: the 1px gaps between cells
+    g.fillRect(0, 0, maze.w * s, maze.h * s);
     for (let r = 0; r < maze.h; r++)
       for (let c = 0; c < maze.w; c++) {
         g.fillStyle = maze.noBuild[maze.idx(c, r)] ? '#2a2a2a' : '#3b4a3b';
@@ -841,7 +1096,9 @@ export class Renderer {
     const { ctx, cell: s, panX, panY } = this;
     const X = (x: number) => (panX + x * s) | 0;
     const Y = (y: number) => (panY + y * s) | 0;
-    ctx.fillStyle = '#111';
+    const tp = this.terrain();
+    tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
+    ctx.fillStyle = tp;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
 
@@ -904,10 +1161,38 @@ export class Renderer {
       ctx.drawImage(sh, X(x) - sh.width / 2, Y(y) - sh.height / 2);
     }
     for (const cr of order) {
-      const sp = this.creepSprite(cr);
+      // Face the way it last moved sideways; purely vertical steps keep the old facing.
+      const dx = cr.x - cr.px;
+      if (Math.abs(dx) > 1e-4) this.facingLeft.set(cr, dx < 0);
+      const sp = this.creepSprite(cr, this.facingLeft.get(cr) ?? false);
+      // Hop while walking, drift while flying; phase by x so a wave doesn't bob in sync.
+      const t = now / 110 + cr.x * 3;
+      const bob = cr.def.flying
+        ? Math.sin(t / 2) * 0.05
+        : cr.stunT > 0
+          ? 0
+          : Math.abs(Math.sin(t)) * 0.08;
       const x = cr.px + (cr.x - cr.px) * alpha,
-        y = cr.py + (cr.y - cr.py) * alpha - (cr.def.flying ? FLY_Z : 0.15);
+        y = cr.py + (cr.y - cr.py) * alpha - (cr.def.flying ? FLY_Z : 0.15) - bob;
+      if (cr === this.creep) {
+        ctx.strokeStyle = '#ffd24a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(X(x), Y(y + bob + 0.3), sp.width * 0.4, sp.width * 0.16, 0, 0, 7);
+        ctx.stroke();
+      }
       ctx.drawImage(sp, X(x) - sp.width / 2, Y(y) - sp.height / 2);
+      // Health bar once damaged (always for the selected creep).
+      if (cr.hp < cr.def.hp || cr === this.creep) {
+        const w = sp.width * 0.7,
+          bx = X(x) - w / 2,
+          by = Y(y) - sp.height / 2 - 4;
+        ctx.fillStyle = '#000a';
+        ctx.fillRect(bx - 1, by - 1, w + 2, 5);
+        const f = Math.max(0, cr.hp / cr.def.hp);
+        ctx.fillStyle = f > 0.5 ? '#4fd05a' : f > 0.25 ? '#f2c52e' : '#e03a3a';
+        ctx.fillRect(bx, by, w * f, 3);
+      }
     }
 
     // Tracers by shot kind: thin white, icy blue (slow), thick silver beam, forked lightning.
@@ -996,4 +1281,3 @@ const TRACERS: [Shot, string, number, string][] = [
 ];
 // 0 spark, 1 fire, 2 ember, 3 snow, 4 lightning spark, 5 disarm mote
 const PARTICLE_COLOR = ['#ffe9a0', '#ff7a1a', '#ffcf40', '#e8f6ff', '#ffc8f4', '#c06aff'];
-const expand = (c: string) => '#' + [...c.slice(1)].map((h) => h + h).join('');
