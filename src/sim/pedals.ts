@@ -1,8 +1,8 @@
 // Pedals (BUILD.md §2.5): 2-gem utility blocks, built with Combine like special towers and
 // upgraded 3× same → Sparkling → 3× → Blingbling. They never attack: when a creep comes within
 // PEDAL.trigger they cast their spell on it, then cool down. Values per tier from data/raw/pedals.json.
-// ponytail: pedals sit on rock cells beside the route (the original lays them on it); trigger
-// range, cooldown, Ensnare root and Paralysis bounces are guesses until the Lua values are known.
+// Combining puts the pedal in hand; the player then lays it on any free ground cell (route
+// included) — it never blocks. ponytail: trigger range, cooldown, Ensnare root and Paralysis bounces are guesses until the Lua values are known.
 import type { SpecialDef } from './towers';
 
 export const PEDAL = { trigger: 192, cooldown: 8 };
@@ -16,7 +16,7 @@ export const SPELL = {
   howl: { radius: [256, 384, 512], dmg: [0.2, 0.4, 0.8], time: 10 },
   acid: { radius: 625, armor: [8, 16, 32], time: [10, 15, 20] },
   paralysis: { range: 1000, bounces: [6, 8, 10], stun: 1 },
-  terrorize: { amp: [0.5, 1, 2], time: 6 },
+  terrorize: { amp: [0.5, 1, 2], slowPct: 0.3, time: [6, 8, 10] },
   decrepify: { slowPct: [0.5, 0.7, 0.9], mr: [30, 60, 90], time: [5, 6, 7] },
 } as const;
 export type Spell = keyof typeof SPELL;
@@ -28,7 +28,12 @@ const BASE: [name: string, spell: Spell, recipe: string[], tip: string][] = [
   ['Howl', 'howl', ['P3', 'R2'], 'Towers near the pedal deal more damage for 10s'],
   ['Acid', 'acid', ['Q3', 'Y2'], 'Reduces armor of creeps in a wide area; pierces spell immunity'],
   ['Paralysis', 'paralysis', ['R3', 'G2'], 'A cask bounces between creeps, stunning each 1s'],
-  ['Terrorize', 'terrorize', ['D3', 'P2'], 'The creep takes more damage; pierces spell immunity'],
+  [
+    'Terrorize',
+    'terrorize',
+    ['D3', 'P2'],
+    'The creep is slowed and takes more damage; pierces spell immunity',
+  ],
   ['Decrepify', 'decrepify', ['E3', 'B2'], 'Slows the creep and lowers its magic resist'],
 ];
 

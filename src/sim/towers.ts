@@ -247,8 +247,20 @@ export class Combat {
   }
 
   place(code: string, c: number, r: number): Tower | null {
+    if (this.towerAt(c, r) || !this.sim.maze.placeRock(c, r)) return null;
+    return this.add(code, c, r);
+  }
+
+  /** Lay a pedal on free ground (no rock, wall or other pedal); it doesn't block the route. */
+  placePedal(code: string, c: number, r: number): Tower | null {
+    const { maze } = this.sim;
+    if (!maze.walkable(c, r) || this.towerAt(c, r)) return null;
+    return this.add(code, c, r);
+  }
+
+  private add(code: string, c: number, r: number): Tower | null {
     const def = this.gems[code];
-    if (!def || !this.sim.maze.placeRock(c, r)) return null;
+    if (!def) return null;
     const t: Tower = {
       def,
       c,
@@ -494,7 +506,8 @@ export class Combat {
       }
       case 'terrorize':
         cr.terror = Math.max(cr.terrorT > 0 ? cr.terror : 0, SPELL.terrorize.amp[k]);
-        cr.terrorT = SPELL.terrorize.time;
+        cr.terrorT = SPELL.terrorize.time[k];
+        slow(cr, SPELL.terrorize.slowPct, SPELL.terrorize.time[k]);
         break;
       case 'decrepify': {
         const s = SPELL.decrepify;

@@ -2,7 +2,7 @@
 // Static layer (ground, route, blocks) is an offscreen canvas redrawn only on maze/zoom change;
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
-import { PEDALS, TIERS } from './sim/pedals';
+import { TIERS } from './sim/pedals';
 import type { Combat, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
@@ -126,11 +126,6 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   'burning-stone': ['crystal', '#3a4a6a', '#4fa0e0', 'b'],
   'the-great-stone': ['pillar', '#6a6a6a', '#8fbf3a', 'y'],
 };
-// Pedals: crystal slabs, accent by tier (base, Sparkling, Blingbling).
-for (const d of Object.values(PEDALS)) {
-  const tier = TIERS.findIndex((x, i) => i && d.name.startsWith(x));
-  MODELS[slug(d.name)] = ['crystal', '#4a4a52', ['#8a8a8a', '#3fb0ff', '#f2c52e'][tier + 1], 'y'];
-}
 export const hasModel = (key: string) => key in MODELS;
 
 /** Draw a special tower's head centred at (mx, my) within radius r. False if it has none. */
@@ -990,6 +985,22 @@ export class Renderer {
       );
       g.stroke();
     }
+    // Pedals: flat diamond slabs on the ground, coloured by tier (base, Sparkling, Blingbling).
+    for (const t of this.combat.towers)
+      if (t.def.pedal) {
+        const tier = TIERS.findIndex((x, i) => i && t.def.name.startsWith(x));
+        const [x, y, h] = [(t.c + 0.5) * s, (t.r + 0.5) * s, s * 0.4];
+        g.fillStyle = ['#9a9aa8', '#3fb0ff', '#f2c52e'][tier + 1];
+        g.strokeStyle = '#111';
+        g.beginPath();
+        g.moveTo(x, y - h);
+        g.lineTo(x + h, y);
+        g.lineTo(x, y + h);
+        g.lineTo(x - h, y);
+        g.closePath();
+        g.fill();
+        g.stroke();
+      }
     g.fillStyle = '#fff';
     g.font = `${Math.max(10, s * 0.6)}px sans-serif`;
     g.textAlign = 'center';

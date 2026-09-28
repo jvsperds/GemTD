@@ -180,9 +180,11 @@ canvas.addEventListener('click', (e) => {
     ? run(['stone', c, r])
     : hit
       ? (sel = hit)
-      : game.step === 'place'
-        ? run(['place', c, r])
-        : ((sel = null), true); // clicking empty ground returns to the hero view
+      : game.pedals.length
+        ? run(['pedal', c, r])
+        : game.step === 'place'
+          ? run(['place', c, r])
+          : ((sel = null), true); // clicking empty ground returns to the hero view
   removing = false;
   if (!ok) {
     [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
@@ -210,7 +212,7 @@ function act(a: string) {
   if (a === 'deselect') return ((sel = selCreep = picking = null), (removing = false));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
   if (a === 'speed') {
-    speed = settings.speed = { 1: 2, 2: 4, 4: 10 }[settings.speed] ?? 1;
+    speed = settings.speed = { 1: 2, 2: 4, 4: 10, 10: 20 }[settings.speed] ?? 1;
     return db.set('settings', settings);
   }
   if (replaying) return;
@@ -301,7 +303,7 @@ addEventListener('keydown', (e) => {
     e.preventDefault();
     debug.hidden = !debug.hidden;
   } else if (e.target instanceof HTMLInputElement) return;
-  else if (/^[1-4]$/.test(e.key)) speed = settings.speed = [1, 2, 4, 10][+e.key - 1];
+  else if (/^[1-5]$/.test(e.key)) speed = settings.speed = [1, 2, 4, 10, 20][+e.key - 1];
   else if (keys[e.key]) {
     e.preventDefault();
     act(keys[e.key]);
@@ -762,19 +764,21 @@ function updateHud() {
       ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
       : removing
         ? 'Click a stone to shatter it'
-        : step === 'place'
-          ? `Place gem ${game.placed.length + 1} of 5`
-          : step === 'choose'
-            ? sel
-              ? `Selected ${sel.def.name}: keep, merge or combine it`
-              : 'Click one of this round’s gems to select it'
-            : step === 'won'
-              ? `You win! Score ${score(game)}`
-              : step === 'lost'
-                ? `Game over. Score ${score(game)}`
-                : speed
-                  ? `Wave in progress ×${speed}`
-                  : 'Paused (Space)';
+        : game.pedals.length
+          ? `Lay your ${game.pedals[0]} on free ground`
+          : step === 'place'
+            ? `Place gem ${game.placed.length + 1} of 5`
+            : step === 'choose'
+              ? sel
+                ? `Selected ${sel.def.name}: keep, merge or combine it`
+                : 'Click one of this round’s gems to select it'
+              : step === 'won'
+                ? `You win! Score ${score(game)}`
+                : step === 'lost'
+                  ? `Game over. Score ${score(game)}`
+                  : speed
+                    ? `Wave in progress ×${speed}`
+                    : 'Paused (Space)';
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
