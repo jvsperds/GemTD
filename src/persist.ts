@@ -69,7 +69,9 @@ function open() {
   return (db ??= new Promise((res) => {
     try {
       const q = indexedDB.open('gemtd', VERSION);
-      q.onupgradeneeded = () => q.result.createObjectStore('kv');
+      q.onupgradeneeded = () => {
+        if (!q.result.objectStoreNames.contains('kv')) q.result.createObjectStore('kv');
+      };
       q.onsuccess = () => res(q.result);
       q.onerror = () => res(null);
     } catch {
@@ -81,8 +83,12 @@ function open() {
 export async function get<K extends keyof Stores>(key: K): Promise<Stores[K]> {
   const d = await open();
   if (!d) {
-    const v = localStorage.getItem('gemtd.' + key);
-    return v ? JSON.parse(v) : DEFAULTS[key];
+    try {
+      const v = localStorage.getItem('gemtd.' + key);
+      return v ? JSON.parse(v) : DEFAULTS[key];
+    } catch {
+      return DEFAULTS[key]; // corrupt or blocked storage: start fresh rather than crash
+    }
   }
   return new Promise((res) => {
     const q = d.transaction('kv').objectStore('kv').get(key);

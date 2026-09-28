@@ -75,7 +75,16 @@ game.skills = past
         .slice(0, bringLimit(pick))
         .map((id) => [id, hero.skills[id]]),
     );
-if (save) game.replay(save.commands); // resume: waves before the last command replay headless
+// Resume: waves before the last command replay headless. A save the current rules can't replay
+// (corrupt, or left by an older build) is dropped rather than leaving a blank page.
+if (save)
+  try {
+    game.replay(save.commands);
+  } catch (e) {
+    console.warn('dropping unreadable save', e);
+    await db.set('save', null);
+    location.reload();
+  }
 const replaying = start?.replay ?? null; // watch mode: commands are fed live, input is off
 const builder = !!start?.builder; // maze builder: free stone editing, no gems or waves
 let ri = 0,
