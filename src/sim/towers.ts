@@ -49,6 +49,8 @@ export interface Tower {
   kills: number;
   mvp: number;
   disarmT: number;
+  // Melancholy: a positive self-skill (not a disarm, so calm can't dispel it); attacks deal no damage while > 0.
+  melancholyT: number;
   // Hero skill buffs: value and seconds left.
   haste: { v: number; t: number };
   aim: { v: number; t: number };
@@ -56,7 +58,7 @@ export interface Tower {
   bonds: { v: number; t: number };
   howl: { v: number; t: number }; // Howl pedal: +damage fraction
   // Ally auras covering this tower (distinct gem types stack; copies too on easy), refreshed when towers change.
-  aura: { range: number; as: number; dmg: number; aim: number; calm: number };
+  aura: { range: number; as: number; dmg: number; aim: number; calm: number; src: AuraSrc[] };
   // Natural Zumurud: effects including skills copied from neighbours, refreshed with auras.
   copied?: Fx;
 }
@@ -78,6 +80,13 @@ export const SKILL_CRIT_CHANCE = 0.2;
 const SLOW = [60, 90, 120, 150, 180, 480];
 const POISON = [2, 4, 8, 16, 32, 128];
 const ARMOR = [2, 4, 8, 16, 32, 64];
+/** One ally aura covering a tower, for the status strip. */
+export interface AuraSrc {
+  kind: 'range' | 'as' | 'dmg' | 'aim' | 'calm';
+  value: number;
+  from: Tower;
+}
+
 export const AURA = [20, 30, 40, 50, 60, 70];
 const CLEAVE = [
   [0.3, 300],
@@ -261,7 +270,10 @@ export class Combat {
       )
       .sort((a, b) => dps(b) - dps(a))
       .slice(0, 2);
-    z.copied = parseFx({ ...z.def, abilities: [...z.def.abilities, ...src.flatMap((o) => o.def.abilities)] });
+    z.copied = parseFx({
+      ...z.def,
+      abilities: [...z.def.abilities, ...src.flatMap((o) => o.def.abilities)],
+    });
     // Split-shot counts depend on the source tower's name (Uranium-238 vs Kyparium).
     z.copied.targets = Math.max(this.fx(z.def).targets, ...src.map((o) => this.fx(o.def).targets));
   }
@@ -304,12 +316,13 @@ export class Combat {
       kills: 0,
       mvp: 0,
       disarmT: 0,
+      melancholyT: 0,
       haste: { v: 0, t: 0 },
       aim: { v: 0, t: 0 },
       crit: { v: 0, t: 0 },
       bonds: { v: 0, t: 0 },
       howl: { v: 0, t: 0 },
-      aura: { range: 0, as: 0, dmg: 0, aim: 0, calm: 0 },
+      aura: { range: 0, as: 0, dmg: 0, aim: 0, calm: 0, src: [] },
     };
     this.towers.push(t);
     this.refreshAuras();
@@ -335,7 +348,11 @@ export class Combat {
   }
 
   /** Ally auras covering `t`: different gem types stack, copies of one type don't. */
-  private allyAura(t: Tower, pick: (f: Fx) => [range: number, value: number] | null) {
+  private allyAura(
+    t: Tower,
+    kind: AuraSrc['kind'],
+    pick: (f: Fx) => [range: number, value: number] | null,
+  ) {
     const seen = new Set<Tower | string>();
     let sum = 0;
     for (const o of this.towers) {
@@ -343,6 +360,7 @@ export class Combat {
       if (a && a[0] && !seen.has(this.stackKey(o)) && this.tdist(o, t) <= a[0]) {
         seen.add(this.stackKey(o));
         sum += a[1];
+        t.aura.src.push({ kind, value: a[1], from: o });
       }
     }
     return sum;
@@ -367,11 +385,12 @@ export class Combat {
       else t.copied = undefined;
     for (const t of this.towers) {
       const a = t.aura;
-      a.range = this.allyAura(t, (f) => [f.rangeAura, 300]);
-      a.as = this.allyAura(t, (f) => f.asAura);
-      a.dmg = this.allyAura(t, (f) => [f.dmgAura, 0.5]);
-      a.aim = this.allyAura(t, (f) => [f.aimAura, 1]);
-      a.calm = this.allyAura(t, (f) => [f.calmAura, 1]);
+      a.src = [];
+      a.range = this.allyAura(t, 'range', (f) => [f.rangeAura, 300]);
+      a.as = this.allyAura(t, 'as', (f) => f.asAura);
+      a.dmg = this.allyAura(t, 'dmg', (f) => [f.dmgAura, 0.5]);
+      a.aim = this.allyAura(t, 'aim', (f) => [f.aimAura, 1]);
+      a.calm = this.allyAura(t, 'calm', (f) => [f.calmAura, 1]);
     }
   }
 
@@ -388,6 +407,7 @@ export class Combat {
 
   /** Damage multiplier from MVP stacks, kill bonus (special towers) and damage auras. */
   damageMult(t: Tower) {
+    if (t.melancholyT > 0) return 0;
     const kills = t.def.quality ? 0 : Math.floor(t.kills / 10) * KILL_BONUS;
     // Revenge hero skill: +1% damage per castle HP below its threshold.
     const { revenge, castleHp } = this.sim;
@@ -436,7 +456,7 @@ export class Combat {
     this.shots.push({ from: t, to: cr });
     // Evasion (unless an aim aura covers the tower); Refraction blocks whole instances.
     if (hasAbility(cr, 'guai_shanbi') && !t.aura.aim && this.rand() < EVASION) return;
-    if (hasAbility(cr, 'enemy_bukeqinfan') && this.rand() < UNTOUCHABLE.chance)
+    if (hasAbility(cr, 'enemy_bukeqinfan') && !t.aura.calm && this.rand() < UNTOUCHABLE.chance)
       t.disarmT = Math.max(t.disarmT, UNTOUCHABLE.time);
     if (cr.shield > 0) {
       cr.shield--;
@@ -448,7 +468,13 @@ export class Combat {
     // Debuffs land before damage so armor reduction counts on this hit. One stack per gem type, timer refreshes.
     const poison = magicImmune(cr) ? 0 : f.poison;
     if (f.armor || f.slow || poison) {
-      cr.stacks.set(this.stackKey(t), { slow: f.slow, armor: f.armor, poison, t: DEBUFF_TIME, by: t });
+      cr.stacks.set(this.stackKey(t), {
+        slow: f.slow,
+        armor: f.armor,
+        poison,
+        t: DEBUFF_TIME,
+        by: t,
+      });
       cr.slow = sumStacks(cr, 'slow');
       cr.armorRed = sumStacks(cr, 'armor');
       cr.poison = sumStacks(cr, 'poison');
@@ -489,7 +515,7 @@ export class Combat {
       for (const o of this.near(cr, this.range(t)).slice(0, FORK.targets)) this.magic(t, o, dmg);
     if (f.heal && this.rand() < f.heal)
       this.sim.castleHp = Math.min(CASTLE_HP, this.sim.castleHp + 1);
-    if (f.melancholy && this.rand() < MELANCHOLY.chance) t.disarmT = MELANCHOLY.time;
+    if (f.melancholy && this.rand() < MELANCHOLY.chance) t.melancholyT = MELANCHOLY.time;
   }
 
   /** Cast pedal `t`'s spell at tier k on creep `cr`. Spell-immune creeps resist unless it pierces. */
@@ -619,6 +645,7 @@ export class Combat {
           if (a.mr) cr.auraMr += a.mr;
         }
       if (t.disarmT > 0) t.disarmT -= TICK;
+      if (t.melancholyT > 0) t.melancholyT -= TICK;
     }
     for (const cr of this.sim.creeps)
       if (cr.alive && hasAbility(cr, 'guai_jiaoxieguanghuan'))
@@ -659,7 +686,11 @@ export class Combat {
           t.cooldown = PEDAL.cooldown;
           this.pedal(t, cr, ...spell);
           for (const o of this.towers)
-            if (this.tfx(o).chainFrost && this.dist(o, cr) <= this.range(o) && this.rand() < CHAIN_FROST.chance)
+            if (
+              this.tfx(o).chainFrost &&
+              this.dist(o, cr) <= this.range(o) &&
+              this.rand() < CHAIN_FROST.chance
+            )
               this.chainFrost(o, cr);
         }
         continue;
