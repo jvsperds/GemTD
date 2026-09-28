@@ -246,6 +246,7 @@ const magicImmune = (cr: Creep) => hasAbility(cr, 'enemy_momian');
 export class Combat {
   towers: Tower[] = [];
   heroAs = 0; // hero passive: +% attack speed for every tower
+  heroProc = { execute: 0, luckyCrit: 0, bash: 0 }; // passive skills: per-hit chances
   stackCopies = false; // easy mode: identical gems' buffs/debuffs stack too (else Dota rule: distinct types only)
   shots: { from: Tower; to: Creep }[] = [];
   onHeal: (() => void) | null = null;
@@ -472,6 +473,10 @@ export class Combat {
     let dmg = (d.damage + d.bonusDamage) * this.damageMult(t);
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
     if (t.crit.t > 0 && this.rand() < SKILL_CRIT_CHANCE) dmg *= t.crit.v;
+    const p = this.heroProc; // checked only when owned, so older replays draw the same numbers
+    if (p.luckyCrit && this.rand() < p.luckyCrit) dmg *= 3;
+    if (p.execute && !cr.def.boss && this.rand() < p.execute) return this.deal(t, cr, cr.hp);
+    if (p.bash && this.rand() < p.bash) cr.stunT = Math.max(cr.stunT, STUN_TIME);
     // Debuffs land before damage so armor reduction counts on this hit. One stack per gem type, timer refreshes.
     const poison = magicImmune(cr) ? 0 : f.poison * this.damageMult(t);
     if (f.armor || f.slow || poison) {

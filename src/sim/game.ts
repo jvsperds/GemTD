@@ -5,7 +5,7 @@
 import { codeOf, rng, type Combat, type GemDef, type SpecialDef, type Tower } from './towers';
 import { HEROES, type Perk } from './heroes';
 import { ROCK } from './maze';
-import { DURATION, SKILLS, goldOf, type Loadout } from './skills';
+import { DURATION, SKILLS, goldOf, withPassives, type Loadout } from './skills';
 import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL } from './waves';
 
 export interface LevelDef {
@@ -69,13 +69,16 @@ export class Game {
   pedals: string[] = []; // combined pedals waiting to be laid on the path
   hero = ''; // hero id; '' = no hero (tests, old saves)
   get perk(): Perk {
-    return HEROES[this.hero]?.perk ?? {};
+    return withPassives(HEROES[this.hero]?.perk ?? {}, this.skills);
   }
-  /** Pick the hero; call before replaying commands. */
+  /** Pick the hero; set `skills` first, and call before replaying commands. */
   setHero(id: string) {
     this.hero = id;
+    this.gold += this.perk.startGold ?? 0;
     this.sim.bossBite = this.perk.bossBite ?? 0;
     this.combat.heroAs = this.perk.attackSpeed ?? 0;
+    const { execute = 0, luckyCrit = 0, bash = 0 } = this.perk;
+    this.combat.heroProc = { execute, luckyCrit, bash };
   }
   /** Gold per cast of skill `id` after the hero's discount. */
   skillGold(id: string) {
@@ -115,7 +118,11 @@ export class Game {
           return r && Math.hypot(o.c - k.c, o.r - k.r) * UNITS_PER_CELL <= r;
         }) &&
         this.rand() < GREED.chance;
-      const gold = killGold(sim.wave, cr.def.boss) * (greedy ? GREED.mult : 1);
+      const gold =
+        killGold(sim.wave, cr.def.boss) *
+        (greedy ? GREED.mult : 1) *
+        (cr.def.boss ? 1 + (this.perk.bossGold ?? 0) : 1) *
+        (this.perk.midas && this.rand() < this.perk.midas ? 3 : 1);
       this.gold += Math.round(gold * (1 + (this.perk.killGold ?? 0)));
       this.xp += cr.def.hp * XP_PER_HP * (1 + (this.perk.xp ?? 0));
       this.kills++;

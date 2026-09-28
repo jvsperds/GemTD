@@ -451,7 +451,8 @@
         margin: 12px 0 6px;
         font-size: 14px;
       }
-      #shop {
+      #shop,
+      #passives {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 6px;
@@ -1249,7 +1250,10 @@
         <h3>Hero</h3>
         <div id="herolist"></div>
         <h3>Skills · bringing <b id="bringing">0/5</b></h3>
+        <p>Hero and passive skills share the bring slots. Level and Stone are always available.</p>
         <div id="shop"></div>
+        <h3>Passive skills</h3>
+        <div id="passives"></div>
       </section>
       <section data-pane="settings" hidden>
         <p>

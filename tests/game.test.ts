@@ -238,3 +238,31 @@ test('shells: 1 per 3 waves, +4 for a win, never more than 20', () => {
   expect(shellsFor(50, true)).toBe(20);
   expect(shellsFor(200, true)).toBe(20); // endless runs stay capped
 });
+
+test('passive skills stack onto the hero perk', () => {
+  const g = setup();
+  g.skills = { purse: 2, focus: 4, walls: 1, heal: 1 };
+  g.setHero('citrine');
+  expect(g.gold).toBe(100);
+  expect(g.skillGold('heal')).toBe(220); // 400 - 25% hero - 20% Focus
+  expect(g.sim.bossBite).toBe(1);
+});
+
+test('rate passives: Reaper at 100% kills with every shot', () => {
+  const run = (execute: number) => {
+    const g = setup(7);
+    g.combat.heroProc.execute = execute;
+    for (const d of g.sim.waves) d.hp *= 100; // needs many shots
+    for (let k = 0; k < GEMS_PER_ROUND; k++) g.place(5 + k, 16); // beside the row-18 leg
+    g.keep(g.placed[0]);
+    let shots = 0;
+    while (g.sim.phase === 'wave') {
+      g.tick();
+      shots += g.combat.shots.length;
+    }
+    for (const d of g.sim.waves) d.hp /= 100; // shared wave data
+    return shots / g.kills;
+  };
+  expect(run(1)).toBe(1); // one shot per kill
+  expect(run(0)).toBeGreaterThan(1);
+});

@@ -66,7 +66,6 @@ const hero = await db.get('hero');
 // A new game takes the picked hero and skills; a resume or replay keeps the ones it started with.
 const past = start?.replay ? start : save;
 const pick = HEROES[hero.hero ?? ''] ? hero.hero! : DEFAULT_HERO;
-game.setHero(past ? (past.hero ?? '') : pick);
 game.skills = past
   ? (past.skills ?? {})
   : Object.fromEntries(
@@ -75,6 +74,7 @@ game.skills = past
         .slice(0, bringLimit(pick))
         .map((id) => [id, hero.skills[id]]),
     );
+game.setHero(past ? (past.hero ?? '') : pick);
 // Resume: waves before the last command replay headless. A save the current rules can't replay
 // (corrupt, or left by an older build) is dropped rather than leaving a blank page.
 if (save)
