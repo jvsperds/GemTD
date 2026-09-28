@@ -407,6 +407,11 @@ export class Combat {
     return Math.max(20, 100 + bonus) / 100 / t.def.attackRate;
   }
 
+  /** Burn/poison scaling: damage buffs times attack-speed bonus (so Opal auras boost burns). */
+  magicScale(t: Tower) {
+    return this.damageMult(t) * this.attacksPerSec(t) * t.def.attackRate;
+  }
+
   /** Damage multiplier from MVP stacks, kill bonus (special towers) and damage auras. */
   damageMult(t: Tower) {
     if (t.melancholyT > 0) return 0;
@@ -468,7 +473,7 @@ export class Combat {
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
     if (t.crit.t > 0 && this.rand() < SKILL_CRIT_CHANCE) dmg *= t.crit.v;
     // Debuffs land before damage so armor reduction counts on this hit. One stack per gem type, timer refreshes.
-    const poison = magicImmune(cr) ? 0 : f.poison;
+    const poison = magicImmune(cr) ? 0 : f.poison * this.damageMult(t);
     if (f.armor || f.slow || poison) {
       cr.stacks.set(this.stackKey(t), {
         slow: f.slow,
@@ -509,7 +514,7 @@ export class Combat {
         const next = this.near(at, LIGHTNING.radius).find((o) => !hitSet.has(o));
         if (!next) break;
         hitSet.add(next);
-        this.magic(t, next, LIGHTNING.damage);
+        this.magic(t, next, LIGHTNING.damage * this.damageMult(t));
         at = next;
       }
     }
@@ -639,7 +644,7 @@ export class Combat {
           if (!cr.alive || this.dist(t, cr) > a.range) continue;
           if (a.flyingOnly && !cr.def.flying) continue;
           const immune = magicImmune(cr) && !a.pierceImmune;
-          if (a.dps) this.magic(t, cr, a.dps * TICK);
+          if (a.dps) this.magic(t, cr, a.dps * this.magicScale(t) * TICK);
           if (dup) continue;
           if (a.armor && !immune) cr.auraArmor += a.armor;
           if (a.slowPct && !immune) cr.auraSlowPct = 1 - (1 - cr.auraSlowPct) * (1 - a.slowPct);
