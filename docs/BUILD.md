@@ -69,7 +69,7 @@ Notation: letter = gem, digit = quality (e.g. `B1` = Chipped Sapphire).
 - Combined gems: **+10% damage per 10 kills**, inherited on upgrade ✅(community). Same aura doesn't stack ✅.
 
 ### 2.5 Pedals (✅ `data/raw/pedals.json`) — 2-gem utility blocks
-8 pedals (e.g. Ensnare `Y3+D2`, Gale `G3+E2`), each upgradeable **3× → Sparkling → 3× → Blingbling** (24 total). They cast Dota-style spells (ensnare, venom gale, torrent, howl, acid, paralysis, terrorize, decrepify). **Deferred to Phase 7.**
+8 pedals (e.g. Ensnare `Y3+D2`, Gale `G3+E2`), each upgradeable **3× → Sparkling → 3× → Blingbling** (24 total). They cast Dota-style spells (ensnare, venom gale, torrent, howl, acid, paralysis, terrorize, decrepify). ✅ `src/sim/pedals.ts`: built via Combine, cast on creeps within trigger range, then cool down.
 
 ### 2.6 Waves (✅ `data/raw/creeps.json`, 50 waves)
 - Base HP curve: w1 5 → w10 boss 2,100 → w20 34,000 → w30 80,000 → w40 330,000 → w50 1,000,000. Armor 0 → 4 (w11) → 8 (w21) → 12 (w31) → 16 (w41), spikes to 24/32 on some.

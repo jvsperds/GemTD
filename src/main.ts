@@ -2,6 +2,7 @@ import waves from '../data/waves.json';
 import * as db from './persist';
 import rawAdvanced from '../data/raw/advanced_towers.json';
 import rawBase from '../data/raw/base_towers.json';
+import { PEDAL_TIPS } from './sim/pedals';
 import { skillIcon } from './icons';
 import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
@@ -388,6 +389,7 @@ const ABILITY = new Map(
     t.abilities.map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
   ),
 );
+for (const [id, a] of PEDAL_TIPS) ABILITY.set(id, a);
 const panel = document.querySelector<HTMLElement>('#panel')!;
 const portraitEl = document.querySelector<HTMLElement>('#portrait')!;
 const nameEl = document.querySelector<HTMLElement>('#name')!;

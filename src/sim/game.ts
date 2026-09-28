@@ -199,7 +199,7 @@ export class Game {
     if (this.sim.phase !== 'wave') return;
     this.ticks++;
     const { guard, evade } = this.sim;
-    const buffs = this.combat.towers.flatMap((t) => [t.haste, t.aim, t.crit, t.bonds]);
+    const buffs = this.combat.towers.flatMap((t) => [t.haste, t.aim, t.crit, t.bonds, t.howl]);
     for (const b of [guard, evade, this.sim.revenge, ...buffs]) if (b.t > 0) b.t -= TICK;
     this.sim.tick();
     this.combat.tick();
