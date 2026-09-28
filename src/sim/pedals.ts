@@ -1,8 +1,7 @@
 // Pedals (BUILD.md §2.5): 2-gem utility blocks, built with Combine like special towers and
 // upgraded 3× same → Sparkling → 3× → Blingbling. They never attack: when a creep comes within
 // PEDAL.trigger they cast their spell on it, then cool down. Values per tier from data/raw/pedals.json.
-// Combining puts the pedal in hand; the player then lays it on any free ground cell (route
-// included) — it never blocks. ponytail: trigger range, cooldown, Ensnare root and Paralysis bounces are guesses until the Lua values are known.
+// A pedal is built on the selected tower's cell like any special tower. ponytail: trigger range, cooldown, Ensnare root and Paralysis bounces are guesses until the Lua values are known.
 import type { SpecialDef } from './towers';
 
 export const PEDAL = { trigger: 192, cooldown: 8 };

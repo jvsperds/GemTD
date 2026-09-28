@@ -24,9 +24,7 @@ test('24 pedals: 2-gem recipe, then 3× same for Sparkling and Blingbling', () =
     const t = combat.place('Y3', 10 + 2 * k, 10)!;
     combat.place('D2', 10 + 2 * k, 12);
     expect(game.combine(t, 'Ensnare Pedal')).toBe(true);
-    const [c, r] = game.sim.maze.waypoints[k + 1];
-    expect(game.run(['pedal', c, r])).toBe(true);
-    return combat.towerAt(c, r)!;
+    return t;
   });
   expect(game.combine(ens[0], 'Sparkling Ensnare Pedal')).toBe(true);
   expect(combat.towers).toEqual([ens[0]]);
@@ -55,18 +53,13 @@ test('pedal casts on a nearby creep, then cools down; howl buffs nearby towers',
   expect(combat.damageMult(gem)).toBeCloseTo(before + SPELL.howl.dmg[2]);
 });
 
-test('gems combined into a pedal become stones; the pedal is laid on free ground, not rocks', () => {
+test('a pedal is built on the selected gem; the other ingredient becomes a stone', () => {
   const game = newGame(1);
   const { combat, sim } = game;
   const t = combat.place('Y3', 10, 10)!;
   combat.place('D2', 12, 10);
   expect(game.combine(t, 'Ensnare Pedal')).toBe(true);
-  expect(combat.towers).toEqual([]);
-  expect(game.pedals).toEqual(['Ensnare Pedal']);
-  expect(game.run(['pedal', 10, 10])).toBe(false); // stone
-  const [c, r] = sim.maze.waypoints[1];
-  expect(game.run(['pedal', c, r])).toBe(true); // on the route
-  expect(sim.maze.walkable(c, r)).toBe(true);
-  expect(game.pedals).toEqual([]);
-  expect(combat.place('B1', c, r)).toBeNull();
+  expect(combat.towers).toEqual([t]);
+  expect(t.def.name).toBe('Ensnare Pedal');
+  expect(sim.maze.walkable(12, 10)).toBe(false); // stone
 });

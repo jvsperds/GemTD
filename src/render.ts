@@ -2,7 +2,7 @@
 // Static layer (ground, route, blocks) is an offscreen canvas redrawn only on maze/zoom change;
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
-import { TIERS } from './sim/pedals';
+import { PEDALS, TIERS } from './sim/pedals';
 import type { Combat, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
@@ -79,7 +79,7 @@ function bake(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void)
 // Original special-tower models: every GemTD tower is a ward with a big eye, so each one is a
 // body archetype + body/accent colours + eye colour. Silhouettes loosely follow the Dota renders;
 // nothing is traced from them.
-type Body = 'orb' | 'pillar' | 'house' | 'mech' | 'bird' | 'plant' | 'crystal' | 'beast';
+type Body = 'orb' | 'pillar' | 'house' | 'mech' | 'bird' | 'plant' | 'crystal' | 'beast' | 'rune';
 const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   silver: ['orb', '#34404c', '#3fb0ff', 'y'],
   'silver-knight': ['mech', '#3a3f48', '#f0a030', 'y'],
@@ -126,6 +126,27 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   'burning-stone': ['crystal', '#3a4a6a', '#4fa0e0', 'b'],
   'the-great-stone': ['pillar', '#6a6a6a', '#8fbf3a', 'y'],
 };
+// Pedals: hexagonal rune stones in the spell's colour, rimmed by tier (base, Sparkling, Blingbling).
+const SPELL_COLOR: Record<string, string> = {
+  Ensnare: '#6a8a3a',
+  Gale: '#5ac8a0',
+  Torrent: '#2f6fd0',
+  Howl: '#a0503a',
+  Acid: '#8fd02f',
+  Paralysis: '#d0a02f',
+  Terrorize: '#6a2f8a',
+  Decrepify: '#4a5a6a',
+};
+const RUNE_GLYPH = new Map<string, number>();
+for (const d of Object.values(PEDALS)) {
+  const tier = Math.max(
+    0,
+    TIERS.findIndex((x, i) => i && d.name.startsWith(x)),
+  );
+  const spell = d.name.slice(TIERS[tier].length).replace(' Pedal', '');
+  MODELS[slug(d.name)] = ['rune', SPELL_COLOR[spell], ['#b8b8c4', '#3fb0ff', '#f2c52e'][tier], 'y'];
+  RUNE_GLYPH.set(slug(d.name), Object.keys(SPELL_COLOR).indexOf(spell) * 10 + tier);
+}
 export const hasModel = (key: string) => key in MODELS;
 
 /** Draw a special tower's head centred at (mx, my) within radius r. False if it has none. */
@@ -145,6 +166,45 @@ function towerModel(g: CanvasRenderingContext2D, key: string, mx: number, my: nu
     g.arc(mx + x * r, my + y * r, rr * r, 0, 7);
     g.fill();
   };
+  if (body === 'rune') {
+    const hex = (k: number) =>
+      Array.from({ length: 6 }, (_, i) => [
+        Math.cos((i / 6) * 6.283 - 1.571) * k,
+        Math.sin((i / 6) * 6.283 - 1.571) * k * 0.95,
+      ]).flat();
+    poly(hex(0.98), a); // tier rim
+    poly(hex(0.84), shade(c, 0.55));
+    poly(
+      hex(0.84).map((v, i) => (i % 2 ? Math.min(v, 0.1) : v)),
+      c,
+    ); // lit upper half
+    poly(hex(0.62), shade(c, 0.8));
+    // Glyph: three strokes chosen by spell, glowing in the tier colour.
+    const n = RUNE_GLYPH.get(key)!,
+      spell = (n / 10) | 0,
+      tier = n % 10;
+    g.save();
+    g.strokeStyle = a;
+    g.shadowColor = a;
+    g.shadowBlur = r * (0.2 + 0.2 * tier);
+    g.lineWidth = Math.max(1, r * 0.12);
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(mx, my - r * 0.45);
+    g.lineTo(mx, my + r * 0.45);
+    for (let k = 0; k < 2; k++) {
+      const t = (spell * 0.785 + k * 2.1) % 6.283;
+      g.moveTo(mx, my + (k ? 0.15 : -0.2) * r);
+      g.lineTo(mx + Math.cos(t) * r * 0.4, my + (k ? 0.15 : -0.2) * r + Math.sin(t) * r * 0.3);
+    }
+    g.stroke();
+    g.restore();
+    for (let k = 0; k < tier * 2; k++) {
+      const t = (k / (tier * 2)) * 6.283;
+      disc(Math.cos(t) * 0.98, Math.sin(t) * 0.93, 0.09, '#fff');
+    }
+    return true;
+  }
   let ey = -0.1; // eye centre y
   let er = 0.3; // eye radius
   switch (body) {
@@ -781,6 +841,7 @@ export class Renderer {
   selected = -1; // selected cell index
   creep: Creep | null = null; // selected creep
   hints: number[] = []; // cells of towers that can combine now
+  pending: number[] = []; // this round's gems, one of which must be picked to finish it
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
   showRanges = true; // aura range rings (Volcano, Asteriated Ruby...)
@@ -985,22 +1046,6 @@ export class Renderer {
       );
       g.stroke();
     }
-    // Pedals: flat diamond slabs on the ground, coloured by tier (base, Sparkling, Blingbling).
-    for (const t of this.combat.towers)
-      if (t.def.pedal) {
-        const tier = TIERS.findIndex((x, i) => i && t.def.name.startsWith(x));
-        const [x, y, h] = [(t.c + 0.5) * s, (t.r + 0.5) * s, s * 0.4];
-        g.fillStyle = ['#9a9aa8', '#3fb0ff', '#f2c52e'][tier + 1];
-        g.strokeStyle = '#111';
-        g.beginPath();
-        g.moveTo(x, y - h);
-        g.lineTo(x + h, y);
-        g.lineTo(x, y + h);
-        g.lineTo(x - h, y);
-        g.closePath();
-        g.fill();
-        g.stroke();
-      }
     g.fillStyle = '#fff';
     g.font = `${Math.max(10, s * 0.6)}px sans-serif`;
     g.textAlign = 'center';
@@ -1159,6 +1204,21 @@ export class Renderer {
         s - 4,
         s - 4,
       );
+    if (this.pending.length) {
+      ctx.save();
+      ctx.strokeStyle = `rgba(255,240,150,${0.55 + 0.35 * Math.sin(now / 200)})`;
+      ctx.shadowColor = '#ffe066';
+      ctx.shadowBlur = s / 3;
+      ctx.lineWidth = 2 * this.dpr;
+      for (const p of this.pending) {
+        const pc = p % this.maze.w,
+          pr = (p / this.maze.w) | 0;
+        ctx.beginPath();
+        ctx.ellipse(X(pc + 0.5), Y(pr + 0.55), s * 0.55, s * 0.4, 0, 0, 7);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     if (this.selected >= 0) {
       ctx.strokeStyle = '#ffd24a';
       ctx.lineWidth = 2 * this.dpr;
