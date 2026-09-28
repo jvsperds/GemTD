@@ -30,7 +30,7 @@ const GUIDE_COLOR: Record<string, string> = {
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
 export const MAX_PARTICLES = 800;
-const HUD_H = 32;
+const HUD_H = 44;
 
 /** In-place insertion sort by ground y: near O(n) because order barely changes between frames. */
 export function sortByY<T extends { y: number }>(a: T[]) {
