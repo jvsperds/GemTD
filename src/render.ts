@@ -552,21 +552,28 @@ export class Renderer {
     this.resize();
   }
 
+  /** Device pixels per CSS pixel. The canvas and all view state are in device pixels, so
+   * phones render at native resolution; public inputs (clicks, pans) stay in CSS pixels. */
+  dpr = 1;
+
   /** Fit the map to the window and recentre. */
   resize() {
-    this.canvas.width = innerWidth;
-    this.canvas.height = innerHeight;
+    this.dpr = devicePixelRatio || 1;
+    this.canvas.width = Math.round(innerWidth * this.dpr);
+    this.canvas.height = Math.round(innerHeight * this.dpr);
     this.setZoom(this.zoom, innerWidth / 2, innerHeight / 2, true);
   }
 
-  /** Zoom keeping the world point under (sx, sy) fixed. */
+  /** Zoom keeping the CSS-pixel point (sx, sy) fixed. */
   setZoom(zoom: number, sx: number, sy: number, recentre = false) {
-    const base = Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) / this.maze.w;
+    const d = this.dpr;
+    [sx, sy] = [sx * d, sy * d];
+    const base = (Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) * d) / this.maze.w;
     const cell = Math.max(4, Math.floor(base * Math.min(4, Math.max(0.5, zoom))));
     this.zoom = cell / base;
     if (recentre) {
-      this.panX = Math.floor((innerWidth - cell * this.maze.w) / 2);
-      this.panY = HUD_H;
+      this.panX = Math.floor((this.canvas.width - cell * this.maze.w) / 2);
+      this.panY = HUD_H * d;
     } else {
       this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
       this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
@@ -579,12 +586,16 @@ export class Renderer {
   }
 
   pan(dx: number, dy: number) {
-    this.panX += dx;
-    this.panY += dy;
+    this.panX += dx * this.dpr;
+    this.panY += dy * this.dpr;
   }
 
   screenToCell(x: number, y: number): [number, number] {
-    return [Math.floor((x - this.panX) / this.cell), Math.floor((y - this.panY) / this.cell)];
+    const d = this.dpr;
+    return [
+      Math.floor((x * d - this.panX) / this.cell),
+      Math.floor((y * d - this.panY) / this.cell),
+    ];
   }
 
   /** Call when the maze or towers change. */
@@ -866,7 +877,7 @@ export class Renderer {
         }
 
     ctx.strokeStyle = '#6ff';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = this.dpr;
     for (const h of this.hints)
       ctx.strokeRect(
         X(h % this.maze.w) + 2,
@@ -876,7 +887,7 @@ export class Renderer {
       );
     if (this.selected >= 0) {
       ctx.strokeStyle = '#ffd24a';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2 * this.dpr;
       const sc = this.selected % this.maze.w,
         sr = (this.selected / this.maze.w) | 0;
       ctx.strokeRect(X(sc), Y(sr - BLOCK_H), s, s * (1 + BLOCK_H));
