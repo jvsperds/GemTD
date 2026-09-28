@@ -238,3 +238,12 @@ test('shells: 1 per 3 waves, +4 for a win, never more than 20', () => {
   expect(shellsFor(50, true)).toBe(20);
   expect(shellsFor(200, true)).toBe(20); // endless runs stay capped
 });
+
+test('passive skills stack onto the hero perk', () => {
+  const g = setup();
+  g.skills = { purse: 2, focus: 4, walls: 1, heal: 1 };
+  g.setHero('citrine');
+  expect(g.gold).toBe(100);
+  expect(g.skillGold('heal')).toBe(220); // 400 - 25% hero - 20% Focus
+  expect(g.sim.bossBite).toBe(1);
+});

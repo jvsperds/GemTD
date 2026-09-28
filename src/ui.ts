@@ -3,7 +3,15 @@ import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
-import { SKILLS, bringLimit, goldOf, skillTip, type Loadout } from './sim/skills';
+import {
+  PASSIVES,
+  SKILLS,
+  bringLimit,
+  goldOf,
+  passiveTip,
+  skillTip,
+  type Loadout,
+} from './sim/skills';
 
 /** Start a new game (or a replay) on the next load. */
 function startNext(o: {
@@ -117,7 +125,9 @@ export function initMenu(
     const h = HEROES[picked];
     $('loadout').textContent =
       `${h.icon} ${h.name} · ` +
-      (bring.map((id) => `${SKILLS[id].icon} ${SKILLS[id].name}`).join(', ') || 'no skills');
+      (bring
+        .map((id) => `${(SKILLS[id] ?? PASSIVES[id]).icon} ${(SKILLS[id] ?? PASSIVES[id]).name}`)
+        .join(', ') || 'no skills');
     $('bringing').textContent = `${bring.length}/${limit}`;
     $('herolist').replaceChildren(
       ...Object.entries(HEROES).map(([id, h]) => {
@@ -145,42 +155,53 @@ export function initMenu(
         return b;
       }),
     );
-    $('shop').replaceChildren(
-      ...Object.entries(SKILLS).map(([id, s]) => {
-        const lvl = hero.skills[id] ?? 0;
-        const price = s.shells[lvl]; // undefined at max level
-        const item = document.createElement('div');
-        item.className = 'shopitem';
-        const b = document.createElement('button');
-        b.textContent = `${s.icon} ${s.name} ${lvl ? `Lv ${lvl}` : ''}`;
-        const small = document.createElement('small');
-        small.textContent = `${skillTip(id, lvl + (price ? 1 : 0))} · ${goldOf(id, lvl + (price ? 1 : 0))}g per cast · ${
-          price ? `${lvl ? 'Upgrade' : 'Unlock'}: 🐚 ${price}` : 'Max level'
-        }`;
-        b.append(small);
-        b.disabled = !price || hero.shells < price;
-        b.onclick = () => {
-          hero.shells -= price;
-          hero.skills = { ...hero.skills, [id]: lvl + 1 };
-          if (!lvl && bring.length < limit) bring.push(id);
+    /** One shop row: buy/upgrade button, then a bring toggle once owned. */
+    const shopItem = (
+      id: string,
+      s: { icon: string; name: string; shells: number[] },
+      info: (lvl: number) => string,
+    ) => {
+      const lvl = hero.skills[id] ?? 0;
+      const price = s.shells[lvl]; // undefined at max level
+      const item = document.createElement('div');
+      item.className = 'shopitem';
+      const b = document.createElement('button');
+      b.textContent = `${s.icon} ${s.name} ${lvl ? `Lv ${lvl}` : ''}`;
+      const small = document.createElement('small');
+      small.textContent = `${info(lvl + (price ? 1 : 0))} · ${
+        price ? `${lvl ? 'Upgrade' : 'Unlock'}: 🐚 ${price}` : 'Max level'
+      }`;
+      b.append(small);
+      b.disabled = !price || hero.shells < price;
+      b.onclick = () => {
+        hero.shells -= price;
+        hero.skills = { ...hero.skills, [id]: lvl + 1 };
+        if (!lvl && bring.length < limit) bring.push(id);
+        save();
+      };
+      item.append(b);
+      if (lvl) {
+        const on = bring.includes(id);
+        const t = document.createElement('button');
+        t.className = on ? 'bring on' : 'bring';
+        t.textContent = on ? '✓ Bringing' : '+ Bring';
+        t.disabled = !on && bring.length >= limit;
+        t.onclick = () => {
+          if (on) bring.splice(bring.indexOf(id), 1);
+          else bring.push(id);
           save();
         };
-        item.append(b);
-        if (lvl) {
-          const on = bring.includes(id);
-          const t = document.createElement('button');
-          t.className = on ? 'bring on' : 'bring';
-          t.textContent = on ? '✓ Bringing' : '+ Bring';
-          t.disabled = !on && bring.length >= limit;
-          t.onclick = () => {
-            if (on) bring.splice(bring.indexOf(id), 1);
-            else bring.push(id);
-            save();
-          };
-          item.append(t);
-        }
-        return item;
-      }),
+        item.append(t);
+      }
+      return item;
+    };
+    $('shop').replaceChildren(
+      ...Object.entries(SKILLS).map(([id, s]) =>
+        shopItem(id, s, (l) => `${skillTip(id, l)} · ${goldOf(id, l)}g per cast`),
+      ),
+    );
+    $('passives').replaceChildren(
+      ...Object.entries(PASSIVES).map(([id, s]) => shopItem(id, s, (l) => passiveTip(id, l))),
     );
   }
   const saveSettings = () => db.set('settings', settings);

@@ -10,6 +10,8 @@ export interface Perk {
   bossBite?: number; // boss leaks deal this much less
   attackSpeed?: number; // +% attack speed, all towers
   qualityUp?: number; // chance a placed gem rolls one quality higher
+  startGold?: number; // gold at the start of the game
+  bossGold?: number; // +fraction of boss kill gold
   extraSkill?: boolean; // bring one more skill
 }
 export type Rarity = 'Common' | 'Rare' | 'Epic' | 'Legendary';

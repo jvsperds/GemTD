@@ -1,4 +1,4 @@
-import { HEROES } from './heroes';
+import { HEROES, type Perk } from './heroes';
 // Hero skills (BUILD.md §2.7, data/raw/hero_abilities.json). Unlocked between games with shells,
 // cast in game for gold. Values per skill level 1..4.
 export interface SkillDef {
@@ -198,7 +198,115 @@ export const SKILLS: Record<string, SkillDef> = {
     ]),
   ),
 };
-/** Most skills a game can bring. */
+// Passive skills: bought with shells like hero skills and take a bring slot, but are never cast;
+// each adds `value` (per level 1..4) to one hero perk for the whole game.
+export interface PassiveDef {
+  name: string;
+  icon: string;
+  tip: string;
+  shells: number[];
+  value: number[];
+  perk: Exclude<keyof Perk, 'extraSkill'>;
+}
+// ponytail: passive sizes are first guesses until playtests.
+export const PASSIVES: Record<string, PassiveDef> = {
+  greed: {
+    name: 'Greed',
+    icon: '💰',
+    tip: '+{v}% gold from kills',
+    shells: CASTLE,
+    value: [5, 10, 15, 20],
+    perk: 'killGold',
+  },
+  study: {
+    name: 'Study',
+    icon: '📚',
+    tip: '+{v}% XP',
+    shells: CASTLE,
+    value: [5, 10, 15, 20],
+    perk: 'xp',
+  },
+  thrift: {
+    name: 'Thrift',
+    icon: '🪙',
+    tip: 'Levels cost {v}% less gold',
+    shells: TOWER,
+    value: [5, 10, 15, 20],
+    perk: 'levelCost',
+  },
+  focus: {
+    name: 'Focus',
+    icon: '🧘',
+    tip: 'Hero skills cost {v}% less gold',
+    shells: CASTLE,
+    value: [5, 10, 15, 20],
+    perk: 'skillGold',
+  },
+  patience: {
+    name: 'Patience',
+    icon: '⏳',
+    tip: 'Hero skill effects last {v}% longer',
+    shells: CASTLE,
+    value: [10, 20, 30, 40],
+    perk: 'duration',
+  },
+  walls: {
+    name: 'Thick Walls',
+    icon: '🧱',
+    tip: 'Boss leaks deal {v} less damage',
+    shells: TOWER,
+    value: [1, 2, 3, 4],
+    perk: 'bossBite',
+  },
+  fury: {
+    name: 'Fury',
+    icon: '🏹',
+    tip: '+{v}% attack speed, all towers',
+    shells: TOWER,
+    value: [3, 6, 9, 12],
+    perk: 'attackSpeed',
+  },
+  polish: {
+    name: 'Polish',
+    icon: '✨',
+    tip: '{v}% chance a placed gem rolls one quality higher',
+    shells: [20, 40, 80, 160],
+    value: [2, 4, 6, 8],
+    perk: 'qualityUp',
+  },
+  purse: {
+    name: 'Purse',
+    icon: '👛',
+    tip: 'Start the game with {v} gold',
+    shells: CASTLE,
+    value: [50, 100, 150, 200],
+    perk: 'startGold',
+  },
+  bounty: {
+    name: 'Bounty',
+    icon: '👑',
+    tip: '+{v}% gold from bosses',
+    shells: CASTLE,
+    value: [25, 50, 75, 100],
+    perk: 'bossGold',
+  },
+};
+/** Perk units: fractions, except these flat amounts. */
+const FLAT = new Set(['bossBite', 'attackSpeed', 'startGold']);
+/** Hero perk plus the passives in a loadout, summed. */
+export function withPassives(perk: Perk, skills: Loadout): Perk {
+  const out: Perk = { ...perk };
+  for (const [id, lvl] of Object.entries(skills)) {
+    const p = PASSIVES[id];
+    if (!p) continue;
+    const v = p.value[lvl - 1] / (FLAT.has(p.perk) ? 1 : 100);
+    out[p.perk] = (out[p.perk] ?? 0) + v;
+  }
+  return out;
+}
+export const passiveTip = (id: string, lvl: number) =>
+  PASSIVES[id].tip.replace('{v}', String(PASSIVES[id].value[Math.max(1, lvl) - 1]));
+/** Most hero and passive skills a game can bring; Level and Stone are always on the bar. */
 export const MAX_BRING = 5;
 /** Skills a hero may bring (some heroes carry one more). */
 export const bringLimit = (hero: string) => MAX_BRING + (HEROES[hero]?.perk.extraSkill ? 1 : 0);
