@@ -4,33 +4,36 @@ A single-player, fully offline browser remake of the Dota 2 custom game **Gem TD
 gems, keep one, maze the rest as stones, combine into special towers, survive 50 waves.
 No server, no network calls, no runtime dependencies. Design notes: [docs/BUILD.md](docs/BUILD.md).
 
-## Play offline
+## Play
 
-1. Get `index.html`: download a release, or build it yourself (`npm install && npm run build` →
-   `dist/index.html`).
-2. Open `index.html` in Chrome, Edge or Firefox straight from disk (double-click / `file://`).
-   That single file is the whole game and works with the network off: you don't need npm,
-   Node or a server to play. npm is only needed to change the game and rebuild it.
-3. Always open it **from the same path**: scores, settings and your saved game live in the
-   browser's storage for that file location. Moving the file starts a fresh leaderboard, so use
-   **Scores & settings → Export scores** first and **Import scores** afterwards.
+1. Download `gemtd-<version>.html` from the
+   [latest release](https://github.com/jvsperds/GemTD/releases/latest).
+2. Double-click it to open it in Chrome, Edge or Firefox. That one file is the whole game: it
+   runs from disk with the network off, and you don't need npm, Node or a server.
+3. Keep the file in one place. Scores, settings and your saved game are stored by the browser
+   for that file location, so moving or renaming it starts fresh. To carry scores over, use
+   **Scores & settings → Export scores** first and **Import scores** after.
 
-Optional install as an app: serve the `dist/` folder over http (any static server) and use the
-browser's "Install" button; the service worker then caches the game for offline use.
+To install it as an app with offline caching, self-host it (below) and use the browser's
+"Install" button.
 
 ## Self-host with Docker
 
-[compose.yaml](compose.yaml) builds the game from this repo's `main` branch on GitHub (no clone
-needed) and serves it with nginx on port **5180**:
+[compose.yaml](compose.yaml) builds the game straight from GitHub (no clone needed) and serves it
+with nginx on port **5180**:
 
 ```bash
 docker compose up -d --build
 ```
 
-Then open `http://<your-server>:5180`. To update to the latest `main`, run the same command again.
-It works as a stack in Dockge/Portainer too: paste `compose.yaml` and deploy. To build from a
-local checkout instead, change `build:` to `.`. Change the port on the left of `"5180:80"` if
-5180 is taken. Put it behind a reverse proxy with HTTPS if you want the "Install" app button.
+Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer too: paste
+`compose.yaml` and deploy.
+
+- **Version:** `#main` in the `build:` URL tracks the latest code; rerun the command to update.
+  Pin a release instead with its tag, e.g. `https://github.com/jvsperds/GemTD.git#v0.1.0`.
+- **Local checkout:** set `build: .` to build what's on disk.
+- **Port:** change the left side of `"5180:80"` if 5180 is taken.
+- **Install button:** browsers only offer it over HTTPS, so put it behind a reverse proxy.
 
 ## How to play
 
@@ -64,8 +67,12 @@ Score = waves cleared × (1000 + difficulty bonus) + castle HP × 50 − seconds
 
 ## Develop
 
+Building needs Node 22. `npm run build` writes the single-file game to `dist/index.html` (plus
+the icon, manifest and service worker used when it's served over http).
+
 ```bash
 npm install
+npm run build      # type-check + single-file build into dist/
 npm run dev        # Vite dev server
 npm test           # unit tests (Vitest)
 npm run e2e        # build + Playwright: smoke on Chromium/Firefox/Edge, then perf budgets
