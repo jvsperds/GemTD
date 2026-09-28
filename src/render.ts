@@ -832,6 +832,7 @@ export class Renderer {
   showPath = true;
   showRanges = true; // every tower's attack range and aura rings; the selected one always shows
   private staticLayer = document.createElement('canvas');
+  private blockLayer = document.createElement('canvas'); // stones/towers, drawn over the pedals
   private staticDirty = true;
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
   private sprites = new Map<string, HTMLCanvasElement>();
@@ -1006,7 +1007,7 @@ export class Renderer {
     const L = this.staticLayer;
     L.width = maze.w * s;
     L.height = maze.h * s + top;
-    const g = L.getContext('2d')!;
+    let g = L.getContext('2d')!;
     g.translate(0, top);
     g.fillStyle = '#111'; // grid lines: the 1px gaps between cells
     g.fillRect(0, 0, maze.w * s, maze.h * s);
@@ -1043,6 +1044,12 @@ export class Renderer {
         (r + 0.5) * s,
       ),
     );
+    // Blocks go on their own layer so pedals (drawn per frame) sit under a tower's top.
+    const B = this.blockLayer;
+    B.width = L.width;
+    B.height = L.height;
+    g = B.getContext('2d')!;
+    g.translate(0, top);
     // Blocks in row order so nearer rows overlap the ones behind.
     const towers = new Map(this.combat.towers.map((t) => [maze.idx(t.c, t.r), t]));
     for (let r = 0; r < maze.h; r++)
@@ -1161,6 +1168,49 @@ export class Renderer {
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
 
+    // Pedals lie flat on the path: glowing while armed, dim with a refill arc while cooling down,
+    // and a shock ring in the spell's colour when a creep sets one off.
+    for (const t of this.combat.towers) {
+      const pd = this.combat.tfx(t).pedal;
+      if (!pd) continue;
+      const [spell, k] = pd,
+        col = spellColor(spell),
+        cx = X(t.c + 0.5),
+        cy = Y(t.r + 0.5),
+        key = towerKey(t.def);
+      const sp = this.sprite(`p${key}`, s, s, (g) => towerModel(g, key, s / 2, s / 2, s * 0.4));
+      const since = PEDAL.cooldown - t.cooldown; // seconds since it last went off
+      ctx.save();
+      if (t.cooldown > 0) ctx.globalAlpha = 0.45;
+      else {
+        ctx.shadowColor = col;
+        ctx.shadowBlur = s * (0.3 + 0.2 * Math.sin(now / 250));
+      }
+      ctx.drawImage(sp, cx - s / 2, cy - s / 2);
+      ctx.restore();
+      if (t.cooldown > 0) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(1, s / 12);
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.46, -1.571, -1.571 + (since / PEDAL.cooldown) * 6.283);
+        ctx.stroke();
+      }
+      if (t.cooldown > 0 && since < 0.8) {
+        const def = SPELL[spell] as { radius?: number | readonly number[] };
+        const rad = typeof def.radius === 'number' ? def.radius : (def.radius?.[k] ?? 128);
+        const f = since / 0.8;
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = 1 - f;
+        ctx.lineWidth = Math.max(2, s / 6) * (1 - f);
+        ctx.beginPath();
+        ctx.arc(cx, cy, (rad / UNITS_PER_CELL) * s * (0.2 + 0.8 * f), 0, 7);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    ctx.drawImage(this.blockLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
+
     if (this.flash >= 0 && now < this.flashUntil) {
       ctx.fillStyle = 'rgba(220,50,50,0.6)';
       ctx.fillRect(X(this.flash % this.maze.w), Y((this.flash / this.maze.w) | 0), s, s);
@@ -1220,47 +1270,6 @@ export class Renderer {
       ctx.arc(X(t.c + 0.5), Y(t.r + 0.5), (this.combat.range(t) / UNITS_PER_CELL) * s, 0, 7);
       if (on) ctx.fill();
       ctx.stroke();
-    }
-
-    // Pedals lie flat on the path: glowing while armed, dim with a refill arc while cooling down,
-    // and a shock ring in the spell's colour when a creep sets one off.
-    for (const t of this.combat.towers) {
-      const pd = this.combat.tfx(t).pedal;
-      if (!pd) continue;
-      const [spell, k] = pd,
-        col = spellColor(spell),
-        cx = X(t.c + 0.5),
-        cy = Y(t.r + 0.5),
-        key = towerKey(t.def);
-      const sp = this.sprite(`p${key}`, s, s, (g) => towerModel(g, key, s / 2, s / 2, s * 0.4));
-      const since = PEDAL.cooldown - t.cooldown; // seconds since it last went off
-      ctx.save();
-      if (t.cooldown > 0) ctx.globalAlpha = 0.45;
-      else {
-        ctx.shadowColor = col;
-        ctx.shadowBlur = s * (0.3 + 0.2 * Math.sin(now / 250));
-      }
-      ctx.drawImage(sp, cx - s / 2, cy - s / 2);
-      ctx.restore();
-      if (t.cooldown > 0) {
-        ctx.strokeStyle = col;
-        ctx.lineWidth = Math.max(1, s / 12);
-        ctx.beginPath();
-        ctx.arc(cx, cy, s * 0.46, -1.571, -1.571 + (since / PEDAL.cooldown) * 6.283);
-        ctx.stroke();
-      }
-      if (t.cooldown > 0 && since < 0.8) {
-        const def = SPELL[spell] as { radius?: number | readonly number[] };
-        const rad = typeof def.radius === 'number' ? def.radius : (def.radius?.[k] ?? 128);
-        const f = since / 0.8;
-        ctx.strokeStyle = col;
-        ctx.globalAlpha = 1 - f;
-        ctx.lineWidth = Math.max(2, s / 6) * (1 - f);
-        ctx.beginPath();
-        ctx.arc(cx, cy, (rad / UNITS_PER_CELL) * s * (0.2 + 0.8 * f), 0, 7);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
     }
 
     if (this.selected >= 0) {
