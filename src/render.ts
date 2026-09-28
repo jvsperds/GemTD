@@ -25,16 +25,7 @@ export const GEM_COLOR: Record<string, string> = {
   Y: '#f2c52e',
   S: '#ff7ad9', // special towers
 };
-// Guide colours by build order (1 first), opal spots, specials.
-const GUIDE_COLOR: Record<string, string> = {
-  '1': '#f2e94e80',
-  '2': '#f2c52e80',
-  '3': '#f0a03080',
-  '4': '#d0702080',
-  '5': '#e03a3a80',
-  O: '#4fe0d880',
-  S: '#3a6bff99',
-};
+const GUIDE_COLOR = '#f2c52e80'; // one colour for every guide mark, as in the game
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
 const TALL = 0.55;
@@ -1022,7 +1013,7 @@ export class Renderer {
         g.fillRect(c * s, r * s, s - 1, s - 1);
         const k = this.guide?.[r]?.[c] ?? '.';
         if (k && k !== '.' && maze.cells[maze.idx(c, r)] !== WALL) {
-          g.fillStyle = GUIDE_COLOR[k];
+          g.fillStyle = GUIDE_COLOR;
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
       }

@@ -2,7 +2,14 @@ import { expect, test } from 'vitest';
 import map from '../data/map.json';
 import waves from '../data/waves.json';
 import { Maze, type MapData } from '../src/sim/maze';
-import { CASTLE_HP, CREEPS_PER_WAVE, ENDLESS, WaveSim, type WaveEntry } from '../src/sim/waves';
+import {
+  CASTLE_HP,
+  CREEPS_PER_WAVE,
+  ENDLESS,
+  GIANT,
+  WaveSim,
+  type WaveEntry,
+} from '../src/sim/waves';
 
 const sim = () => new WaveSim(new Maze(map as unknown as MapData), waves as WaveEntry[]);
 
@@ -73,4 +80,17 @@ test('endless: past the last wave, earlier waves return with scaled hp and armor
   const orig = (waves as WaveEntry[]).find((w) => w.wave === s.lastWave - 9)!;
   expect(cr.def.hp).toBeCloseTo(orig.hp * ENDLESS.hp);
   expect(cr.def.armor).toBe(orig.armor + ENDLESS.armor);
+});
+
+test('giant: 10x-HP creep only after a no-damage streak', () => {
+  const s = sim();
+  s.rand = () => 0;
+  s.startWave();
+  expect(s['queue'].some((d: { name: string }) => d.name.startsWith('Giant'))).toBe(false);
+  s.phase = 'build';
+  s.streak = GIANT.streak;
+  s.startWave();
+  const giants = s['queue'].filter((d: { name: string }) => d.name.startsWith('Giant'));
+  expect(giants).toHaveLength(1);
+  expect(giants[0].hp).toBe(s['queue'][1].hp * GIANT.hp);
 });
