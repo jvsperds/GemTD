@@ -149,6 +149,12 @@ export class WaveSim {
   phase: Phase = 'build';
   wave = 0; // last wave started
   castleHp = CASTLE_HP;
+  // Hero skills on the castle: damage blocked per bite / dodge chance, and seconds left.
+  guard = { v: 0, t: 0 };
+  evade = { v: 0, t: 0 };
+  bossBite = 0; // hero passive: less damage from boss leaks
+  revenge = { v: 0, t: 0 }; // HP threshold below which towers deal more damage
+  candy: Cell | null = null; // Candy Marker: creeps visit it first, next wave only
   creeps: Creep[] = [];
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
@@ -189,6 +195,14 @@ export class WaveSim {
 
   startWave() {
     if (this.phase !== 'build') return false;
+    if (this.candy) {
+      const wp = this.maze.waypoints;
+      wp.splice(1, 0, this.candy);
+      if (!this.maze.route()) {
+        wp.splice(1, 1); // built over since the cast
+        this.candy = null;
+      }
+    }
     this.refreshRoute();
     this.wave++;
     const defs = this.waves
@@ -262,8 +276,13 @@ export class WaveSim {
     }
     this.creeps = this.creeps.filter((c) => c.alive);
     if (this.castleHp <= 0) this.phase = 'lost';
-    else if (!this.queue.length && !this.creeps.length)
+    else if (!this.queue.length && !this.creeps.length) {
       this.phase = this.wave >= this.lastWave ? 'won' : 'build';
+      if (this.candy) {
+        this.maze.waypoints.splice(this.maze.waypoints.indexOf(this.candy), 1);
+        this.candy = null;
+      }
+    }
   }
 
   /** Move speed after rush, % slows (strongest) and flat slows, floored at MIN_SPEED. */
@@ -304,7 +323,10 @@ export class WaveSim {
     if (atGoal) {
       if (cr.seg === wp.length - 1) {
         cr.alive = false;
-        this.castleHp -= cr.def.boss ? BOSS_LEAK_DAMAGE : LEAK_DAMAGE;
+        let dmg = cr.def.boss ? BOSS_LEAK_DAMAGE - this.bossBite : LEAK_DAMAGE;
+        if (this.guard.t > 0) dmg = Math.max(0, dmg - this.guard.v);
+        if (this.evade.t > 0 && this.rand() * 100 < this.evade.v) dmg = 0;
+        this.castleHp -= dmg;
         return;
       }
       cr.seg++;

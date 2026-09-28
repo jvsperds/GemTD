@@ -31,8 +31,8 @@
       }
       #game {
         display: block;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         touch-action: none;
       }
       .glass {
@@ -300,6 +300,23 @@
         position: relative;
         box-shadow: inset 0 0 10px #000;
       }
+      button.skillcard {
+        padding: 0;
+        color: var(--text);
+        cursor: pointer;
+      }
+      button.skillcard:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button.skillcard.on {
+        border-color: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+      }
+      .odds {
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
       .card img {
         width: 40px;
         height: 40px;
@@ -403,6 +420,143 @@
           opacity: 0;
           transform: translateX(-20px);
         }
+      }
+      #herolist {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 6px;
+      }
+      .herocard {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        border-color: var(--rarity);
+        text-align: center;
+      }
+      .herocard.on {
+        box-shadow: 0 0 10px var(--rarity);
+      }
+      .herocard i {
+        font-style: normal;
+        font-size: 26px;
+      }
+      .herocard small {
+        color: var(--muted);
+      }
+      .herocard .rarity {
+        color: var(--rarity);
+      }
+      .herocard .cost {
+        color: var(--accent);
+      }
+      #menu h3 {
+        margin: 12px 0 6px;
+        font-size: 14px;
+      }
+      #shop {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 6px;
+      }
+      .shopitem {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .shopitem > button:first-child {
+        flex: 1;
+        text-align: left;
+      }
+      .shopitem small {
+        display: block;
+        color: var(--muted);
+      }
+      .shopitem .bring {
+        font-size: 12px;
+        padding: 2px 6px;
+      }
+      .shopitem .bring.on {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      #dmgtab {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        border-radius: 8px 0 0 8px;
+        padding: 6px 8px;
+        z-index: 2;
+      }
+      #dmgtab.on {
+        right: min(260px, calc(70vw));
+      }
+      #dmg {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        max-height: 45vh;
+        width: min(260px, 70vw);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+        box-sizing: border-box;
+        border-radius: 8px 0 0 8px;
+      }
+      #dmg[hidden] {
+        display: none;
+      }
+      #dmg header {
+        display: flex;
+        gap: 4px;
+      }
+      #dmg header button {
+        font-size: 12px;
+        padding: 2px 6px;
+      }
+      #dmg header button.on {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      #dmglist {
+        overflow: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dmgrow {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 4px;
+        color: var(--text);
+      }
+      .dmgrow i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        opacity: 0.25;
+        border-radius: 3px;
+      }
+      .dmgrow img,
+      .dmgrow > span:first-of-type {
+        width: 18px;
+        height: 18px;
+        text-align: center;
+      }
+      .dmgrow > span:last-of-type {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dmgrow b {
+        font-weight: normal;
+        font-variant-numeric: tabular-nums;
       }
       #bookbody {
         overflow: auto;
@@ -575,6 +729,350 @@
         font: 12px monospace;
         pointer-events: none;
       }
+      /* ---- Dota-style theme: carved dark stone, bronze bevels, gold accents ---- */
+      :root {
+        --glass:
+          linear-gradient(180deg, #ffffff0a, #0000 40%),
+          linear-gradient(180deg, #1c1f24f2, #0d0f12f5);
+        --edge: #8a7148;
+        --edge-dim: #3b3327;
+        --accent: #e2c47c;
+        --gold: #f0c860;
+        --text: #e8e2d4;
+        --muted: #9a9384;
+        --bevel: inset 0 1px 0 #ffffff14, inset 0 -1px 0 #000a, 0 0 0 1px #000, 0 6px 18px #000c;
+      }
+      .glass {
+        border: 1px solid var(--edge);
+        box-shadow: var(--bevel);
+      }
+      button {
+        background: linear-gradient(180deg, #2f2c27, #17150f);
+        border-color: var(--edge-dim);
+        box-shadow: inset 0 1px 0 #ffffff12;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--accent);
+        box-shadow:
+          inset 0 1px 0 #ffffff12,
+          0 0 8px #e2c47c55;
+      }
+      /* Top bar: centred info, menu on the right */
+      #hud {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        padding: 0 0 0 12px;
+        min-height: 38px;
+        border-width: 0 0 1px;
+        border-radius: 0;
+        background: linear-gradient(180deg, #2a261f, #121110 70%), #121110;
+      }
+      #hudinfo {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 4px 16px;
+      }
+      #hudinfo .chip {
+        text-shadow: 0 1px 2px #000;
+      }
+      #gold {
+        color: var(--gold);
+      }
+      #menubtn {
+        height: 100%;
+        border-radius: 0;
+        border-width: 0 0 0 1px;
+        border-color: var(--edge);
+        padding: 0 16px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: var(--accent);
+      }
+      .tag {
+        border-color: var(--edge);
+        color: var(--accent);
+        background: #0006;
+      }
+      /* Left dock (mirrors the damage-chart tab on the right) */
+      #dock {
+        position: fixed;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: 4px;
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+        z-index: 2;
+      }
+      #dock button {
+        width: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 4px 2px;
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      #dock button i {
+        font-style: normal;
+        font-size: 17px;
+      }
+      #dock button.on {
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: inset 0 0 8px #e2c47c55;
+      }
+      #book {
+        left: 64px;
+      }
+      /* Bottom HUD */
+      #panel {
+        bottom: 0;
+        border-radius: 12px 12px 0 0;
+        border-bottom: none;
+        padding: 10px 12px 8px;
+      }
+      #panel[data-view='hero'] #actions {
+        display: none;
+      }
+      #portrait {
+        border: 2px solid var(--edge);
+        box-shadow:
+          inset 0 0 14px #000,
+          0 0 0 1px #000;
+        background: radial-gradient(circle at 50% 35%, #3a342a, #0b0a08);
+      }
+      #name {
+        color: var(--accent);
+        font-size: 11px;
+        letter-spacing: 1.5px;
+      }
+      #attrs span:nth-child(even) {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+      #cards {
+        flex-wrap: nowrap;
+        gap: 5px;
+      }
+      .card,
+      .slot {
+        border-color: #000;
+        box-shadow:
+          inset 0 0 0 1px var(--edge-dim),
+          inset 0 0 12px #000;
+      }
+      .slot {
+        position: relative;
+        width: 58px;
+        height: 58px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 4px;
+        background: radial-gradient(circle at 50% 40%, #3b3a36, #0e0e0d);
+      }
+      .slot i {
+        font-style: normal;
+        font-size: 26px;
+        margin-bottom: 8px;
+      }
+      .slot small {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 1px;
+        font-size: 9px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-shadow: 0 1px 2px #000;
+      }
+      .slot kbd {
+        position: absolute;
+        top: 1px;
+        left: 2px;
+        font-size: 9px;
+        color: var(--gold);
+        background: #000a;
+        border-color: #0000;
+      }
+      .slot u {
+        position: absolute;
+        top: -1px;
+        right: 3px;
+        text-decoration: none;
+        font-size: 10px;
+        letter-spacing: -1px;
+        color: var(--gold);
+      }
+      .slot.on {
+        box-shadow:
+          inset 0 0 0 2px var(--accent),
+          0 0 10px var(--accent);
+      }
+      .slot:disabled {
+        opacity: 1;
+        filter: grayscale(1) brightness(0.55);
+      }
+      #bar {
+        height: 18px;
+        border-color: #000;
+        box-shadow: inset 0 0 0 1px var(--edge-dim);
+      }
+      #bar i {
+        background: linear-gradient(180deg, #d8b85a, #7a5d1c);
+      }
+      #panel[data-view='creep'] #bar i,
+      #panel[data-view='tower'] #bar i {
+        background: linear-gradient(180deg, #3fd35f, #1c7a30);
+      }
+      #combos.oddsrow {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+        gap: 4px;
+      }
+      .oddsrow .odds {
+        text-align: center;
+        font-size: 11px;
+        white-space: nowrap;
+        padding: 1px 0;
+        background: #0007;
+        border: 1px solid var(--edge-dim);
+        border-radius: 3px;
+      }
+      #actions button {
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 10px;
+      }
+      #dmgtab {
+        border-color: var(--edge);
+      }
+      /* Menu: dashboard with a gold-underlined nav */
+      #menu {
+        z-index: 10;
+        padding: 0 0 16px;
+        border-color: var(--edge);
+        background:
+          radial-gradient(ellipse at 50% 0%, #3a2f1c66, #0000 60%),
+          linear-gradient(180deg, #16171af7, #0b0c0ef9);
+      }
+      #menu > :not(.tabs):not(h2) {
+        margin-left: 20px;
+        margin-right: 20px;
+      }
+      #menu h2 {
+        margin: 0;
+        padding: 14px 0 10px;
+        font-size: 22px;
+        letter-spacing: 8px;
+        color: var(--gold);
+        text-shadow:
+          0 0 14px #f0c86055,
+          0 2px 2px #000;
+        background: linear-gradient(180deg, #2a2418, #0000);
+      }
+      .tabs {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        gap: 0;
+        padding: 0 12px;
+        margin-bottom: 14px;
+        background: #0d0e10;
+        border-bottom: 1px solid var(--edge);
+      }
+      .tabs button {
+        background: none;
+        border: none;
+        border-bottom: 2px solid #0000;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 10px 14px 8px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .tabs button:hover:not(:disabled) {
+        color: var(--text);
+        box-shadow: none;
+      }
+      .tabs button.on {
+        color: var(--gold);
+        border-bottom-color: var(--gold);
+        text-shadow: 0 0 10px #f0c86066;
+      }
+      #menu h3 {
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 12px;
+        font-weight: normal;
+        color: var(--accent);
+        border-bottom: 1px solid var(--edge-dim);
+        padding-bottom: 4px;
+      }
+      #menu th {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 11px;
+        background: #0006;
+      }
+      #menu tbody tr:nth-child(odd) {
+        background: #ffffff05;
+      }
+      .cards button,
+      .herocard,
+      .shopitem > button:first-child {
+        background: linear-gradient(180deg, #25231f, #121110);
+        box-shadow:
+          inset 0 1px 0 #ffffff10,
+          inset 0 0 0 1px #000;
+      }
+      .cards button.on {
+        border-color: var(--gold);
+        box-shadow: inset 0 0 12px #f0c86044;
+      }
+      #gameover .big {
+        color: var(--gold);
+        font-size: 36px;
+        text-shadow: 0 0 16px #f0c86066;
+      }
+      @media (max-width: 760px) {
+        #dock button {
+          width: 40px;
+        }
+        #dock button span,
+        #menubtn kbd {
+          display: none;
+        }
+        #book {
+          left: 50px;
+        }
+        .slot {
+          width: 42px;
+          height: 42px;
+        }
+        .slot i {
+          font-size: 18px;
+        }
+        .slot small {
+          font-size: 8px;
+        }
+        #cards {
+          gap: 3px;
+          justify-content: center;
+        }
+      }
       @media (max-width: 760px) {
         #hud {
           gap: 2px 8px;
@@ -617,8 +1115,19 @@
   </head>
   <body>
     <canvas id="game"></canvas>
-    <div id="hud" class="glass"></div>
+    <header id="hud" class="glass">
+      <div id="hudinfo"></div>
+      <button id="menubtn" data-a="menu" title="Menu (B)">☰ Menu <kbd>B</kbd></button>
+    </header>
     <div id="hint"></div>
+    <nav id="dock" class="glass">
+      <button data-a="guide" title="Maze guide (G)"><i>🗺</i><span>Guide</span></button>
+      <button data-a="path" title="Show path (P)"><i>〰</i><span>Path</span></button>
+      <button data-a="ranges" title="Show ranges (V)"><i>◎</i><span>Ranges</span></button>
+      <button data-a="book" title="Recipe book (H)"><i>📖</i><span>Book</span></button>
+      <button data-a="pause" title="Pause (Space)"><i>⏸</i><span>Pause</span></button>
+      <button data-a="speed" title="Game speed (1-4)"><i>⏩</i><span>×1</span></button>
+    </nav>
     <div id="panel" class="glass" data-view="hero">
       <div id="status"></div>
       <div id="who">
@@ -636,21 +1145,8 @@
         <button class="tower" data-a="merge2"><i>⬆</i><span>Merge ×2</span><kbd>M</kbd></button>
         <button class="tower" data-a="merge4"><i>⏫</i><span>Merge ×4</span><kbd>N</kbd></button>
         <button class="tower" data-a="down"><i>⬇</i><span>Down</span><kbd>D</kbd></button>
-        <button class="hero" data-a="level"><i>✨</i><span>Level</span><kbd>L</kbd></button>
-        <button class="hero" data-a="stone"><i>⛏</i><span>Stone</span><kbd>R</kbd></button>
-        <button class="hero builder" data-a="guide"><i>🗺</i><span>Guide</span><kbd>G</kbd></button>
         <button class="builder" data-a="clear"><i>🧹</i><span>Clear</span></button>
         <button class="builder" data-a="save"><i>💾</i><span>Save</span></button>
-        <button class="hero builder" data-a="path"><i>〰</i><span>Path</span><kbd>P</kbd></button>
-        <button class="hero" data-a="ranges"><i>◎</i><span>Ranges</span><kbd>V</kbd></button>
-        <button class="creep" data-a="book"><i>📖</i><span>Book</span><kbd>H</kbd></button>
-        <button class="hero tower creep" data-a="pause">
-          <i>⏸</i><span>Pause</span><kbd>Space</kbd>
-        </button>
-        <button class="hero tower creep" data-a="speed">
-          <i>⏩</i><span>×1</span><kbd>1-4</kbd>
-        </button>
-        <button class="creep" data-a="menu"><i>📜</i><span>Menu</span><kbd>B</kbd></button>
         <button class="tower creep" data-a="deselect">
           <i>✕</i><span>Back</span><kbd>Esc</kbd>
         </button>
@@ -664,12 +1160,24 @@
       <div id="bookbody"></div>
     </aside>
     <pre id="debug" hidden></pre>
+    <button id="dmgtab" class="glass" title="Damage chart">📊</button>
+    <aside id="dmg" class="glass" hidden>
+      <header>
+        <button data-kind="magic">Magic</button>
+        <button data-kind="physical">Physical</button>
+        <button data-kind="total" class="on">Total</button>
+        <span style="flex: 1"></span>
+        <button id="dmgpin">📌</button>
+      </header>
+      <div id="dmglist"></div>
+    </aside>
     <div id="menu" class="glass" hidden>
       <h2>✦ GEM TD ✦</h2>
       <div id="gameover" hidden></div>
       <div class="tabs">
         <button data-tab="scores" class="on">Scores</button>
         <button data-tab="play">New game</button>
+        <button data-tab="hero">Hero</button>
         <button data-tab="settings">Settings</button>
         <span style="flex: 1"></span>
         <button id="close">✕ <kbd>B</kbd></button>
@@ -724,11 +1232,25 @@
           <button data-diff="normal">🔵 Normal<small>The true path</small></button>
           <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
         </div>
+        <p>
+          Hero &amp; skills: <b id="loadout">—</b>
+          <button id="changeloadout">Change</button>
+        </p>
         <p class="cards">
           <button id="newgame">⚔ Begin new game</button>
           <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
           <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
         </p>
+      </section>
+      <section data-pane="hero" hidden>
+        <p>
+          🐚 <b id="shells">0</b> shells — earned each game (1 per 3 waves cleared, +4 for a win, max 20).
+          Your hero and skills apply from your next new game.
+        </p>
+        <h3>Hero</h3>
+        <div id="herolist"></div>
+        <h3>Skills · bringing <b id="bringing">0/5</b></h3>
+        <div id="shop"></div>
       </section>
       <section data-pane="settings" hidden>
         <p>

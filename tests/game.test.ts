@@ -1,3 +1,4 @@
+import { shellsFor } from '../src/sim/skills';
 import { expect, test } from 'vitest';
 import gems from '../data/gems.json';
 import map from '../data/map.json';
@@ -103,4 +104,137 @@ test('a scripted player can play full rounds start to finish', () => {
   }
   expect(g.sim.wave).toBeGreaterThan(3);
   expect(g.level).toBeGreaterThan(1);
+});
+
+test('hero skills: need unlocking and gold, buff a tower, expire, and replay identically', () => {
+  const g = setup();
+  for (const [c, r] of spots) g.run(['place', c, r]);
+  const t = g.placed[0];
+  g.gold = 1000;
+  expect(g.run(['skill', t.c, t.r, 'haste'])).toBe(false); // not unlocked
+  g.skills = { haste: 2, guard: 1 };
+  expect(g.run(['skill', -1, -1, 'haste'])).toBe(false); // needs a tower
+  const base = g.combat.attacksPerSec(t);
+  expect(g.run(['skill', t.c, t.r, 'haste'])).toBe(true);
+  expect(g.combat.attacksPerSec(t)).toBeCloseTo(base * 1.8);
+  expect(g.run(['skill', -1, -1, 'guard'])).toBe(true);
+  expect(g.gold).toBe(500);
+  g.run(['keep', t.c, t.r]);
+  for (let k = 0; k < 61 * 30 && g.sim.phase === 'wave'; k++) g.tick();
+  const r = setup();
+  r.skills = g.skills;
+  r.gold = 1000;
+  r.replay(g.log);
+  while (r.ticks < g.ticks && r.sim.phase === 'wave') r.tick();
+  expect(r.ticks).toBe(g.ticks);
+  expect(t.haste.t).toBeCloseTo(60 - g.seconds); // counts down in wave time only
+  expect(r.gold).toBe(g.gold);
+  expect(r.sim.castleHp).toBe(g.sim.castleHp);
+});
+
+test('pray skills bias the next gem only; hammer downgrades exactly one level', () => {
+  const g = setup();
+  g.skills = { prayR: 4, perfect: 4, hammer: 1 };
+  g.gold = 10000;
+  let rubies = 0;
+  for (let k = 0; k < 40; k++) {
+    const m = setup(k + 1);
+    m.skills = { prayR: 4 };
+    m.gold = 200;
+    expect(m.run(['skill', -1, -1, 'prayR'])).toBe(true);
+    if (m.place(10, 10)!.def.type === 'R') rubies++;
+    expect(m.pray).toBeNull(); // consumed by one placement
+  }
+  expect(rubies).toBeGreaterThan(20); // 70% + 1/8 of the rest, vs 5 by chance
+  expect(g.run(['skill', -1, -1, 'perfect'])).toBe(true);
+  for (const [c, r] of spots) g.run(['place', c, r]);
+  const t = g.placed.find((x) => x.def.quality > 1);
+  if (t) {
+    const q = t.def.quality;
+    expect(g.run(['skill', t.c, t.r, 'hammer'])).toBe(true);
+    expect(t.def.quality).toBe(q - 1);
+    expect(g.gold).toBe(10000 - 400 - 250);
+  }
+  const chipped = g.placed.find((x) => x.def.quality === 1)!;
+  expect(g.run(['skill', chipped.c, chipped.r, 'hammer'])).toBe(false);
+});
+
+test('map skills: swap, stonehenge, whirl, candy, timelapse, adja-swap', () => {
+  const g = setup();
+  g.skills = { swap: 1, stonehenge: 1, whirl: 1, candy: 1, timelapse: 1, adjswap: 1 };
+  g.gold = 5000;
+  const { maze } = g.sim;
+  // TimeLapse takes this round's gems back.
+  for (const [c, r] of spots.slice(0, 2)) g.run(['place', c, r]);
+  expect(g.run(['skill', -1, -1, 'timelapse'])).toBe(true);
+  expect(g.placed.length).toBe(0);
+  expect(maze.walkable(spots[0][0], spots[0][1])).toBe(true);
+  // StoneHenge: a line of up to 4 stones to the right.
+  expect(g.run(['skill', 10, 14, 'stonehenge', 11, 14])).toBe(true);
+  expect([10, 11, 12, 13, 14].map((c) => maze.cells[maze.idx(c, 14)] === ROCK)).toEqual([
+    true,
+    true,
+    true,
+    true,
+    false,
+  ]);
+  // Swap two towers.
+  for (const [c, r] of spots) g.run(['place', c, r]);
+  const [a, b] = g.placed;
+  const [ad, bd] = [a.def, b.def];
+  expect(g.run(['skill', a.c, a.r, 'swap', b.c, b.r])).toBe(true);
+  expect([g.combat.towerAt(10, 10)!.def, g.combat.towerAt(12, 10)!.def]).toEqual([bd, ad]);
+  // Adja-Swap moves a tower onto a neighbouring stone (the StoneHenge line).
+  g.run(['keep', a.c, a.r]); // round ends, other gems become stones
+  while (g.sim.phase === 'wave') g.tick();
+  // Whirl around (12, 15): the StoneHenge stones above it turn counter-clockwise, so the
+  // top-right one leaves (13, 14) and the top-left one moves down to (11, 15).
+  expect(g.run(['skill', 12, 15, 'whirl'])).toBe(true);
+  expect(maze.cells[maze.idx(13, 14)]).not.toBe(ROCK);
+  expect(maze.cells[maze.idx(11, 15)]).toBe(ROCK);
+  // Candy on an open cell adds a waypoint for the next wave only.
+  const n = maze.waypoints.length;
+  expect(g.run(['skill', 20, 20, 'candy'])).toBe(true);
+  for (const [c, r] of [
+    [24, 24],
+    [26, 24],
+    [28, 24],
+    [30, 24],
+    [24, 26],
+  ])
+    g.run(['place', c, r]);
+  g.run(['keep', 24, 24]);
+  expect(maze.waypoints.length).toBe(n + 1);
+  while ((g.sim.phase as string) === 'wave') g.tick();
+  expect(maze.waypoints.length).toBe(n);
+  expect(g.run(['skill', 11, 14, 'adjswap'])).toBe(false); // (11, 14) is a plain stone, not a tower
+});
+
+test('hero passives change rules; no hero is neutral', () => {
+  const plain = setup();
+  const [t0] = placeRound(plain);
+  const war = setup();
+  war.setHero('obsidian');
+  const [t1] = placeRound(war);
+  t1.def = t0.def;
+  expect(war.combat.attacksPerSec(t1)).toBeCloseTo(plain.combat.attacksPerSec(t0) * 1.15);
+  const merchant = setup();
+  merchant.setHero('citrine');
+  merchant.skills = { heal: 1 };
+  expect(merchant.skillGold('heal')).toBe(300); // 400 - 25%
+  const warden = setup();
+  warden.setHero('garnet');
+  expect(warden.sim.bossBite).toBe(3);
+  const scholar = setup();
+  scholar.setHero('onyx');
+  scholar.gold = 1000;
+  const cost = scholar.levelCost!;
+  expect(cost).toBe(Math.round(plain.levelCost! * 0.9));
+});
+
+test('shells: 1 per 3 waves, +4 for a win, never more than 20', () => {
+  expect(shellsFor(0, false)).toBe(0);
+  expect(shellsFor(10, false)).toBe(3);
+  expect(shellsFor(50, true)).toBe(20);
+  expect(shellsFor(200, true)).toBe(20); // endless runs stay capped
 });
