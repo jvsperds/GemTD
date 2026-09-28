@@ -171,6 +171,17 @@ export class Maze {
     return out;
   }
 
+  /** Route legs whose walked path enters the middle (Chebyshev radius `r` around the centre). */
+  middlePasses(fields: Float64Array[], r = 6) {
+    const mc = (this.w - 1) / 2,
+      mr = (this.h - 1) / 2;
+    return fields.filter((f, s) =>
+      this.walk(f, this.waypoints[s]).some(
+        ([c, rr]) => Math.max(Math.abs(c - mc), Math.abs(rr - mr)) <= r,
+      ),
+    ).length;
+  }
+
   /** Place a rock if buildable and the route stays open. Returns whether it was placed. */
   placeRock(c: number, r: number): boolean {
     if (!this.buildable(c, r)) return false;

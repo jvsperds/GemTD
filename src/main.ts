@@ -1,20 +1,30 @@
 import waves from '../data/waves.json';
 import * as db from './persist';
-import { GEM_COLOR, Renderer } from './render';
+import rawAdvanced from '../data/raw/advanced_towers.json';
+import rawBase from '../data/raw/base_towers.json';
+import { GEM_COLOR, portrait, Renderer, towerKey } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
-import { DEFS, newGame, type Difficulty } from './sim/setup';
-import type { GemDef, SpecialDef, Tower } from './sim/towers';
-import { TICK, type WaveEntry } from './sim/waves';
+import { newGame, type Difficulty } from './sim/setup';
+import type { Tower } from './sim/towers';
+import { CASTLE_HP, TICK, type WaveEntry } from './sim/waves';
+import { initBook, mazeRows, measure, type Guide } from './book';
 import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const hud = document.querySelector<HTMLElement>('#hud')!;
+const hintEl = document.querySelector<HTMLElement>('#hint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const stress = location.hash === '#stress';
 const settings = await db.get('settings');
 // A fresh start (new game / daily / replay) is handed over the reload in sessionStorage.
-type Start = { seed: number; difficulty: string; daily?: string; replay?: LogEntry[] };
+type Start = {
+  seed: number;
+  difficulty: string;
+  daily?: string;
+  replay?: LogEntry[];
+  builder?: boolean;
+};
 let start: Start | null = null;
 try {
   start = JSON.parse(sessionStorage.getItem('gemtd.start') ?? 'null');
@@ -28,6 +38,7 @@ const cfg = start ??
 const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
 if (save) game.replay(save.commands); // resume: waves before the last command replay headless
 const replaying = start?.replay ?? null; // watch mode: commands are fed live, input is off
+const builder = !!start?.builder; // maze builder: free stone editing, no gems or waves
 let ri = 0,
   nextCmdAt = 0;
 const { combat, sim } = game;
@@ -37,7 +48,35 @@ const view = new Renderer(canvas, maze, sim, combat);
 let removing = false; // Remove-stone mode
 let sel: Tower | null = null;
 let speed = settings.speed; // 0 = paused
-const menu = initMenu(settings, game, (s) => (speed = s), sfx.setVolume);
+const menu = initMenu(
+  settings,
+  game,
+  (s) => (speed = s),
+  sfx.setVolume,
+  () => book.save(mazeRows(maze)),
+);
+let guide: Guide | null = null;
+const showGuide = (g: Guide | null) => {
+  guide = g;
+  view.guide = g?.rows ?? null;
+  view.invalidate();
+};
+const book = initBook({
+  towers: () => combat.towers,
+  selected: () => sel,
+  guide: () => guide,
+  showGuide,
+  build: builder
+    ? (g) => {
+        // Stones in a valid guide never block part-way, so placing them one by one is safe.
+        for (let i = 0; i < maze.cells.length; i++) maze.removeRock(i % maze.w, (i / maze.w) | 0);
+        g.rows.forEach((row, r) => [...row].forEach((ch, c) => ch !== '.' && maze.placeRock(c, r)));
+        mazeVer++;
+        view.invalidate();
+      }
+    : undefined,
+});
+let mazeVer = 0; // bumped on every builder edit
 
 const saveNow = () =>
   db.set('save', {
@@ -47,7 +86,7 @@ const saveNow = () =>
     commands: game.log,
     version: db.VERSION,
   });
-if (!replaying && !stress) {
+if (!replaying && !stress && !builder) {
   game.onCommand = saveNow;
   if (start) saveNow(); // so a reload before the first move resumes this game, not the old one
 }
@@ -65,12 +104,21 @@ canvas.addEventListener('click', (e) => {
   if (replaying) return;
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
+  if (builder) {
+    const ok = maze.removeRock(c, r) || maze.placeRock(c, r);
+    if (ok) mazeVer++;
+    else [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
+    sfx.play(ok ? 'place' : 'refuse');
+    return view.invalidate();
+  }
   const hit = combat.towerAt(c, r);
   const ok = removing
     ? run(['stone', c, r])
     : hit
       ? (sel = hit)
-      : game.step === 'place' && run(['place', c, r]);
+      : game.step === 'place'
+        ? run(['place', c, r])
+        : ((sel = null), true); // clicking empty ground returns to the hero view
   removing = false;
   if (!ok) {
     [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
@@ -80,8 +128,27 @@ canvas.addEventListener('click', (e) => {
 });
 function act(a: string) {
   if (a === 'menu') return menu.toggle();
-  if (a === 'guide') return ((view.guide = !view.guide), view.invalidate());
+  if (a === 'guide') {
+    // cycle: off -> each guide (built-in, then library) -> off
+    const all = book.guides();
+    return showGuide(all[all.findIndex((g) => g.rows === guide?.rows) + 1] ?? null);
+  }
+  if (a === 'ranges') return (view.showRanges = !view.showRanges);
+  if (a === 'book') return book.toggle();
+  if (a === 'save') return book.save(mazeRows(maze));
+  if (a === 'clear') {
+    if (!confirm('Clear every stone?')) return;
+    for (let i = 0; i < maze.cells.length; i++) maze.removeRock(i % maze.w, (i / maze.w) | 0);
+    mazeVer++;
+    return view.invalidate();
+  }
+  if (a === 'path') return ((view.showPath = !view.showPath), view.invalidate());
+  if (a === 'deselect') return ((sel = null), (removing = false));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
+  if (a === 'speed') {
+    speed = settings.speed = { 1: 2, 2: 4 }[settings.speed] ?? 1;
+    return db.set('settings', settings);
+  }
   if (replaying) return;
   if (a === 'stone') removing = !removing;
   else if (a === 'level') run(['level']);
@@ -101,10 +168,14 @@ const keys: Record<string, string> = {
   r: 'stone',
   l: 'level',
   g: 'guide',
+  p: 'path',
+  v: 'ranges',
+  h: 'book',
+  Escape: 'deselect',
   b: 'menu',
   ' ': 'pause',
 };
-const buttons = [...document.querySelectorAll<HTMLButtonElement>('#panel button')];
+const buttons = [...document.querySelectorAll<HTMLButtonElement>('#actions button')];
 for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
 const combos = document.querySelector<HTMLElement>('#combos')!;
 combos.addEventListener('click', (e) => {
@@ -143,7 +214,7 @@ if (stress) {
   debug.hidden = false;
 }
 const flyer = (waves as WaveEntry[]).find((w) => w.flying)!;
-let recorded = game.over || !!replaying || stress;
+let recorded = game.over || !!replaying || stress || builder;
 async function recordScore() {
   recorded = true;
   const scores = await db.get('scores');
@@ -163,7 +234,7 @@ async function recordScore() {
   });
   await db.set('scores', scores);
   await db.set('save', null);
-  menu.show();
+  menu.show({ score: score(game), won: sim.phase === 'won' });
 }
 function topUpStress() {
   for (let k = sim.creeps.length; k < 400; k++) {
@@ -193,6 +264,169 @@ function sounds() {
   prev = { kills: game.kills, hp: sim.castleHp, phase: sim.phase };
 }
 
+const QUALITY_COLOR = ['#8a8070', '#2fbf5a', '#3a6bff', '#a24de0', '#f2c52e'];
+let prevGold = game.gold,
+  prevHp = sim.castleHp;
+function flashEl(id: string, cls: string) {
+  const e = document.getElementById(id);
+  e?.classList.add(cls); // fresh element each HUD rebuild, so the animation replays
+}
+const label = (a: string, t: string) =>
+  (buttons.find((b) => b.dataset.a === a)!.querySelector('span')!.textContent = t);
+// Ability names/tooltips from the wiki extract, keyed by ability id.
+const ABILITY = new Map(
+  [...rawBase, ...rawAdvanced].flatMap((t) =>
+    t.abilities.map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
+  ),
+);
+const ABILITY_GLYPH: [RegExp, string][] = [
+  [/huiyao/, '🔥'],
+  [/slow|lanbaoshi|jihan/, '❄'],
+  [/du/, '☠'],
+  [/jianshe/, '💥'],
+  [/baoji|crit/, '⚡'],
+  [/shandian/, '🌩'],
+  [/aura|guanghuan|maoyan|jingzhun|tanlan/, '✺'],
+  [/jianjia|jin|bixi|zheyi/, '🛡'],
+  [/speed/, '⏩'],
+  [/fenlie/, '🏹'],
+  [/yun|shihua/, '💫'],
+];
+const panel = document.querySelector<HTMLElement>('#panel')!;
+const portraitEl = document.querySelector<HTMLElement>('#portrait')!;
+const nameEl = document.querySelector<HTMLElement>('#name')!;
+const attrs = document.querySelector<HTMLElement>('#attrs')!;
+const cards = document.querySelector<HTMLElement>('#cards')!;
+const barFill = document.querySelector<HTMLElement>('#bar i')!;
+const barText = document.querySelector<HTMLElement>('#bar span')!;
+const el = (tag: string, cls = '', text = '') => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  e.textContent = text;
+  return e;
+};
+function setPortrait(url: string | undefined, fallback: string, colour = '') {
+  if (url) {
+    const im = document.createElement('img');
+    im.src = url;
+    im.alt = '';
+    portraitEl.replaceChildren(im);
+  } else portraitEl.replaceChildren(fallback);
+  portraitEl.style.color = colour;
+}
+function setAttrs(rows: [string, string | Node][]) {
+  attrs.replaceChildren(
+    ...rows.flatMap(([k, v]) => {
+      const val = el('span');
+      val.append(v);
+      return [el('span', '', k), val];
+    }),
+  );
+}
+function card(glyph: string, label: string, tip: string, bg: string) {
+  const c = el('div', 'card', glyph);
+  c.title = tip;
+  c.style.background = bg;
+  c.append(el('small', '', label));
+  return c;
+}
+/** Default view: the builder "hero" — level, XP, gem odds. */
+function drawHero(xpPct: number, lvlTo: number | undefined) {
+  setPortrait(undefined, '👑');
+  nameEl.textContent = 'Gem Builder';
+  setAttrs([
+    ['Level', String(game.level)],
+    ['Gold', String(game.gold)],
+    ['Next lvl', game.levelCost === null ? 'max' : `${game.levelCost}g`],
+    ['Towers', String(combat.towers.length)],
+    ['Kills', String(game.kills)],
+  ]);
+  cards.replaceChildren(
+    ...game.odds.map((p, q) =>
+      card(
+        '◆',
+        `${p}%`,
+        `Chance of a quality ${q + 1} gem`,
+        `radial-gradient(circle, ${QUALITY_COLOR[q]}${p ? 'aa' : '22'}, #120d19)`,
+      ),
+    ),
+  );
+  barFill.style.width = `${xpPct}%`;
+  barText.textContent = lvlTo
+    ? `Level ${game.level} · ${Math.floor(game.xp)} / ${Math.ceil(lvlTo)} XP`
+    : `Level ${game.level} · max`;
+  combos.replaceChildren();
+}
+/** Maze builder: live evaluation of the current stones. */
+let measured = -1,
+  stats = measure(maze);
+function drawBuilder() {
+  if (measured !== mazeVer) [measured, stats] = [mazeVer, measure(maze)];
+  setPortrait(undefined, '🧱');
+  nameEl.textContent = 'Maze builder';
+  setAttrs([
+    ['Stones', String(stats.stones)],
+    ['Path', String(stats.length)],
+    ['Middle', `${stats.passes}/6 legs`],
+    ['Guide', guide?.name ?? '—'],
+  ]);
+  const names = ['S→1', '1→2', '2→3', '3→4', '4→5', '5→E'];
+  cards.replaceChildren(
+    ...stats.legs.map((n, i) =>
+      card(
+        String(n),
+        names[i],
+        `Leg ${names[i]}: ${n} cells`,
+        'radial-gradient(circle, #3b2c50, #120d19)',
+      ),
+    ),
+  );
+  barFill.style.width = `${(stats.passes / 6) * 100}%`;
+  barText.textContent = `${stats.passes} of 6 legs pass through the middle`;
+  combos.replaceChildren();
+}
+/** Selected tower: portrait, stats, ability cards, combines and recipe uses. */
+function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share: number) {
+  const d = t.def;
+  const colour = GEM_COLOR[d.quality ? d.type : 'S'];
+  setPortrait(portrait(towerKey(d)), '◆', colour);
+  nameEl.textContent = d.name;
+  const dmg = el('span', '', String(d.damage));
+  if (d.bonusDamage) dmg.append(el('span', 'up', ` +${d.bonusDamage}`));
+  setAttrs([
+    ['⚔ Dmg', dmg],
+    ['⏱ Rate', `${d.attackRate}s`],
+    ['◎ Range', String(d.range)],
+    ['☠ Kills', String(t.kills)],
+    ['★ MVP', String(t.mvp)],
+  ]);
+  cards.replaceChildren(
+    ...d.abilities
+      .filter((id) => ABILITY.has(id) && !/^tower_attack/.test(id))
+      .map((id) => {
+        const a = ABILITY.get(id)!;
+        const name = a.name ?? id;
+        const glyph = ABILITY_GLYPH.find(([re]) => re.test(id))?.[1] ?? '✦';
+        return card(
+          glyph,
+          name,
+          `${name}: ${a.tip ?? ''}`,
+          `radial-gradient(circle, ${colour}88, #120d19)`,
+        );
+      }),
+  );
+  barFill.style.width = `${share}%`;
+  barText.textContent = `${share}% of all damage`;
+  combos.replaceChildren(
+    ...recipes.map((x) => {
+      const b = el('button', '', `✦ ${x.name}`);
+      b.dataset.a = 'combine:' + x.name;
+      b.title = x.parts.map((p) => p.def.name).join(' + ');
+      return b;
+    }),
+  );
+}
+
 let lastHud = '',
   lastLog = -1;
 function updateHud() {
@@ -201,61 +435,77 @@ function updateHud() {
     view.invalidate();
   }
   const step = game.step;
-  const odds = game.odds
-    .map((p, q) => (p ? `Q${q + 1} ${p}%` : ''))
-    .filter(Boolean)
-    .join(' ');
-  const hint = removing
-    ? 'click a stone to remove it'
-    : step === 'place'
-      ? `click to place gem ${game.placed.length + 1}/5`
-      : step === 'choose'
-        ? sel
-          ? `selected ${sel.def.name}${sel.kills ? ` · ${sel.kills} kills` : ''}${sel.mvp ? ` · MVP ×${sel.mvp}` : ''}`
-          : 'click one of this round’s gems to select it'
-        : step === 'won'
-          ? `You win! Score ${score(game)}`
-          : step === 'lost'
-            ? `Game over. Score ${score(game)}`
-            : speed
-              ? `wave in progress ×${speed}`
-              : 'paused (Space)';
-  const mode = `${replaying ? 'REPLAY · ' : ''}${cfg.daily ? `Daily ${cfg.daily} · ` : ''}${cfg.difficulty} · `;
+  const hint = builder
+    ? 'Maze builder: click to add or remove stones · 📖 Book → Maze helpers to load or compare'
+    : removing
+      ? 'Click a stone to shatter it'
+      : step === 'place'
+        ? `Place gem ${game.placed.length + 1} of 5`
+        : step === 'choose'
+          ? sel
+            ? `Selected ${sel.def.name}: keep, merge or combine it`
+            : 'Click one of this round’s gems to select it'
+          : step === 'won'
+            ? `You win! Score ${score(game)}`
+            : step === 'lost'
+              ? `Game over. Score ${score(game)}`
+              : speed
+                ? `Wave in progress ×${speed}`
+                : 'Paused (Space)';
+  const lvlFrom = game.xpFor[game.level - 1] ?? 0,
+    lvlTo = game.xpFor[game.level];
+  const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
+  const hp = Math.max(0, sim.castleHp);
+  const tags = [
+    replaying && 'Replay',
+    builder && 'Maze builder',
+    cfg.daily && `Daily ${cfg.daily}`,
+    !builder && cfg.difficulty,
+  ].filter(Boolean);
   const s =
-    mode +
-    `Wave ${sim.wave}/${sim.lastWave} · HP ${sim.castleHp} · Gold ${game.gold} · ` +
-    `Level ${game.level} (${Math.floor(game.xp)}/${Math.ceil(game.xpFor[game.level] ?? game.xp)} XP) · ` +
-    `odds ${odds} · ${Math.floor(game.seconds)}s — ${hint}`;
-  const recipes = sel && combat.towers.includes(sel) ? game.recipesFor(sel) : [];
-  const key = s + recipes.map((x) => x.name) + combat.towers.length + sim.phase + sel?.def.name;
+    tags.map((t) => `<span class="tag">${t}</span>`).join('') +
+    (builder
+      ? ''
+      : `<span class="chip"><b>Wave</b> ${sim.wave}/${sim.lastWave}</span>` +
+        `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
+        `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
+        `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`);
+  const live = sel && combat.towers.includes(sel) ? sel : null;
+  if (!live) sel = null;
+  const recipes = live ? game.recipesFor(live) : [];
+  const total = combat.towers.reduce((n, t) => n + t.damageDealt, 0) || 1;
+  const share = live ? Math.round((live.damageDealt / total) * 100) : 0;
+  const key =
+    s +
+    hint +
+    speed +
+    removing +
+    view.guide +
+    view.showPath +
+    view.showRanges +
+    book.open +
+    guide?.name +
+    mazeVer +
+    game.xp +
+    game.kills +
+    recipes.map((x) => x.name) +
+    combat.towers.length +
+    sim.phase +
+    live?.def.name +
+    live?.kills +
+    share;
   if (key !== lastHud) {
     lastHud = key;
-    hud.textContent = s;
-    combos.replaceChildren(
-      ...recipes.map((x) => {
-        const b = document.createElement('button');
-        b.dataset.a = 'combine:' + x.name;
-        b.textContent = `Combine → ${x.name}`;
-        b.title = x.parts.map((p) => p.def.name).join(' + ');
-        return b;
-      }),
-    );
-    // Recipe hints: every special tower the selected gem is an ingredient of.
-    if (sel) {
-      const code = sel.def.quality ? sel.def.type + sel.def.quality : sel.def.name;
-      const uses = Object.values(DEFS)
-        .filter((d) => (d as GemDef & Partial<SpecialDef>).recipes?.some((r) => r.includes(code)))
-        .map(
-          (d) =>
-            `${d.name} = ${(d as GemDef & SpecialDef).recipes.find((r) => r.includes(code))!.join('+')}`,
-        );
-      if (uses.length) {
-        const tip = document.createElement('span');
-        tip.className = 'tip';
-        tip.textContent = `${sel.def.name} (dmg ${sel.def.damage + sel.def.bonusDamage}, range ${sel.def.range}) · used in: ${uses.join(' · ')}`;
-        combos.append(tip);
-      }
-    }
+    hud.innerHTML = s;
+    hintEl.textContent = hint;
+    if (game.gold > prevGold) flashEl('gold', 'pop');
+    if (hp < prevHp) flashEl('hp', 'hit');
+    [prevGold, prevHp] = [game.gold, hp];
+    panel.dataset.view = builder ? 'builder' : live ? 'tower' : 'hero';
+    if (builder) drawBuilder();
+    else if (live) drawTower(live, recipes, share);
+    else drawHero(xpPct, lvlTo);
+    book.draw();
     // Highlight every tower that can combine into something right now.
     view.hints =
       sim.phase === 'build'
@@ -267,15 +517,34 @@ function updateHud() {
       merge2: !!sel && game.canMerge(sel, 2),
       merge4: !!sel && game.canMerge(sel, 4),
       down: !!sel && game.canDowngrade(sel),
-      stone: sim.phase === 'build',
+      stone: step === 'place',
       level: game.levelCost !== null && game.gold >= game.levelCost,
       guide: true,
+      path: true,
+      ranges: true,
+      book: true,
+      clear: builder,
+      save: builder,
+      deselect: true,
       pause: true,
+      speed: true,
       menu: true,
     };
     for (const b of buttons) b.disabled = !en[b.dataset.a!];
-    buttons[3].textContent = `Downgrade ${DOWNGRADE_COST}g (D)`;
-    buttons[5].textContent = `Buy level ${game.levelCost ?? '—'}g (L)`;
+    label('down', `Down ${DOWNGRADE_COST}g`);
+    label('level', `Level ${game.levelCost ?? '—'}g`);
+    label('speed', `×${settings.speed}`);
+    label('pause', speed ? 'Pause' : 'Resume');
+    label('guide', guide?.name ?? 'Guide');
+    for (const b of buttons)
+      b.classList.toggle(
+        'on',
+        (b.dataset.a === 'stone' && removing) ||
+          (b.dataset.a === 'guide' && !!guide) ||
+          (b.dataset.a === 'path' && view.showPath) ||
+          (b.dataset.a === 'ranges' && view.showRanges) ||
+          (b.dataset.a === 'book' && book.open),
+      );
   }
 }
 
@@ -299,6 +568,7 @@ requestAnimationFrame(function frame(now) {
     run(replaying[ri++][1]);
     nextCmdAt = now + 250 / Math.max(1, speed);
   }
+  if (builder) acc = 0; // nothing runs in the builder
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
     // Replay: mid-wave commands (level buys) land on the tick they were issued.

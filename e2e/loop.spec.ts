@@ -11,10 +11,10 @@ test('place 5 gems, keep one, wave starts', async ({ page }) => {
   const ox = (box.width - cell * 37) / 2;
   const oy = (box.height - cell * 37) / 2;
   for (let c = 10; c < 15; c++) await page.mouse.click(ox + (c + 0.5) * cell, oy + 16.5 * cell);
-  await expect(page.locator('#hud')).toContainText('select it');
+  await expect(page.locator('#hint')).toContainText('select it');
   await page.mouse.click(ox + 10.5 * cell, oy + 16.5 * cell);
   await page.keyboard.press('k');
-  await expect(page.locator('#hud')).toContainText('wave in progress');
+  await expect(page.locator('#hint')).toContainText('Wave in progress');
 });
 
 test('mid-game reload resumes from the saved command log', async ({ page }) => {

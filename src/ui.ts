@@ -4,7 +4,13 @@ import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
 
 /** Start a new game (or a replay) on the next load. */
-function startNext(o: { seed: number; difficulty: string; daily?: string; replay?: LogEntry[] }) {
+function startNext(o: {
+  seed: number;
+  difficulty: string;
+  daily?: string;
+  replay?: LogEntry[];
+  builder?: boolean;
+}) {
   try {
     sessionStorage.setItem('gemtd.start', JSON.stringify(o));
   } catch {
@@ -23,6 +29,7 @@ export function initMenu(
   game: Game,
   setSpeed: (s: number) => void,
   setVolume: (v: number) => void,
+  saveMaze: () => Promise<boolean>,
 ) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const menu = $<HTMLElement>('menu');
@@ -32,11 +39,21 @@ export function initMenu(
   const name = $<HTMLInputElement>('player');
   const speed = $<HTMLSelectElement>('speed');
   const volume = $<HTMLInputElement>('volume');
-  const newDiff = $<HTMLSelectElement>('newdiff');
+  const cards = [...document.querySelectorAll<HTMLButtonElement>('#diffcards button')];
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')];
+  const over = $<HTMLElement>('gameover');
   name.value = settings.name;
   speed.value = String(settings.speed);
   volume.value = String(settings.volume);
-  newDiff.value = settings.difficulty;
+  const markDiff = () =>
+    cards.forEach((c) => c.classList.toggle('on', c.dataset.diff === settings.difficulty));
+  markDiff();
+  const tab = (t: string) => {
+    for (const b of tabs) b.classList.toggle('on', b.dataset.tab === t);
+    for (const s of document.querySelectorAll<HTMLElement>('#menu [data-pane]'))
+      s.hidden = s.dataset.pane !== t;
+  };
+  for (const b of tabs) b.onclick = () => tab(b.dataset.tab!);
   $<HTMLOptionElement>('dailyopt').value = 'daily:' + today();
 
   async function draw() {
@@ -96,15 +113,17 @@ export function initMenu(
     setVolume(settings.volume);
     saveSettings();
   };
-  newDiff.onchange = () => {
-    settings.difficulty = newDiff.value;
-    saveSettings();
-  };
+  for (const c of cards)
+    c.onclick = () => {
+      settings.difficulty = c.dataset.diff!;
+      markDiff();
+      saveSettings();
+    };
   const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
   $('close').onclick = () => (menu.hidden = true);
-  $('newgame').onclick = () =>
-    confirmLeave() &&
-    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+  $('newgame').onclick = () => newGame();
+  $('builder').onclick = () =>
+    confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });
   $('daily').onclick = () =>
     confirmLeave() && startNext({ seed: dailySeed(), difficulty: 'normal', daily: today() });
   $('export').onclick = async () => {
@@ -131,8 +150,26 @@ export function initMenu(
     file.value = '';
   };
 
-  const show = () => {
+  const newGame = () =>
+    confirmLeave() &&
+    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+  /** Open the menu; with a result it leads with the game-over banner. */
+  const show = (result?: { score: number; won: boolean }) => {
     menu.hidden = false;
+    over.hidden = !result;
+    if (result) {
+      over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
+        <div class="big">${result.score}</div><button>⚔ Play again</button>
+        <button>💾 Save maze to library</button>`;
+      const [again, keep] = over.querySelectorAll('button');
+      again.onclick = newGame;
+      keep.onclick = async () => {
+        if (!(await saveMaze())) return;
+        keep.disabled = true;
+        keep.textContent = '✓ Saved';
+      };
+      tab('scores');
+    }
     draw();
   };
   return { show, toggle: () => (menu.hidden ? show() : (menu.hidden = true)) };

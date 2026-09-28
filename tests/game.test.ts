@@ -67,6 +67,9 @@ test('downgrade costs gold and lowers quality; remove stone frees a rock', () =>
   g.sim.phase = 'build';
   expect(g.removeStone(...spots[0])).toBe(false); // that's a tower
   expect(g.removeStone(...spots[1])).toBe(true);
+  for (const c of [10, 12, 14, 16, 20]) g.place(c, 14);
+  expect(g.step).toBe('choose');
+  expect(g.removeStone(...spots[2])).toBe(false); // all 5 gems placed: no more breaking
 });
 
 test('kills give gold and XP; levels can be bought', () => {
