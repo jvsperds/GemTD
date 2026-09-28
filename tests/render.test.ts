@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import towers from '../data/towers.json';
-import { hasModel, shotKind, slug, sortByY } from '../src/render';
+import waves from '../data/waves.json';
+import { hasCreepModel, hasModel, shotKind, slug, sortByY } from '../src/render';
 
 test('sortByY orders by ground y in place', () => {
   const a = [5, 1, 4, 1, 3].map((y) => ({ y }));
@@ -24,4 +25,9 @@ test('shot kinds: named beams and lightning, slow towers shoot frost', () => {
     'frost',
     'normal',
   ]);
+});
+
+test('every wave creep has a model', () => {
+  const missing = waves.map((w) => w.name).filter((n) => !hasCreepModel(slug(n)));
+  expect(missing).toEqual([]);
 });
