@@ -147,7 +147,7 @@ function act(a: string) {
   if (a === 'deselect') return ((sel = null), (removing = false));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
   if (a === 'speed') {
-    speed = settings.speed = { 1: 2, 2: 4 }[settings.speed] ?? 1;
+    speed = settings.speed = { 1: 2, 2: 4, 4: 10 }[settings.speed] ?? 1;
     return db.set('settings', settings);
   }
   if (replaying) return;
@@ -191,13 +191,47 @@ canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('pointermove', (e) => {
   if (e.buttons & 6) view.pan(e.movementX, e.movementY); // right or middle drag
 });
+// Touch: one-finger drag pans, two-finger pinch zooms. A drag swallows the click it ends with.
+const touches = new Map<number, [number, number]>();
+let dragged = false;
+let pinch = [0, 1]; // [finger distance, zoom] when the second finger landed
+const spread = () => {
+  const [a, b] = [...touches.values()];
+  return Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
+};
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch') return;
+  touches.set(e.pointerId, [e.clientX, e.clientY]);
+  if (touches.size === 1) dragged = false;
+  if (touches.size === 2) pinch = [spread(), view.zoom];
+});
+canvas.addEventListener('pointermove', (e) => {
+  const prev = touches.get(e.pointerId);
+  if (!prev) return;
+  touches.set(e.pointerId, [e.clientX, e.clientY]);
+  if (touches.size === 1) {
+    if (!dragged && Math.hypot(e.clientX - prev[0], e.clientY - prev[1]) < 8) {
+      return touches.set(e.pointerId, prev); // under the slop: keep origin so a tap stays a tap
+    }
+    dragged = true;
+    view.pan(e.clientX - prev[0], e.clientY - prev[1]);
+  } else if (touches.size === 2) {
+    dragged = true;
+    const [c, d] = [...touches.values()];
+    view.setZoom((pinch[1] * spread()) / pinch[0], (c[0] + d[0]) / 2, (c[1] + d[1]) / 2);
+  }
+  view.invalidate();
+});
+for (const t of ['pointerup', 'pointercancel'] as const)
+  canvas.addEventListener(t, (e) => touches.delete(e.pointerId));
+canvas.addEventListener('click', (e) => dragged && e.stopImmediatePropagation(), { capture: true });
 addEventListener('resize', () => view.resize());
 addEventListener('keydown', (e) => {
   if (e.key === 'F3') {
     e.preventDefault();
     debug.hidden = !debug.hidden;
   } else if (e.target instanceof HTMLInputElement) return;
-  else if (/^[123]$/.test(e.key)) speed = settings.speed = [1, 2, 4][+e.key - 1];
+  else if (/^[1-4]$/.test(e.key)) speed = settings.speed = [1, 2, 4, 10][+e.key - 1];
   else if (keys[e.key]) {
     e.preventDefault();
     act(keys[e.key]);
