@@ -234,7 +234,7 @@ test('Natural Zumurud copies skills of the two strongest towers in its 3x3', () 
   combat.place('Y1', 13, 10); // out of 3x3
   combat.refreshAuras();
   const f = combat.tfx(z);
-  expect(f.targets).toBe(10);
+  expect(f.targets).toBe(9);
   expect(f.cleave).not.toBeNull();
   expect(f.slow).toBe(120); // diamond's slow3, not B1's (weaker tower dropped)
 });

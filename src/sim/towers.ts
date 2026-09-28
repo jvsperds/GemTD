@@ -96,6 +96,8 @@ export const DEBUFF_TIME = 5; // seconds, slow / poison / armor reduction
 export const AURA_RANGE = 664;
 export const STUN_TIME = 2;
 export const GAZE = { chance: 0.01, range: 1000, time: 3 };
+// ponytail: Chain Frost damage/slow/bounce range are guesses; the codex only gives chance and bounces.
+export const CHAIN_FROST = { chance: 0.25, bounces: 10, dmg: 300, range: 600, pct: 0.5, time: 3 };
 export const FROST = { pct: 0.5, splash: 300, time: 3 };
 export const LIGHTNING = { chance: 0.3, damage: 150, jumps: 5, radius: 1000 };
 export const FORK = { chance: 0.25, targets: 3 }; // default: 3 bolts of attack damage, magic
@@ -124,6 +126,7 @@ export interface Fx {
   magicPct: number;
   stun: number; // chance
   frost: boolean;
+  chainFrost: boolean; // on a nearby pedal trigger
   lightning: boolean;
   fork: boolean;
   heal: number; // chance
@@ -154,6 +157,7 @@ export function parseFx(d: GemDef): Fx {
     magicPct: 0,
     stun: 0,
     frost: false,
+    chainFrost: false,
     lightning: false,
     fork: false,
     heal: 0,
@@ -184,7 +188,10 @@ export function parseFx(d: GemDef): Fx {
     else if (id === 'tower_baoji1') f.crit.push([0.1, 5]);
     else if (id === 'tower_fenliejian') f.targets = 3;
     else if (id === 'tower_fenliejian_xianyan') f.targets = 5;
-    else if (id === 'tower_fenliejian_you') f.targets = 10;
+    else if (id === 'tower_fenliejian_you')
+      // Codex: U-238 irradiates 9, U-235 10, Depleted-Kyparium 15.
+      f.targets = d.name === 'Uranium-238' ? 9 : d.name === 'Depleted-Kyparium' ? 15 : 10;
+    else if (id === 'tower_chain_frost') f.chainFrost = true;
     else if (id === 'tower_ranjin') f.magicPct = 1;
     else if (id === 'tower_10jiyun') f.stun = 0.1;
     else if (id === 'tower_jihan') f.frost = true;
@@ -216,8 +223,7 @@ export function parseFx(d: GemDef): Fx {
       f.enemy.push({ range: 600, armor: 10, slow: 250, mr: 50, flyingOnly: true });
     else if (id === 'tower_zheyi3')
       f.enemy.push({ range: 600, armor: 64, slow: 480, mr: 100, flyingOnly: true });
-    // tower_attackN on special towers is already in bonusDamage; tower_chain_frost needs
-    // pedals (Phase 7); eNNNN ids are cosmetic.
+    // tower_attackN on special towers is already in bonusDamage; eNNNN ids are cosmetic.
   }
   return f;
 }
@@ -256,6 +262,8 @@ export class Combat {
       .sort((a, b) => dps(b) - dps(a))
       .slice(0, 2);
     z.copied = parseFx({ ...z.def, abilities: [...z.def.abilities, ...src.flatMap((o) => o.def.abilities)] });
+    // Split-shot counts depend on the source tower's name (Uranium-238 vs Kyparium).
+    z.copied.targets = Math.max(this.fx(z.def).targets, ...src.map((o) => this.fx(o.def).targets));
   }
 
   /** Stacking key for a tower's effects: its gem type, or the tower itself when copies stack. */
@@ -552,6 +560,25 @@ export class Combat {
     }
   }
 
+  /** Frost ball bouncing between nearby creeps: magic damage and a slow on each bounce. */
+  private chainFrost(t: Tower, cr: Creep) {
+    const c = CHAIN_FROST;
+    const hit = new Set<Creep>();
+    let cur: Creep | undefined = cr;
+    for (let i = 0; i < c.bounces && cur; i++) {
+      hit.add(cur);
+      if (!magicImmune(cur)) {
+        cur.slowPct = Math.max(cur.slowPct, c.pct);
+        cur.slowPctT = Math.max(cur.slowPctT, c.time);
+        this.magic(t, cur, c.dmg);
+      }
+      const from: Creep = cur;
+      // Prefer creeps not yet hit; once all have been, bounce back among them.
+      const next = this.near(from, c.range).filter((o) => o !== from);
+      cur = next.find((o) => !hit.has(o)) ?? next[0];
+    }
+  }
+
   private near(cr: Creep, radius: number) {
     return this.sim.creeps.filter(
       (o) => o.alive && Math.hypot(o.x - cr.x, o.y - cr.y) * UNITS_PER_CELL <= radius,
@@ -631,6 +658,9 @@ export class Combat {
         if (cr) {
           t.cooldown = PEDAL.cooldown;
           this.pedal(t, cr, ...spell);
+          for (const o of this.towers)
+            if (this.tfx(o).chainFrost && this.dist(o, cr) <= this.range(o) && this.rand() < CHAIN_FROST.chance)
+              this.chainFrost(o, cr);
         }
         continue;
       }
