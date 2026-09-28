@@ -12,6 +12,7 @@ export interface WaveEntry {
   magicResist: number;
   flying: boolean;
   boss: boolean;
+  giant?: boolean; // 10x-HP streak event copy
   abilities: string[];
 }
 
@@ -46,6 +47,9 @@ export const BLINK_CELLS = 3;
 // Endless: after the last wave, the last 10 waves repeat with hp and armor scaled per extra wave.
 // ponytail: growth rates are guesses until playtests.
 export const ENDLESS = { hp: 1.15, armor: 1 };
+// Giant: after `streak` waves in a row with no castle damage, a wave may swap one creep for a
+// 10x-HP copy. ponytail: streak/chance are guesses until playtests.
+export const GIANT = { streak: 3, chance: 0.3, hp: 10 };
 
 /** Seeded PRNG (mulberry32) so the sim is deterministic. */
 export function rng(seed: number) {
@@ -170,6 +174,8 @@ export class WaveSim {
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
   hpMult = 1; // difficulty
+  streak = 0; // waves in a row that ended with no castle damage
+  private hurt = false; // castle took damage this wave
   private queue: WaveEntry[] = [];
   private spawnTimer = 0;
   private next: Int32Array[] = []; // per segment: cell index → next cell index on the flow field
@@ -227,6 +233,12 @@ export class WaveSim {
       );
     const n = defs.some((d) => d.boss) ? 1 : CREEPS_PER_WAVE;
     this.queue = Array.from({ length: n }, (_, k) => defs[k % defs.length]);
+    if (n > 1 && this.streak >= GIANT.streak && this.rand() < GIANT.chance) {
+      const k = Math.floor(this.rand() * n);
+      const d = this.queue[k];
+      this.queue[k] = { ...d, giant: true, hp: d.hp * GIANT.hp };
+    }
+    this.hurt = false;
     this.spawnTimer = 0;
     this.phase = 'wave';
     return true;
@@ -296,6 +308,7 @@ export class WaveSim {
     if (this.castleHp <= 0) this.phase = 'lost';
     else if (!this.queue.length && !this.creeps.length) {
       this.phase = 'build'; // endless: waves never run out
+      this.streak = this.hurt ? 0 : this.streak + 1;
       if (this.candy) {
         this.maze.waypoints.splice(this.maze.waypoints.indexOf(this.candy), 1);
         this.candy = null;
@@ -354,6 +367,7 @@ export class WaveSim {
         if (this.guard.t > 0) dmg = Math.max(0, dmg - this.guard.v);
         if (this.evade.t > 0 && this.rand() * 100 < this.evade.v) dmg = 0;
         this.castleHp -= dmg;
+        if (dmg > 0) this.hurt = true;
         return;
       }
       cr.seg++;

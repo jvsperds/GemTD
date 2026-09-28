@@ -1,6 +1,7 @@
 // Grid + pathing. Pure TS, no DOM.
-// Movement rule (picked to reproduce map.json's emptyMapPathFixture): 8 directions,
-// diagonal cost √2, a diagonal is refused only when BOTH orthogonal neighbours are blocked.
+// Movement rule (map.json emptyMapPathFixture pins the result): 8 directions,
+// diagonal cost √2, a diagonal is refused when EITHER orthogonal neighbour is blocked
+// (no corner cutting, so creeps stay mid-cell instead of grazing towers).
 
 export type Cell = [col: number, row: number];
 
@@ -124,7 +125,7 @@ export class Maze {
         const c = uc + dc,
           r = ur + dr;
         if (!this.walkable(c, r)) continue;
-        if (dc && dr && !this.walkable(uc + dc, ur) && !this.walkable(uc, ur + dr)) continue;
+        if (dc && dr && (!this.walkable(uc + dc, ur) || !this.walkable(uc, ur + dr))) continue;
         const nd = dist[u] + (dc && dr ? Math.SQRT2 : 1);
         const v = this.idx(c, r);
         if (nd < dist[v]) {
@@ -162,7 +163,7 @@ export class Maze {
         const nc = c + dc,
           nr = r + dr;
         if (!this.walkable(nc, nr)) continue;
-        if (dc && dr && !this.walkable(c + dc, r) && !this.walkable(c, r + dr)) continue;
+        if (dc && dr && (!this.walkable(c + dc, r) || !this.walkable(c, r + dr))) continue;
         if (field[this.idx(nc, nr)] < field[this.idx(...best)]) best = [nc, nr];
       }
       [c, r] = best;

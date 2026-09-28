@@ -3,7 +3,7 @@ import map from '../data/map.json';
 import { GUIDES } from './guide';
 import * as db from './persist';
 import { towerIcon } from './render';
-import { Maze, ROCK, type MapData } from './sim/maze';
+import { Maze, OPEN, ROCK, type MapData } from './sim/maze';
 import { PEDAL_TIPS } from './sim/pedals';
 import { DEFS } from './sim/setup';
 import { codeOf, type GemDef, type SpecialDef, type Tower } from './sim/towers';
@@ -20,11 +20,11 @@ export const mazeRows = (m: Maze) =>
     Array.from({ length: m.w }, (_, c) => (m.cells[m.idx(c, r)] === ROCK ? '1' : '.')).join(''),
   );
 
-/** Build a guide's stones on a fresh map and measure it. */
+/** Lay out a guide (full layout: '.' clears preset stones) on a fresh map and measure it. */
 export function evaluate(rows: string[], m = new Maze(map as unknown as MapData)) {
   rows.forEach((row, r) =>
     [...row].forEach((ch, c) => {
-      if (ch !== '.' && !m.noBuild[m.idx(c, r)]) m.cells[m.idx(c, r)] = ROCK;
+      if (!m.noBuild[m.idx(c, r)]) m.cells[m.idx(c, r)] = ch === '.' ? OPEN : ROCK;
     }),
   );
   return measure(m);

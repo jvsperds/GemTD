@@ -25,16 +25,7 @@ export const GEM_COLOR: Record<string, string> = {
   Y: '#f2c52e',
   S: '#ff7ad9', // special towers
 };
-// Guide colours by build order (1 first), opal spots, specials.
-const GUIDE_COLOR: Record<string, string> = {
-  '1': '#f2e94e80',
-  '2': '#f2c52e80',
-  '3': '#f0a03080',
-  '4': '#d0702080',
-  '5': '#e03a3a80',
-  O: '#4fe0d880',
-  S: '#3a6bff99',
-};
+const GUIDE_COLOR = '#f2c52e80'; // one colour for every guide mark, as in the game
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
 const TALL = 0.55;
@@ -487,7 +478,7 @@ function drawTower(
   const T = s * TALL;
   const [, c, a] = quality ? ['', shade(GEM_COLOR[gem], 0.5), GEM_COLOR[gem]] : MODELS[key];
   // Gem-cut stone: dark gem-tinted block, top face cut into four lit facets around a
-  // table, small inlaid gems at the corners and studs along the front face.
+  // table.
   const st = mix(a, '#6b6b6b', 0.55);
   g.fillStyle = shade(st, 0.7);
   g.fillRect(0, T + s, s, s * TOWER_H);
@@ -503,15 +494,6 @@ function drawTower(
   tri([s, 0, s, s, s - q, s - q, s - q, q], shade(st, 0.85));
   tri([0, s, q, s - q, s - q, s - q, s, s], shade(st, 0.7));
   tri([q, q, s - q, q, s - q, s - q, q, s - q], st);
-  for (const [x, y] of [
-    [q / 2, q / 2],
-    [s - q / 2, q / 2],
-    [q / 2, s - q / 2],
-    [s - q / 2, s - q / 2],
-  ])
-    gemFacets(g, a, x, T + y, s * 0.08);
-  for (let i = 1; i <= 3; i++)
-    gemFacets(g, a, (i * s) / 4, T + s * (1 + TOWER_H / 2), s * TOWER_H * 0.35);
   const cx = s / 2,
     foot = T + s * 0.62,
     head = s * (quality ? 0.24 + 0.035 * quality : 0.46);
@@ -997,7 +979,7 @@ export class Renderer {
 
   /** Creep model at the current zoom; `flip` faces it left. */
   private creepSprite(cr: Creep, flip: boolean) {
-    const rad = this.cell * (cr.def.boss ? 0.6 : 0.4);
+    const rad = this.cell * (cr.def.boss ? 0.6 : cr.def.giant ? 0.7 : 0.4);
     const m = rad * 1.25;
     return this.sprite(`c${cr.def.name}${rad}${flip}`, m * 2, m * 2, (g) => {
       if (flip) g.setTransform(-1, 0, 0, 1, m * 2, 0);
@@ -1031,7 +1013,7 @@ export class Renderer {
         g.fillRect(c * s, r * s, s - 1, s - 1);
         const k = this.guide?.[r]?.[c] ?? '.';
         if (k && k !== '.' && maze.cells[maze.idx(c, r)] !== WALL) {
-          g.fillStyle = GUIDE_COLOR[k];
+          g.fillStyle = GUIDE_COLOR;
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
       }
@@ -1302,7 +1284,7 @@ export class Renderer {
     sortByY(order);
 
     for (const cr of order) {
-      const sh = this.shadow(cr.def.boss);
+      const sh = this.shadow(cr.def.boss || !!cr.def.giant);
       const x = cr.px + (cr.x - cr.px) * alpha,
         y = cr.py + (cr.y - cr.py) * alpha;
       ctx.drawImage(sh, X(x) - sh.width / 2, Y(y) - sh.height / 2);
