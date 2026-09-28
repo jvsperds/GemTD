@@ -102,7 +102,7 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   'paraiba-tourmaline': ['crystal', '#6a3a5a', '#c8c8d0', 'y'],
   'elaborately-carved-tourmaline': ['beast', '#6a4a2a', '#e0a040', 'y'],
   'sapphire-star-of-adam': ['beast', '#3a4a8a', '#4fa0e0', 'y'],
-  'deep-sea-pearl': ['plant', '#d8c830', '#e8e8e8', 'y'],
+  'deepsea-pearl': ['plant', '#d8c830', '#e8e8e8', 'y'],
   'chrysoberyl-cat-s-eye': ['plant', '#5a3a2a', '#3a5a8a', 'y'],
   'red-coral': ['beast', '#e06040', '#c04040', 'y'],
   'natural-zumurud': ['pillar', '#4a3a8a', '#2fbf5a', 'y'],
@@ -113,9 +113,12 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   obsidian: ['orb', '#3a3030', '#e05a20', 'y'],
   agate: ['beast', '#e0c080', '#a07040', 'y'],
   'fantastic-miss-shrimp': ['bird', '#e0a020', '#3a3030', 'y'],
-  'yaphets-stone': ['bird', '#f0f0e0', '#e0b040', 'y'],
-  'burning-stone': ['crystal', '#3a4a6a', '#4fa0e0', 'b'],
+  geluanshi: ['bird', '#f0f0e0', '#e0b040', 'y'],
+  'the-burning-stone': ['crystal', '#3a4a6a', '#4fa0e0', 'b'],
   'the-great-stone': ['pillar', '#6a6a6a', '#8fbf3a', 'y'],
+  'black-opal': ['orb', '#1a1a2a', '#8a4ae0', 'y'],
+  ehome: ['plant', '#f0e6c8', '#e04a8a', 'b'],
+  'wings-stone': ['bird', '#e0c060', '#f0f0f0', 'y'],
 };
 // Pedals: hexagonal rune stones in the spell's colour, rimmed by tier (base, Sparkling, Blingbling).
 const SPELL_COLOR: Record<string, string> = {

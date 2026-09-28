@@ -71,7 +71,49 @@ def build_towers(gems):
             for variant in alt.split("|"):
                 parts = [p.strip() for p in variant.split("+")]
                 tower["recipes"].append([p if p in gems else ids[norm(p)] for p in parts])
-    return {v["name"]: v for v in towers.values()}
+    return apply_codex({v["name"]: v for v in towers.values()}, gems)
+
+
+# Wiki name -> Codex name (the Codex is exported from the live game, so its names win).
+CODEX_RENAME = {"Deep Sea Pearl": "Deepsea Pearl", "Burning Stone": "The Burning Stone",
+                "Yaphets Stone": "Geluanshi"}
+# Codex towers the wiki lacks: abilities picked from existing ids to match the Codex effect text.
+# ponytail: approximations of the Codex blurbs; swap in exact ids if the real kit turns up.
+CODEX_NEW = {"Black Opal": ["tower_baoji1"],                                  # heavy crits
+             "Ehome": ["tower_speed_aura6", "tower_speed_aura_guichu"],        # aura max + otomad
+             "Wings Stone": ["tower_jianshe6"]}                                # full-force splash
+TIERS = {"Chipped": 1, "Flawed": 2, "Regular": 3, "Flawless": 4, "Perfect": 5, "Great": 6}
+CELL_UNITS = 150  # Codex RNG is in board cells of 150 Dota units
+
+
+def apply_codex(towers, gems):
+    """Make names, recipes and base stats match data/raw/codex_towers.json."""
+    codex = RAW / "codex_towers.json"
+    if not codex.exists():
+        return towers
+    towers = {CODEX_RENAME.get(n, n): {**t, "name": CODEX_RENAME.get(n, n)} for n, t in towers.items()}
+    gem_code = {(g["name"].split()[-1], g["quality"]): code for code, g in gems.items()}
+    for c in load(codex):
+        t = towers.get(c["name"])
+        if t is None:
+            t = towers[c["name"]] = {"name": c["name"], "damage": 0, "bonusDamage": 0, "attackRate": 1,
+                                     "range": 0, "abilities": CODEX_NEW[c["name"]], "recipes": []}
+        # Codex DMG is damage + bonusDamage (what a hit deals); keep the split where it fits.
+        t["bonusDamage"] = min(t["bonusDamage"], c["damage"])
+        t["damage"] = c["damage"] - t["bonusDamage"]
+        if abs(1 / t["attackRate"] - c["attacksPerSec"]) > 0.01:
+            t["attackRate"] = round(1 / c["attacksPerSec"], 3)
+        if abs(t["range"] / CELL_UNITS - c["rangeCells"]) > 0.05:  # Codex rounds to 0.1 cell
+            t["range"] = round(c["rangeCells"] * CELL_UNITS)
+        t["secret"] = c["secret"]
+        if c["recipe"].startswith("Any "):  # The Great Stone: special-cased by the sim
+            continue
+        parts = []
+        for p in c["recipe"].split(" + "):
+            tier, _, gem = p.partition(" ")
+            parts.append(gem_code[(gem, TIERS[tier])] if tier in TIERS and (gem, TIERS[tier]) in gem_code else p)
+        t["recipes"] = [parts]
+    return towers
 
 
 def build_waves():
