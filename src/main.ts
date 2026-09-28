@@ -774,19 +774,23 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
     ['☠ Kills', String(t.kills)],
     ['★ MVP', String(t.mvp)],
   ]);
-  cards.replaceChildren(
-    ...d.abilities
+  const skillCards = (src: typeof d, from = '') =>
+    src.abilities
       .filter((id) => ABILITY.has(id) && !/^tower_attack/.test(id))
       .map((id) => {
         const a = ABILITY.get(id)!;
         const name = a.name ?? id;
+        const c = GEM_COLOR[src.quality ? src.type : 'S'];
         return card(
           skillIcon(id),
           name,
-          `${name}: ${a.tip ?? ''}`,
-          `radial-gradient(circle, ${colour}88, #0e1115)`,
+          `${name}${from}: ${a.tip ?? ''}`,
+          `radial-gradient(circle, ${c}88, #0e1115)`,
         );
-      }),
+      });
+  cards.replaceChildren(
+    ...skillCards(d),
+    ...(t.copiedFrom ?? []).flatMap((o) => skillCards(o, ` (copied from ${o.name})`)),
   );
   barFill.style.width = `${share}%`;
   barText.textContent = `${share}% of all damage`;
