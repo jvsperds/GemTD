@@ -65,7 +65,7 @@ export function allDefs(gems: Record<string, GemDef>, towers: Record<string, Spe
 const SLOW = [60, 90, 120, 150, 180, 480];
 const POISON = [2, 4, 8, 16, 32, 128];
 const ARMOR = [2, 4, 8, 16, 32, 64];
-const AURA = [20, 30, 40, 50, 60, 70];
+export const AURA = [20, 30, 40, 50, 60, 70];
 const CLEAVE = [
   [0.3, 300],
   [0.4, 350],

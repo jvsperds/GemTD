@@ -2,7 +2,7 @@
 import map from '../data/map.json';
 import { GUIDES } from './guide';
 import * as db from './persist';
-import { portrait, towerKey } from './render';
+import { towerIcon } from './render';
 import { Maze, ROCK, type MapData } from './sim/maze';
 import { DEFS } from './sim/setup';
 import { codeOf, type GemDef, type SpecialDef, type Tower } from './sim/towers';
@@ -94,13 +94,10 @@ export function initBook(opts: {
     for (const d of all) {
       const r = (mine && d.recipes!.find((x) => x.includes(mine))) || d.recipes![0];
       const row = el('div', 'recipe');
-      const url = portrait(towerKey({ ...d, type: 'S', quality: 0 }));
-      if (url) {
-        const im = document.createElement('img');
-        im.src = url;
-        im.alt = '';
-        row.append(im);
-      }
+      const im = document.createElement('img');
+      im.src = towerIcon({ ...d, type: 'S', quality: 0 });
+      im.alt = '';
+      row.append(im);
       const text = el('div');
       text.append(el('b', '', d.name + (r.every((p) => owned.has(p)) ? ' ✓' : '')));
       const parts = el('div', 'parts');
