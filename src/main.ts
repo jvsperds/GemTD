@@ -414,20 +414,52 @@ const statusEl = document.querySelector<HTMLElement>('#status')!;
 function statuses(t: Tower): [string, string, string, boolean][] {
   const a = t.aura,
     out: [string, string, string, boolean][] = [];
-  if (a.as) {
-    const n = AURA.indexOf(a.as) + 1;
-    const lvl = n ? String(n) : 'MAX+';
-    out.push([
-      'tower_speed_aura',
-      n ? lvl : '+',
-      `Attack speed aura ${lvl}\n+${a.as}% attack speed`,
-      false,
-    ]);
+  // One card per aura source, so stacked auras read as [1] [2] [4] rather than a merged total.
+  for (const { kind, value, from } of t.aura.src) {
+    const by = `
+from ${from.def.name}`;
+    if (kind === 'as') {
+      const n = AURA.indexOf(value) + 1;
+      out.push([
+        'tower_speed_aura',
+        n ? String(n) : '+',
+        `Attack speed aura ${n || ''}
++${value}% attack speed${by}`,
+        false,
+      ]);
+    } else if (kind === 'dmg')
+      out.push([
+        'tower_baoji',
+        '',
+        `Damage aura
++${value * 100}% damage${by}`,
+        false,
+      ]);
+    else if (kind === 'range')
+      out.push([
+        'status_range',
+        '',
+        `Range aura
++${value} attack range${by}`,
+        false,
+      ]);
+    else if (kind === 'aim')
+      out.push([
+        'status_aim',
+        '',
+        `Aim aura
+Attacks cannot miss (ignores evasion)${by}`,
+        false,
+      ]);
+    else
+      out.push([
+        'status_calm',
+        '',
+        `Calm aura
+Immune to Disarm${by}`,
+        false,
+      ]);
   }
-  if (a.dmg) out.push(['tower_baoji', '', `Damage aura\n+${a.dmg * 100}% damage`, false]);
-  if (a.range) out.push(['status_range', '', `Range aura\n+${a.range} attack range`, false]);
-  if (a.aim) out.push(['status_aim', '', 'Aim aura\nAttacks cannot miss (ignores evasion)', false]);
-  if (a.calm) out.push(['status_calm', '', 'Calm aura\nImmune to Disarm', false]);
   if (t.haste.t > 0)
     out.push([
       'tower_speed_aura',
@@ -454,6 +486,14 @@ function statuses(t: Tower): [string, string, string, boolean][] {
       'status_aim',
       '',
       `Fatal Bonds\n${t.bonds.v}% pure damage to the farthest enemy, ${Math.ceil(t.bonds.t)}s left`,
+      false,
+    ]);
+  if (t.melancholyT > 0)
+    out.push([
+      'tower_aojiao',
+      '',
+      `Melancholy
+Attacks deal no damage for ${t.melancholyT.toFixed(1)}s`,
       false,
     ]);
   if (t.disarmT > 0)

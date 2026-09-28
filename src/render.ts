@@ -1145,7 +1145,7 @@ export class Renderer {
       }
     // Disarmed towers shed purple motes.
     for (const t of combat.towers)
-      if (t.disarmT > 0 && Math.random() < 0.5)
+      if (t.disarmT > 0 && !t.aura.calm && Math.random() < 0.5)
         this.emit(t.c + 0.2 + Math.random() * 0.6, t.r - TALL, 0, -0.8, 0.8, 5);
   }
 
@@ -1396,6 +1396,17 @@ export class Renderer {
       ctx.stroke();
     }
     ctx.restore();
+
+    // Calm-aura towers (Deepsea Pearl): a faint pale-blue shield dome over the head.
+    ctx.strokeStyle = 'rgba(150,220,255,0.7)';
+    ctx.lineWidth = Math.max(1.5, s / 16);
+    for (const t of this.combat.towers) {
+      if (!t.aura.calm) continue;
+      const [x, y] = head(t);
+      ctx.beginPath();
+      ctx.arc(x, y + s * 0.15, s * 0.45, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+    }
 
     // Disarmed towers: a purple shackle ring spinning round the head.
     ctx.strokeStyle = '#c06aff';
