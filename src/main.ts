@@ -269,6 +269,7 @@ function updateHud() {
       down: !!sel && game.canDowngrade(sel),
       stone: sim.phase === 'build',
       level: game.levelCost !== null && game.gold >= game.levelCost,
+      guide: true,
       pause: true,
       menu: true,
     };

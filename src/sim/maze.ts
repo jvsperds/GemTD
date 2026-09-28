@@ -51,9 +51,9 @@ export class Maze {
         for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) fn(this.idx(c, r));
       }
     };
-    each(map.walls.segments, (i) => (this.cells[i] = WALL));
-    // centerCross stays buildable: placeRock's route check stops stones from closing the loop.
-    each(map.noBuildZones, (i) => (this.noBuild[i] = 1));
+    // Preset walls are ordinary stones (removable); only waypoints are no-build.
+    // placeRock's route check stops stones from closing the loop.
+    each(map.walls.segments, (i) => (this.cells[i] = ROCK));
     for (const [c, r] of this.waypoints) {
       this.cells[this.idx(c, r)] = OPEN; // checkpoints stay walkable even inside a wall line
       this.noBuild[this.idx(c, r)] = 1;
