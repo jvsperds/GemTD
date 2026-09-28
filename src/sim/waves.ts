@@ -179,6 +179,7 @@ export class WaveSim {
   hpMult = 1; // difficulty
   streak = 0; // waves in a row that ended with no castle damage
   private hurt = false; // castle took damage this wave
+  current: WaveEntry | null = null; // this wave's creep, for the banner
   private queue: WaveEntry[] = [];
   private spawnTimer = 0;
   private next: Int32Array[] = []; // per segment: cell index → next cell index on the flow field
@@ -234,6 +235,7 @@ export class WaveSim {
       .map((w) =>
         mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra },
       );
+    this.current = defs[0];
     const n = defs.some((d) => d.boss) ? 1 : CREEPS_PER_WAVE;
     this.queue = Array.from({ length: n }, (_, k) => defs[k % defs.length]);
     if (n > 1 && this.streak >= GIANT.streak && this.rand() < GIANT.chance) {

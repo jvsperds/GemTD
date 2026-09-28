@@ -139,6 +139,7 @@ const book = initBook({
     : undefined,
 });
 let mazeVer = 0; // bumped on every builder edit
+if (!save && !start && !stress) menu.newGame(); // fresh visit: pick a trial first
 initDmgChart(() => combat.towers, canvas);
 
 const saveNow = () =>
@@ -381,6 +382,23 @@ function topUpStress() {
     { creeps } = sim;
   for (let k = shots.length; k < 1500; k++)
     shots.push({ from: towers[k % towers.length], to: creeps[k % creeps.length] });
+}
+
+// Wave banner: number and creep, shown as each wave starts.
+const banner = document.querySelector<HTMLElement>('#banner')!;
+let bannerWave = sim.wave; // a resumed wave in progress gets no banner
+function showBanner() {
+  bannerWave = sim.wave;
+  const d = sim.current;
+  if (!d) return;
+  const tags = [d.boss && 'Boss', d.flying && 'Flying', sim.wave > sim.lastWave && 'Endless']
+    .filter(Boolean)
+    .join(' · ');
+  banner.innerHTML = `<img alt="" src="${creepIcon(d.name)}"><div><b>WAVE ${sim.wave}</b><span></span></div>`;
+  banner.querySelector('span')!.textContent = d.name + (tags ? ` · ${tags}` : '');
+  banner.hidden = true;
+  void banner.offsetWidth; // restart the animation
+  banner.hidden = false;
 }
 
 let prev = { kills: 0, hp: sim.castleHp, phase: sim.phase as string };
@@ -1021,6 +1039,7 @@ requestAnimationFrame(function frame(now) {
   if (!stress) updateHud();
   if (game.over && !recorded) recordScore();
   sounds();
+  if (sim.wave !== bannerWave && sim.phase === 'wave' && !stress) showBanner();
 
   if (now - second >= 1000) {
     Object.assign(perf, {
