@@ -149,6 +149,9 @@ export class WaveSim {
   phase: Phase = 'build';
   wave = 0; // last wave started
   castleHp = CASTLE_HP;
+  // Hero skills on the castle: damage blocked per bite / dodge chance, and seconds left.
+  guard = { v: 0, t: 0 };
+  evade = { v: 0, t: 0 };
   creeps: Creep[] = [];
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
@@ -304,7 +307,10 @@ export class WaveSim {
     if (atGoal) {
       if (cr.seg === wp.length - 1) {
         cr.alive = false;
-        this.castleHp -= cr.def.boss ? BOSS_LEAK_DAMAGE : LEAK_DAMAGE;
+        let dmg = cr.def.boss ? BOSS_LEAK_DAMAGE : LEAK_DAMAGE;
+        if (this.guard.t > 0) dmg = Math.max(0, dmg - this.guard.v);
+        if (this.evade.t > 0 && this.rand() * 100 < this.evade.v) dmg = 0;
+        this.castleHp -= dmg;
         return;
       }
       cr.seg++;

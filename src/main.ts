@@ -7,6 +7,7 @@ import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { newGame, type Difficulty } from './sim/setup';
+import { MAX_BRING, SKILLS, goldOf, shellsFor, skillTip, type Loadout } from './sim/skills';
 import { AURA, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
@@ -29,6 +30,7 @@ import {
   type WaveEntry,
 } from './sim/waves';
 import { initBook, mazeRows, measure, type Guide } from './book';
+import { initDmgChart } from './dmgchart';
 import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
@@ -44,6 +46,7 @@ type Start = {
   daily?: string;
   replay?: LogEntry[];
   builder?: boolean;
+  skills?: Loadout; // a replay's hero skills
 };
 let start: Start | null = null;
 try {
@@ -56,6 +59,18 @@ const save = stress || start ? null : await db.get('save');
 const cfg = start ??
   save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
 const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
+const hero = await db.get('hero');
+// A new game takes the hero's current skills; a resume or replay keeps the ones it started with.
+game.skills = start?.replay
+  ? (start.skills ?? {})
+  : save
+    ? (save.skills ?? {})
+    : Object.fromEntries(
+        (hero.bring ?? [])
+          .filter((id) => hero.skills[id])
+          .slice(0, MAX_BRING)
+          .map((id) => [id, hero.skills[id]]),
+      );
 if (save) game.replay(save.commands); // resume: waves before the last command replay headless
 const replaying = start?.replay ?? null; // watch mode: commands are fed live, input is off
 const builder = !!start?.builder; // maze builder: free stone editing, no gems or waves
@@ -98,6 +113,7 @@ const book = initBook({
     : undefined,
 });
 let mazeVer = 0; // bumped on every builder edit
+initDmgChart(() => combat.towers, canvas);
 
 const saveNow = () =>
   db.set('save', {
@@ -106,6 +122,7 @@ const saveNow = () =>
     daily: cfg.daily,
     commands: game.log,
     version: db.VERSION,
+    skills: game.skills,
   });
 if (!replaying && !stress && !builder) {
   game.onCommand = saveNow;
@@ -174,7 +191,8 @@ function act(a: string) {
     return db.set('settings', settings);
   }
   if (replaying) return;
-  if (a === 'stone') removing = !removing;
+  if (a.startsWith('skill:')) run(['skill', sel?.c ?? -1, sel?.r ?? -1, a.slice(6)]);
+  else if (a === 'stone') removing = !removing;
   else if (a === 'level') run(['level']);
   else if (sel) {
     const { c, r } = sel;
@@ -289,10 +307,14 @@ async function recordScore() {
     date: Date.now(),
     version: db.VERSION,
     commands: game.log,
+    skills: game.skills,
   });
   await db.set('scores', scores);
   await db.set('save', null);
-  menu.show({ score: score(game), won: sim.phase === 'won' });
+  const shells = shellsFor(game.wavesCleared, sim.phase === 'won');
+  const h = await db.get('hero');
+  await db.set('hero', { ...h, shells: h.shells + shells });
+  menu.show({ score: score(game), won: sim.phase === 'won', shells });
 }
 function topUpStress() {
   for (let k = sim.creeps.length; k < 400; k++) {
@@ -361,6 +383,20 @@ function statuses(t: Tower): [string, string, string, boolean][] {
   if (a.range) out.push(['status_range', '', `Range aura\n+${a.range} attack range`, false]);
   if (a.aim) out.push(['status_aim', '', 'Aim aura\nAttacks cannot miss (ignores evasion)', false]);
   if (a.calm) out.push(['status_calm', '', 'Calm aura\nImmune to Disarm', false]);
+  if (t.haste.t > 0)
+    out.push([
+      'tower_speed_aura',
+      '',
+      `Haste\n+${t.haste.v}% attack speed, ${Math.ceil(t.haste.t)}s left`,
+      false,
+    ]);
+  if (t.aim.t > 0)
+    out.push([
+      'status_range',
+      '',
+      `Aim\nRange at least ${t.aim.v}, ${Math.ceil(t.aim.t)}s left`,
+      false,
+    ]);
   if (t.disarmT > 0)
     out.push(['status_disarm', '', `Disarmed\nCannot attack for ${t.disarmT.toFixed(1)}s`, true]);
   return out;
@@ -506,6 +542,23 @@ function card(glyph: string, label: string, tip: string, bg: string) {
   c.append(el('small', '', label));
   return c;
 }
+/** Cast buttons for the unlocked hero skills that target a tower (or the castle). */
+function skillButtons(t?: Tower) {
+  return Object.entries(game.skills)
+    .filter(([id]) => SKILLS[id] && !!SKILLS[id].tower === !!t)
+    .map(([id, lvl]) => {
+      const s = SKILLS[id];
+      const b = el(
+        'button',
+        'skill',
+        `${s.icon} ${s.name} ${goldOf(id, lvl)}g`,
+      ) as HTMLButtonElement;
+      b.dataset.a = 'skill:' + id;
+      b.title = `${s.name} (level ${lvl}): ${skillTip(id, lvl)}`;
+      b.disabled = !!replaying || !game.canCast(id, t);
+      return b;
+    });
+}
 /** Default view: the builder "hero" — level, XP, gem odds. */
 function drawHero(xpPct: number, lvlTo: number | undefined) {
   setPortrait(undefined, '👑');
@@ -531,7 +584,7 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
   barText.textContent = lvlTo
     ? `Level ${game.level} · ${Math.floor(game.xp)} / ${Math.ceil(lvlTo)} XP`
     : `Level ${game.level} · max`;
-  combos.replaceChildren();
+  combos.replaceChildren(...skillButtons());
 }
 /** Maze builder: live evaluation of the current stones. */
 let measured = -1,
@@ -599,6 +652,7 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
       b.title = x.parts.map((p) => p.def.name).join(' + ');
       return b;
     }),
+    ...skillButtons(t),
   );
 }
 
@@ -643,6 +697,15 @@ function updateHud() {
       ? ''
       : `<span class="chip"><b>Wave</b> ${sim.wave}/${sim.lastWave}</span>` +
         `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
+        (game.pray
+          ? `<span class="chip" title="Pray: ${game.pray.chance}% chance for the next gem">🙏 ${game.pray.chance}%</span>`
+          : '') +
+        (sim.guard.t > 0
+          ? `<span class="chip" title="Guard: bites deal ${sim.guard.v} less">🛡 ${Math.ceil(sim.guard.t)}s</span>`
+          : '') +
+        (sim.evade.t > 0
+          ? `<span class="chip" title="Evade: ${sim.evade.v}% dodge">💨 ${Math.ceil(sim.evade.t)}s</span>`
+          : '') +
         `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
         `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`);
   const live = sel && combat.towers.includes(sel) ? sel : null;

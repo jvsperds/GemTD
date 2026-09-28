@@ -3,7 +3,8 @@
 // Remove stone are extra actions). Unkept gems become stones and the wave starts.
 // Combine builds a special tower from recipe ingredients anywhere on the board (BUILD.md §2.4).
 import { codeOf, rng, type Combat, type GemDef, type SpecialDef, type Tower } from './towers';
-import { CREEPS_PER_WAVE, TICK, UNITS_PER_CELL } from './waves';
+import { DURATION, SKILLS, goldOf, type Loadout } from './skills';
+import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL } from './waves';
 
 export interface LevelDef {
   level: number;
@@ -22,6 +23,7 @@ export const LEVEL_EVERY_WAVES = 4.5; // never-buying player reaches level 9 at 
 export type Cmd =
   | ['place' | 'keep' | 'merge2' | 'merge4' | 'down' | 'stone', number, number]
   | ['combine', number, number, string]
+  | ['skill', number, number, string] // cell of the target tower (ignored for castle skills)
   | ['level'];
 /** Logged command with the wave tick it was issued at (commands may land mid-wave). */
 export type LogEntry = [at: number, cmd: Cmd];
@@ -47,6 +49,8 @@ export class Game {
   kills = 0;
   ticks = 0; // wave ticks simulated, for the clock
   log: LogEntry[] = [];
+  skills: Loadout = {}; // hero skills brought to this game; saved with it so replays match
+  pray: { gem?: string; quality?: number; chance: number } | null = null; // for the next gem
   onCommand: (() => void) | null = null;
   /** XP needed to reach level L is xpFor[L - 1]. */
   readonly xpFor: number[];
@@ -133,16 +137,18 @@ export class Game {
           ? this.removeStone(c, r)
           : op === 'level'
             ? this.buyLevel()
-            : !!t &&
-              (op === 'keep'
-                ? this.keep(t)
-                : op === 'merge2'
-                  ? this.merge(t, 2)
-                  : op === 'merge4'
-                    ? this.merge(t, 4)
-                    : op === 'down'
-                      ? this.downgrade(t)
-                      : this.combine(t, name));
+            : op === 'skill'
+              ? this.cast(name, t)
+              : !!t &&
+                (op === 'keep'
+                  ? this.keep(t)
+                  : op === 'merge2'
+                    ? this.merge(t, 2)
+                    : op === 'merge4'
+                      ? this.merge(t, 4)
+                      : op === 'down'
+                        ? this.downgrade(t)
+                        : this.combine(t, name));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
@@ -162,6 +168,9 @@ export class Game {
   tick() {
     if (this.sim.phase !== 'wave') return;
     this.ticks++;
+    const { guard, evade } = this.sim;
+    for (const b of [guard, evade, ...this.combat.towers.flatMap((t) => [t.haste, t.aim])])
+      if (b.t > 0) b.t -= TICK;
     this.sim.tick();
     this.combat.tick();
     if (this.sim.phase === 'wave') return;
@@ -231,8 +240,14 @@ export class Game {
     // Roll only once the cell is accepted, so refused clicks don't advance the RNG (replays).
     const t = this.combat.place('B1', c, r);
     if (!t) return null;
-    const type = GEM_TYPES[Math.floor(this.rand() * GEM_TYPES.length)];
-    t.def = this.combat.gems[type + this.rollQuality()];
+    let type = GEM_TYPES[Math.floor(this.rand() * GEM_TYPES.length)];
+    let q = this.rollQuality();
+    const p = this.pray; // a Pray skill cast this round biases this one gem
+    if (p) {
+      this.pray = null;
+      if (this.rand() * 100 < p.chance) [type, q] = [p.gem ?? type, p.quality ?? q];
+    }
+    t.def = this.combat.gems[type + q];
     this.placed.push(t);
     return t;
   }
@@ -282,6 +297,43 @@ export class Game {
     // Only while gems can still be placed this round.
     if (this.step !== 'place' || this.combat.towerAt(c, r)) return false;
     return this.sim.maze.removeRock(c, r);
+  }
+
+  canCast(id: string, t?: Tower) {
+    const s = SKILLS[id];
+    return (
+      !!s &&
+      !!this.skills[id] &&
+      !this.over &&
+      this.gold >= goldOf(id, this.skills[id]) &&
+      (!s.tower || !!t) &&
+      (id !== 'heal' || this.sim.castleHp < CASTLE_HP) &&
+      (id !== 'hammer' ||
+        (this.step === 'choose' && this.placed.includes(t!) && t!.def.quality > 1)) &&
+      (!s.pray || this.sim.phase === 'build')
+    );
+  }
+
+  /** Cast hero skill `id` (on tower `t` for tower skills) for its gold cost. */
+  cast(id: string, t?: Tower) {
+    if (!this.canCast(id, t)) return false;
+    const s = SKILLS[id],
+      v = s.value[this.skills[id] - 1];
+    this.gold -= goldOf(id, this.skills[id]);
+    if (s.pray) this.pray = { ...s.pray, chance: v };
+    else if (id === 'hammer') t!.def = this.combat.gems[t!.def.type + (t!.def.quality - 1)];
+    else if (id === 'heal')
+      this.sim.castleHp = Math.min(CASTLE_HP, this.sim.castleHp + 1 + Math.floor(this.rand() * v));
+    else {
+      const b =
+        id === 'guard'
+          ? this.sim.guard
+          : id === 'evade'
+            ? this.sim.evade
+            : t![id as 'haste' | 'aim'];
+      [b.v, b.t] = [v, DURATION];
+    }
+    return true;
   }
 
   buyLevel() {

@@ -42,10 +42,14 @@ export interface Tower {
   r: number;
   cooldown: number;
   target: Creep | null;
-  damageDealt: number;
+  damageDealt: number; // total; physical = damageDealt - magicDealt
+  magicDealt: number;
   kills: number;
   mvp: number;
   disarmT: number;
+  // Hero skill buffs: value and seconds left.
+  haste: { v: number; t: number };
+  aim: { v: number; t: number };
   // Strongest ally auras covering this tower, refreshed each tick (same aura doesn't stack).
   aura: { range: number; as: number; dmg: number; aim: number; calm: number };
 }
@@ -240,9 +244,12 @@ export class Combat {
       cooldown: 0,
       target: null,
       damageDealt: 0,
+      magicDealt: 0,
       kills: 0,
       mvp: 0,
       disarmT: 0,
+      haste: { v: 0, t: 0 },
+      aim: { v: 0, t: 0 },
       aura: { range: 0, as: 0, dmg: 0, aim: 0, calm: 0 },
     };
     this.towers.push(t);
@@ -303,12 +310,13 @@ export class Combat {
   }
 
   range(t: Tower) {
-    return t.def.range + t.aura.range;
+    const r = t.def.range + t.aura.range;
+    return t.aim.t > 0 ? Math.max(r, t.aim.v) : r;
   }
 
   /** Attack speed: own +AS plus the strongest AS aura in range. */
   attacksPerSec(t: Tower) {
-    const bonus = this.fx(t.def).as + t.aura.as;
+    const bonus = this.fx(t.def).as + t.aura.as + (t.haste.t > 0 ? t.haste.v : 0);
     return Math.max(20, 100 + bonus) / 100 / t.def.attackRate;
   }
 
@@ -333,15 +341,16 @@ export class Combat {
   /** Magic damage, reduced by magic resist (+aura reduction); none to magic immune. */
   magic(t: Tower | null, cr: Creep, amount: number) {
     if (magicImmune(cr)) return;
-    this.deal(t, cr, amount * (1 - Math.max(-1, cr.def.magicResist - cr.auraMr) / 100));
+    this.deal(t, cr, amount * (1 - Math.max(-1, cr.def.magicResist - cr.auraMr) / 100), true);
   }
 
-  private deal(t: Tower | null, cr: Creep, dmg: number) {
+  private deal(t: Tower | null, cr: Creep, dmg: number, magic = false) {
     if (!cr.alive) return;
     if (t) cr.lastHit = t;
     this.sim.damage(cr, dmg);
     if (t) {
       t.damageDealt += dmg;
+      if (magic) t.magicDealt += dmg;
       if (!cr.alive) t.kills++;
     }
   }

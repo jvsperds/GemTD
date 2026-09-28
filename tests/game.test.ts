@@ -104,3 +104,56 @@ test('a scripted player can play full rounds start to finish', () => {
   expect(g.sim.wave).toBeGreaterThan(3);
   expect(g.level).toBeGreaterThan(1);
 });
+
+test('hero skills: need unlocking and gold, buff a tower, expire, and replay identically', () => {
+  const g = setup();
+  for (const [c, r] of spots) g.run(['place', c, r]);
+  const t = g.placed[0];
+  g.gold = 1000;
+  expect(g.run(['skill', t.c, t.r, 'haste'])).toBe(false); // not unlocked
+  g.skills = { haste: 2, guard: 1 };
+  expect(g.run(['skill', -1, -1, 'haste'])).toBe(false); // needs a tower
+  const base = g.combat.attacksPerSec(t);
+  expect(g.run(['skill', t.c, t.r, 'haste'])).toBe(true);
+  expect(g.combat.attacksPerSec(t)).toBeCloseTo(base * 1.8);
+  expect(g.run(['skill', -1, -1, 'guard'])).toBe(true);
+  expect(g.gold).toBe(500);
+  g.run(['keep', t.c, t.r]);
+  for (let k = 0; k < 61 * 30 && g.sim.phase === 'wave'; k++) g.tick();
+  const r = setup();
+  r.skills = g.skills;
+  r.gold = 1000;
+  r.replay(g.log);
+  while (r.ticks < g.ticks && r.sim.phase === 'wave') r.tick();
+  expect(r.ticks).toBe(g.ticks);
+  expect(t.haste.t).toBeCloseTo(60 - g.seconds); // counts down in wave time only
+  expect(r.gold).toBe(g.gold);
+  expect(r.sim.castleHp).toBe(g.sim.castleHp);
+});
+
+test('pray skills bias the next gem only; hammer downgrades exactly one level', () => {
+  const g = setup();
+  g.skills = { prayR: 4, perfect: 4, hammer: 1 };
+  g.gold = 10000;
+  let rubies = 0;
+  for (let k = 0; k < 40; k++) {
+    const m = setup(k + 1);
+    m.skills = { prayR: 4 };
+    m.gold = 200;
+    expect(m.run(['skill', -1, -1, 'prayR'])).toBe(true);
+    if (m.place(10, 10)!.def.type === 'R') rubies++;
+    expect(m.pray).toBeNull(); // consumed by one placement
+  }
+  expect(rubies).toBeGreaterThan(20); // 70% + 1/8 of the rest, vs 5 by chance
+  expect(g.run(['skill', -1, -1, 'perfect'])).toBe(true);
+  for (const [c, r] of spots) g.run(['place', c, r]);
+  const t = g.placed.find((x) => x.def.quality > 1);
+  if (t) {
+    const q = t.def.quality;
+    expect(g.run(['skill', t.c, t.r, 'hammer'])).toBe(true);
+    expect(t.def.quality).toBe(q - 1);
+    expect(g.gold).toBe(10000 - 400 - 250);
+  }
+  const chipped = g.placed.find((x) => x.def.quality === 1)!;
+  expect(g.run(['skill', chipped.c, chipped.r, 'hammer'])).toBe(false);
+});

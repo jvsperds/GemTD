@@ -2,6 +2,7 @@
 import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
+import { MAX_BRING, SKILLS, goldOf, skillTip, type Loadout } from './sim/skills';
 
 /** Start a new game (or a replay) on the next load. */
 function startNext(o: {
@@ -10,6 +11,7 @@ function startNext(o: {
   daily?: string;
   replay?: LogEntry[];
   builder?: boolean;
+  skills?: Loadout;
 }) {
   try {
     sessionStorage.setItem('gemtd.start', JSON.stringify(o));
@@ -87,6 +89,7 @@ export function initMenu(
               difficulty: x.difficulty,
               daily: x.daily,
               replay: x.commands,
+              skills: x.skills,
             });
           td.append(b);
         }
@@ -95,6 +98,54 @@ export function initMenu(
       }),
     );
     if (!list.length) rows.innerHTML = '<tr><td colspan="9">No scores yet</td></tr>';
+  }
+  /** Hero tab: buy or upgrade skills with shells, and pick up to MAX_BRING to bring. */
+  async function drawShop() {
+    const hero = await db.get('hero');
+    const bring = (hero.bring ?? []).filter((id) => hero.skills[id]);
+    const save = async () => {
+      await db.set('hero', { ...hero, bring });
+      drawShop();
+    };
+    $('shells').textContent = String(hero.shells);
+    $('bringing').textContent = `${bring.length}/${MAX_BRING}`;
+    $('shop').replaceChildren(
+      ...Object.entries(SKILLS).map(([id, s]) => {
+        const lvl = hero.skills[id] ?? 0;
+        const price = s.shells[lvl]; // undefined at max level
+        const item = document.createElement('div');
+        item.className = 'shopitem';
+        const b = document.createElement('button');
+        b.textContent = `${s.icon} ${s.name} ${lvl ? `Lv ${lvl}` : ''}`;
+        const small = document.createElement('small');
+        small.textContent = `${skillTip(id, lvl + (price ? 1 : 0))} · ${goldOf(id, lvl + (price ? 1 : 0))}g per cast · ${
+          price ? `${lvl ? 'Upgrade' : 'Unlock'}: 🐚 ${price}` : 'Max level'
+        }`;
+        b.append(small);
+        b.disabled = !price || hero.shells < price;
+        b.onclick = () => {
+          hero.shells -= price;
+          hero.skills = { ...hero.skills, [id]: lvl + 1 };
+          if (!lvl && bring.length < MAX_BRING) bring.push(id);
+          save();
+        };
+        item.append(b);
+        if (lvl) {
+          const on = bring.includes(id);
+          const t = document.createElement('button');
+          t.className = on ? 'bring on' : 'bring';
+          t.textContent = on ? '✓ Bringing' : '+ Bring';
+          t.disabled = !on && bring.length >= MAX_BRING;
+          t.onclick = () => {
+            if (on) bring.splice(bring.indexOf(id), 1);
+            else bring.push(id);
+            save();
+          };
+          item.append(t);
+        }
+        return item;
+      }),
+    );
   }
   const saveSettings = () => db.set('settings', settings);
 
@@ -154,12 +205,13 @@ export function initMenu(
     confirmLeave() &&
     startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
   /** Open the menu; with a result it leads with the game-over banner. */
-  const show = (result?: { score: number; won: boolean }) => {
+  const show = (result?: { score: number; won: boolean; shells: number }) => {
     menu.hidden = false;
     over.hidden = !result;
+    drawShop();
     if (result) {
       over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
-        <div class="big">${result.score}</div><button>⚔ Play again</button>
+        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div><button>⚔ Play again</button>
         <button>💾 Save maze to library</button>`;
       const [again, keep] = over.querySelectorAll('button');
       again.onclick = newGame;

@@ -31,8 +31,8 @@
       }
       #game {
         display: block;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         touch-action: none;
       }
       .glass {
@@ -404,6 +404,110 @@
           transform: translateX(-20px);
         }
       }
+      #shop {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 6px;
+      }
+      .shopitem {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .shopitem > button:first-child {
+        flex: 1;
+        text-align: left;
+      }
+      .shopitem small {
+        display: block;
+        color: var(--muted);
+      }
+      .shopitem .bring {
+        font-size: 12px;
+        padding: 2px 6px;
+      }
+      .shopitem .bring.on {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      #dmgtab {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        border-radius: 8px 0 0 8px;
+        padding: 6px 8px;
+        z-index: 2;
+      }
+      #dmgtab.on {
+        right: min(260px, calc(70vw));
+      }
+      #dmg {
+        position: fixed;
+        top: 50px;
+        right: 0;
+        max-height: 45vh;
+        width: min(260px, 70vw);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px;
+        box-sizing: border-box;
+        border-radius: 8px 0 0 8px;
+      }
+      #dmg[hidden] {
+        display: none;
+      }
+      #dmg header {
+        display: flex;
+        gap: 4px;
+      }
+      #dmg header button {
+        font-size: 12px;
+        padding: 2px 6px;
+      }
+      #dmg header button.on {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      #dmglist {
+        overflow: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .dmgrow {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 4px;
+        color: var(--text);
+      }
+      .dmgrow i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        opacity: 0.25;
+        border-radius: 3px;
+      }
+      .dmgrow img,
+      .dmgrow > span:first-of-type {
+        width: 18px;
+        height: 18px;
+        text-align: center;
+      }
+      .dmgrow > span:last-of-type {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dmgrow b {
+        font-weight: normal;
+        font-variant-numeric: tabular-nums;
+      }
       #bookbody {
         overflow: auto;
         flex: 1;
@@ -664,12 +768,24 @@
       <div id="bookbody"></div>
     </aside>
     <pre id="debug" hidden></pre>
+    <button id="dmgtab" class="glass" title="Damage chart">📊</button>
+    <aside id="dmg" class="glass" hidden>
+      <header>
+        <button data-kind="magic">Magic</button>
+        <button data-kind="physical">Physical</button>
+        <button data-kind="total" class="on">Total</button>
+        <span style="flex: 1"></span>
+        <button id="dmgpin">📌</button>
+      </header>
+      <div id="dmglist"></div>
+    </aside>
     <div id="menu" class="glass" hidden>
       <h2>✦ GEM TD ✦</h2>
       <div id="gameover" hidden></div>
       <div class="tabs">
         <button data-tab="scores" class="on">Scores</button>
         <button data-tab="play">New game</button>
+        <button data-tab="hero">Hero</button>
         <button data-tab="settings">Settings</button>
         <span style="flex: 1"></span>
         <button id="close">✕ <kbd>B</kbd></button>
@@ -729,6 +845,14 @@
           <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
           <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
         </p>
+      </section>
+      <section data-pane="hero" hidden>
+        <p>
+          🐚 <b id="shells">0</b> shells — earned each game (1 per wave cleared, +10 for a win).
+          Bring up to 5 owned skills (<b id="bringing">0/5</b>) into your next new game, where
+          they're cast for gold.
+        </p>
+        <div id="shop"></div>
       </section>
       <section data-pane="settings" hidden>
         <p>
