@@ -1,7 +1,6 @@
 // Canvas 2D renderer, CPU-first 2.5D (BUILD.md §3.7). Reads sim state only, never mutates it.
 // Static layer (ground, route, blocks) is an offscreen canvas redrawn only on maze/zoom change;
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
-import { GUIDES } from './guide';
 import { ROCK, WALL, type Maze } from './sim/maze';
 import type { Combat } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
@@ -84,8 +83,9 @@ export class Renderer {
   flashUntil = 0;
   selected = -1; // selected cell index
   hints: number[] = []; // cells of towers that can combine now
-  guide = -1; // index into GUIDES, -1 = off
+  guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
+  showRanges = true; // aura range rings (Volcano, Asteriated Ruby...)
   private staticLayer = document.createElement('canvas');
   private staticDirty = true;
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
@@ -303,7 +303,7 @@ export class Renderer {
       for (let c = 0; c < maze.w; c++) {
         g.fillStyle = maze.noBuild[maze.idx(c, r)] ? '#2a2a2a' : '#3b4a3b';
         g.fillRect(c * s, r * s, s - 1, s - 1);
-        const k = GUIDES[this.guide]?.rows[r]?.[c] ?? '.';
+        const k = this.guide?.[r]?.[c] ?? '.';
         if (k && k !== '.' && maze.cells[maze.idx(c, r)] !== WALL) {
           g.fillStyle = GUIDE_COLOR[k];
           g.fillRect(c * s, r * s, s - 1, s - 1);
@@ -410,17 +410,18 @@ export class Renderer {
 
     // Burn auras (Volcano, Asteriated Ruby...): a slow pulsing heat ring.
     const pulse = 0.3 + 0.12 * Math.sin(now / 250);
-    for (const t of this.combat.towers)
-      for (const e of this.combat.fx(t.def).enemy) {
-        if (!e.dps) continue;
-        ctx.strokeStyle = `rgba(255,110,30,${pulse})`;
-        ctx.fillStyle = `rgba(255,80,20,${pulse / 3})`;
-        ctx.lineWidth = Math.max(1, s / 8);
-        ctx.beginPath();
-        ctx.arc(X(t.c + 0.5), Y(t.r + 0.5), (e.range / UNITS_PER_CELL) * s, 0, 7);
-        ctx.fill();
-        ctx.stroke();
-      }
+    if (this.showRanges)
+      for (const t of this.combat.towers)
+        for (const e of this.combat.fx(t.def).enemy) {
+          if (!e.dps) continue;
+          ctx.strokeStyle = `rgba(255,110,30,${pulse})`;
+          ctx.fillStyle = `rgba(255,80,20,${pulse / 3})`;
+          ctx.lineWidth = Math.max(1, s / 8);
+          ctx.beginPath();
+          ctx.arc(X(t.c + 0.5), Y(t.r + 0.5), (e.range / UNITS_PER_CELL) * s, 0, 7);
+          ctx.fill();
+          ctx.stroke();
+        }
 
     ctx.strokeStyle = '#6ff';
     ctx.lineWidth = 1;
@@ -467,14 +468,21 @@ export class Renderer {
       ctx.drawImage(sp, X(x) - sp.width / 2, Y(y) - sp.height / 2);
     }
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (const { from, to } of this.combat.shots) {
-      ctx.moveTo(X(from.c + 0.5), Y(from.r + 0.5 - BLOCK_H));
-      ctx.lineTo(X(to.x), Y(to.y - (to.def.flying ? FLY_Z : 0.15)));
+    // Tracers: thin white; the Silver line fires a thick glowing beam.
+    for (const thick of [false, true]) {
+      ctx.strokeStyle = thick ? 'rgba(225,238,255,0.9)' : 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = thick ? Math.max(3, s / 5) : 1;
+      ctx.shadowColor = thick ? '#bcd8ff' : 'transparent';
+      ctx.shadowBlur = thick ? s / 2 : 0;
+      ctx.beginPath();
+      for (const { from, to } of this.combat.shots) {
+        if (SILVER.has(from.def.name) !== thick) continue;
+        ctx.moveTo(X(from.c + 0.5), Y(from.r + 0.5 - BLOCK_H));
+        ctx.lineTo(X(to.x), Y(to.y - (to.def.flying ? FLY_Z : 0.15)));
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // Particles: swap-remove dead ones; integer rects, fillStyle switched only on colour change.
     const p = this.px,
@@ -495,6 +503,7 @@ export class Renderer {
   }
 }
 
+const SILVER = new Set(['Silver', 'Silver Knight', 'Huge Pink Diamond', 'Koh-i-noor Diamond']);
 // 0 spark, 1 fire, 2 ember, 3 frost
 const PARTICLE_COLOR = ['#ffe9a0', '#ff7a1a', '#ffcf40', '#bfe8ff'];
 const expand = (c: string) => '#' + [...c.slice(1)].map((h) => h + h).join('');

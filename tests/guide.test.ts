@@ -19,11 +19,21 @@ for (const name of ['Spiral L', 'Spiral S']) {
     const m = build(GUIDES.find((g) => g.name === name)!.rows);
     const route = m.route();
     expect(route).not.toBeNull();
-    const passes = route!.map((f, s) =>
-      m.walk(f, m.waypoints[s]).some(([c, r]) => Math.max(Math.abs(c - 18), Math.abs(r - 18)) <= 2),
-    );
-    expect(passes).toEqual([true, true, true, true, true, true]);
+    expect(m.middlePasses(route!, 2)).toBe(6); // every leg crosses the very centre
     // Much longer than the empty map's 114.
     expect(m.segmentLengths(route!).reduce((a, b) => a + b)).toBeGreaterThan(300);
   });
 }
+
+test('Shakalaka: valid maze', () => {
+  const m = build(GUIDES.find((g) => g.name === 'Shakalaka')!.rows);
+  const route = m.route();
+  expect(route).not.toBeNull();
+  // ponytail: 3 of 6 legs as transcribed; raise to 6 once the outer walls are confirmed.
+  expect(m.middlePasses(route!)).toBe(3);
+});
+
+test('empty map: only the two axis legs cross the middle', () => {
+  const m = build([]);
+  expect(m.middlePasses(m.route()!)).toBe(2);
+});

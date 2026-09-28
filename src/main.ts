@@ -5,10 +5,10 @@ import rawBase from '../data/raw/base_towers.json';
 import { GEM_COLOR, portrait, Renderer, towerKey } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
-import { DEFS, newGame, type Difficulty } from './sim/setup';
-import { codeOf, type GemDef, type SpecialDef, type Tower } from './sim/towers';
+import { newGame, type Difficulty } from './sim/setup';
+import type { Tower } from './sim/towers';
 import { CASTLE_HP, TICK, type WaveEntry } from './sim/waves';
-import { GUIDES } from './guide';
+import { initBook, mazeRows, measure, type Guide } from './book';
 import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
@@ -18,7 +18,13 @@ const debug = document.querySelector<HTMLElement>('#debug')!;
 const stress = location.hash === '#stress';
 const settings = await db.get('settings');
 // A fresh start (new game / daily / replay) is handed over the reload in sessionStorage.
-type Start = { seed: number; difficulty: string; daily?: string; replay?: LogEntry[] };
+type Start = {
+  seed: number;
+  difficulty: string;
+  daily?: string;
+  replay?: LogEntry[];
+  builder?: boolean;
+};
 let start: Start | null = null;
 try {
   start = JSON.parse(sessionStorage.getItem('gemtd.start') ?? 'null');
@@ -32,6 +38,7 @@ const cfg = start ??
 const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
 if (save) game.replay(save.commands); // resume: waves before the last command replay headless
 const replaying = start?.replay ?? null; // watch mode: commands are fed live, input is off
+const builder = !!start?.builder; // maze builder: free stone editing, no gems or waves
 let ri = 0,
   nextCmdAt = 0;
 const { combat, sim } = game;
@@ -41,7 +48,35 @@ const view = new Renderer(canvas, maze, sim, combat);
 let removing = false; // Remove-stone mode
 let sel: Tower | null = null;
 let speed = settings.speed; // 0 = paused
-const menu = initMenu(settings, game, (s) => (speed = s), sfx.setVolume);
+const menu = initMenu(
+  settings,
+  game,
+  (s) => (speed = s),
+  sfx.setVolume,
+  () => book.save(mazeRows(maze)),
+);
+let guide: Guide | null = null;
+const showGuide = (g: Guide | null) => {
+  guide = g;
+  view.guide = g?.rows ?? null;
+  view.invalidate();
+};
+const book = initBook({
+  towers: () => combat.towers,
+  selected: () => sel,
+  guide: () => guide,
+  showGuide,
+  build: builder
+    ? (g) => {
+        // Stones in a valid guide never block part-way, so placing them one by one is safe.
+        for (let i = 0; i < maze.cells.length; i++) maze.removeRock(i % maze.w, (i / maze.w) | 0);
+        g.rows.forEach((row, r) => [...row].forEach((ch, c) => ch !== '.' && maze.placeRock(c, r)));
+        mazeVer++;
+        view.invalidate();
+      }
+    : undefined,
+});
+let mazeVer = 0; // bumped on every builder edit
 
 const saveNow = () =>
   db.set('save', {
@@ -51,7 +86,7 @@ const saveNow = () =>
     commands: game.log,
     version: db.VERSION,
   });
-if (!replaying && !stress) {
+if (!replaying && !stress && !builder) {
   game.onCommand = saveNow;
   if (start) saveNow(); // so a reload before the first move resumes this game, not the old one
 }
@@ -69,6 +104,13 @@ canvas.addEventListener('click', (e) => {
   if (replaying) return;
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
+  if (builder) {
+    const ok = maze.removeRock(c, r) || maze.placeRock(c, r);
+    if (ok) mazeVer++;
+    else [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
+    sfx.play(ok ? 'place' : 'refuse');
+    return view.invalidate();
+  }
   const hit = combat.towerAt(c, r);
   const ok = removing
     ? run(['stone', c, r])
@@ -87,8 +129,17 @@ canvas.addEventListener('click', (e) => {
 function act(a: string) {
   if (a === 'menu') return menu.toggle();
   if (a === 'guide') {
-    // cycle: off -> each guide -> off
-    view.guide = view.guide + 1 < GUIDES.length ? view.guide + 1 : -1;
+    // cycle: off -> each guide (built-in, then library) -> off
+    const all = book.guides();
+    return showGuide(all[all.findIndex((g) => g.rows === guide?.rows) + 1] ?? null);
+  }
+  if (a === 'ranges') return (view.showRanges = !view.showRanges);
+  if (a === 'book') return book.toggle();
+  if (a === 'save') return book.save(mazeRows(maze));
+  if (a === 'clear') {
+    if (!confirm('Clear every stone?')) return;
+    for (let i = 0; i < maze.cells.length; i++) maze.removeRock(i % maze.w, (i / maze.w) | 0);
+    mazeVer++;
     return view.invalidate();
   }
   if (a === 'path') return ((view.showPath = !view.showPath), view.invalidate());
@@ -118,6 +169,8 @@ const keys: Record<string, string> = {
   l: 'level',
   g: 'guide',
   p: 'path',
+  v: 'ranges',
+  h: 'book',
   Escape: 'deselect',
   b: 'menu',
   ' ': 'pause',
@@ -161,7 +214,7 @@ if (stress) {
   debug.hidden = false;
 }
 const flyer = (waves as WaveEntry[]).find((w) => w.flying)!;
-let recorded = game.over || !!replaying || stress;
+let recorded = game.over || !!replaying || stress || builder;
 async function recordScore() {
   recorded = true;
   const scores = await db.get('scores');
@@ -304,6 +357,34 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
     : `Level ${game.level} · max`;
   combos.replaceChildren();
 }
+/** Maze builder: live evaluation of the current stones. */
+let measured = -1,
+  stats = measure(maze);
+function drawBuilder() {
+  if (measured !== mazeVer) [measured, stats] = [mazeVer, measure(maze)];
+  setPortrait(undefined, '🧱');
+  nameEl.textContent = 'Maze builder';
+  setAttrs([
+    ['Stones', String(stats.stones)],
+    ['Path', String(stats.length)],
+    ['Middle', `${stats.passes}/6 legs`],
+    ['Guide', guide?.name ?? '—'],
+  ]);
+  const names = ['S→1', '1→2', '2→3', '3→4', '4→5', '5→E'];
+  cards.replaceChildren(
+    ...stats.legs.map((n, i) =>
+      card(
+        String(n),
+        names[i],
+        `Leg ${names[i]}: ${n} cells`,
+        'radial-gradient(circle, #3b2c50, #120d19)',
+      ),
+    ),
+  );
+  barFill.style.width = `${(stats.passes / 6) * 100}%`;
+  barText.textContent = `${stats.passes} of 6 legs pass through the middle`;
+  combos.replaceChildren();
+}
 /** Selected tower: portrait, stats, ability cards, combines and recipe uses. */
 function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share: number) {
   const d = t.def;
@@ -344,18 +425,6 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
       return b;
     }),
   );
-  // Recipe hints: every special tower this gem is an ingredient of; owned parts in green.
-  const mine = codeOf(d);
-  const owned = new Set(combat.towers.map((o) => codeOf(o.def)));
-  for (const s of Object.values(DEFS) as (GemDef & Partial<SpecialDef>)[]) {
-    const r = s.recipes?.find((r) => r.includes(mine));
-    if (!r) continue;
-    const u = el('div', 'use', `${s.name} = `);
-    r.forEach((part, i) =>
-      u.append(el('span', owned.has(part) ? 'own' : '', (i ? ' + ' : '') + part)),
-    );
-    combos.append(u);
-  }
 }
 
 let lastHud = '',
@@ -366,34 +435,41 @@ function updateHud() {
     view.invalidate();
   }
   const step = game.step;
-  const hint = removing
-    ? 'Click a stone to shatter it'
-    : step === 'place'
-      ? `Place gem ${game.placed.length + 1} of 5`
-      : step === 'choose'
-        ? sel
-          ? `Selected ${sel.def.name}: keep, merge or combine it`
-          : 'Click one of this round’s gems to select it'
-        : step === 'won'
-          ? `You win! Score ${score(game)}`
-          : step === 'lost'
-            ? `Game over. Score ${score(game)}`
-            : speed
-              ? `Wave in progress ×${speed}`
-              : 'Paused (Space)';
+  const hint = builder
+    ? 'Maze builder: click to add or remove stones · 📖 Book → Maze helpers to load or compare'
+    : removing
+      ? 'Click a stone to shatter it'
+      : step === 'place'
+        ? `Place gem ${game.placed.length + 1} of 5`
+        : step === 'choose'
+          ? sel
+            ? `Selected ${sel.def.name}: keep, merge or combine it`
+            : 'Click one of this round’s gems to select it'
+          : step === 'won'
+            ? `You win! Score ${score(game)}`
+            : step === 'lost'
+              ? `Game over. Score ${score(game)}`
+              : speed
+                ? `Wave in progress ×${speed}`
+                : 'Paused (Space)';
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
   const hp = Math.max(0, sim.castleHp);
-  const tags = [replaying && 'Replay', cfg.daily && `Daily ${cfg.daily}`, cfg.difficulty].filter(
-    Boolean,
-  );
+  const tags = [
+    replaying && 'Replay',
+    builder && 'Maze builder',
+    cfg.daily && `Daily ${cfg.daily}`,
+    !builder && cfg.difficulty,
+  ].filter(Boolean);
   const s =
     tags.map((t) => `<span class="tag">${t}</span>`).join('') +
-    `<span class="chip"><b>Wave</b> ${sim.wave}/${sim.lastWave}</span>` +
-    `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
-    `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
-    `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`;
+    (builder
+      ? ''
+      : `<span class="chip"><b>Wave</b> ${sim.wave}/${sim.lastWave}</span>` +
+        `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
+        `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
+        `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`);
   const live = sel && combat.towers.includes(sel) ? sel : null;
   if (!live) sel = null;
   const recipes = live ? game.recipesFor(live) : [];
@@ -406,6 +482,10 @@ function updateHud() {
     removing +
     view.guide +
     view.showPath +
+    view.showRanges +
+    book.open +
+    guide?.name +
+    mazeVer +
     game.xp +
     game.kills +
     recipes.map((x) => x.name) +
@@ -421,9 +501,11 @@ function updateHud() {
     if (game.gold > prevGold) flashEl('gold', 'pop');
     if (hp < prevHp) flashEl('hp', 'hit');
     [prevGold, prevHp] = [game.gold, hp];
-    panel.dataset.view = live ? 'tower' : 'hero';
-    if (live) drawTower(live, recipes, share);
+    panel.dataset.view = builder ? 'builder' : live ? 'tower' : 'hero';
+    if (builder) drawBuilder();
+    else if (live) drawTower(live, recipes, share);
     else drawHero(xpPct, lvlTo);
+    book.draw();
     // Highlight every tower that can combine into something right now.
     view.hints =
       sim.phase === 'build'
@@ -435,10 +517,14 @@ function updateHud() {
       merge2: !!sel && game.canMerge(sel, 2),
       merge4: !!sel && game.canMerge(sel, 4),
       down: !!sel && game.canDowngrade(sel),
-      stone: sim.phase === 'build',
+      stone: step === 'place',
       level: game.levelCost !== null && game.gold >= game.levelCost,
       guide: true,
       path: true,
+      ranges: true,
+      book: true,
+      clear: builder,
+      save: builder,
       deselect: true,
       pause: true,
       speed: true,
@@ -449,13 +535,15 @@ function updateHud() {
     label('level', `Level ${game.levelCost ?? '—'}g`);
     label('speed', `×${settings.speed}`);
     label('pause', speed ? 'Pause' : 'Resume');
-    label('guide', GUIDES[view.guide]?.name ?? 'Guide');
+    label('guide', guide?.name ?? 'Guide');
     for (const b of buttons)
       b.classList.toggle(
         'on',
         (b.dataset.a === 'stone' && removing) ||
-          (b.dataset.a === 'guide' && view.guide >= 0) ||
-          (b.dataset.a === 'path' && view.showPath),
+          (b.dataset.a === 'guide' && !!guide) ||
+          (b.dataset.a === 'path' && view.showPath) ||
+          (b.dataset.a === 'ranges' && view.showRanges) ||
+          (b.dataset.a === 'book' && book.open),
       );
   }
 }
@@ -480,6 +568,7 @@ requestAnimationFrame(function frame(now) {
     run(replaying[ri++][1]);
     nextCmdAt = now + 250 / Math.max(1, speed);
   }
+  if (builder) acc = 0; // nothing runs in the builder
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
     // Replay: mid-wave commands (level buys) land on the tick they were issued.

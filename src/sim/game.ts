@@ -279,7 +279,8 @@ export class Game {
   }
 
   removeStone(c: number, r: number) {
-    if (this.sim.phase !== 'build' || this.combat.towerAt(c, r)) return false;
+    // Only while gems can still be placed this round.
+    if (this.step !== 'place' || this.combat.towerAt(c, r)) return false;
     return this.sim.maze.removeRock(c, r);
   }
 

@@ -31,13 +31,20 @@ export interface Settings {
   volume: number;
   difficulty: string; // for new games
 }
+export interface MazeRow {
+  name: string;
+  rows: string[]; // guide rows, '1' = stone
+  date: number;
+}
 export interface Stores {
   scores: ScoreRow[];
+  mazes: MazeRow[];
   save: Save | null;
   settings: Settings;
 }
 const DEFAULTS: Stores = {
   scores: [],
+  mazes: [],
   save: null,
   settings: { name: 'Player', speed: 1, volume: 0.5, difficulty: 'normal' },
 };

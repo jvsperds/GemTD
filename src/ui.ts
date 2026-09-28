@@ -4,7 +4,13 @@ import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
 
 /** Start a new game (or a replay) on the next load. */
-function startNext(o: { seed: number; difficulty: string; daily?: string; replay?: LogEntry[] }) {
+function startNext(o: {
+  seed: number;
+  difficulty: string;
+  daily?: string;
+  replay?: LogEntry[];
+  builder?: boolean;
+}) {
   try {
     sessionStorage.setItem('gemtd.start', JSON.stringify(o));
   } catch {
@@ -23,6 +29,7 @@ export function initMenu(
   game: Game,
   setSpeed: (s: number) => void,
   setVolume: (v: number) => void,
+  saveMaze: () => Promise<boolean>,
 ) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const menu = $<HTMLElement>('menu');
@@ -115,6 +122,8 @@ export function initMenu(
   const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
   $('close').onclick = () => (menu.hidden = true);
   $('newgame').onclick = () => newGame();
+  $('builder').onclick = () =>
+    confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });
   $('daily').onclick = () =>
     confirmLeave() && startNext({ seed: dailySeed(), difficulty: 'normal', daily: today() });
   $('export').onclick = async () => {
@@ -150,8 +159,15 @@ export function initMenu(
     over.hidden = !result;
     if (result) {
       over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
-        <div class="big">${result.score}</div><button>⚔ Play again</button>`;
-      over.querySelector('button')!.onclick = newGame;
+        <div class="big">${result.score}</div><button>⚔ Play again</button>
+        <button>💾 Save maze to library</button>`;
+      const [again, keep] = over.querySelectorAll('button');
+      again.onclick = newGame;
+      keep.onclick = async () => {
+        if (!(await saveMaze())) return;
+        keep.disabled = true;
+        keep.textContent = '✓ Saved';
+      };
       tab('scores');
     }
     draw();
