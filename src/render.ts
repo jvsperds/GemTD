@@ -2,7 +2,7 @@
 // Static layer (ground, route, blocks) is an offscreen canvas redrawn only on maze/zoom change;
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
-import type { Combat } from './sim/towers';
+import type { Combat, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
 // Portrait sprites baked by tools/build_sprites.py (gitignored; empty glob = drawn fallbacks).
@@ -45,6 +45,8 @@ const GUIDE_COLOR: Record<string, string> = {
 };
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
+const TALL = 0.55;
+const TOWER_H = 0.2; // front-face height of a tower's own (lower) base, in cells // how far modelled towers rise above their block, in cells
 export const MAX_PARTICLES = 800;
 const HUD_H = 44;
 const PANEL_H = 150; // bottom panel
@@ -66,12 +68,456 @@ function shade(hex: string, k: number) {
   return `rgb(${ch(n >> 16)},${ch((n >> 8) & 255)},${ch(n & 255)})`;
 }
 
+/** Blend two #rrggbb colours: t = 0 gives a, 1 gives b. */
+function mix(a: string, b: string, t: number) {
+  const x = parseInt(a.slice(1), 16),
+    y = parseInt(b.slice(1), 16);
+  const ch = (sh: number) => Math.round(((x >> sh) & 255) * (1 - t) + ((y >> sh) & 255) * t);
+  return '#' + ((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0');
+}
+
 function bake(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
   const c = document.createElement('canvas');
   c.width = Math.max(1, Math.ceil(w));
   c.height = Math.max(1, Math.ceil(h));
   draw(c.getContext('2d')!);
   return c;
+}
+
+// Original special-tower models: every GemTD tower is a ward with a big eye, so each one is a
+// body archetype + body/accent colours + eye colour. Silhouettes loosely follow the Dota renders;
+// nothing is traced from them.
+type Body = 'orb' | 'pillar' | 'house' | 'mech' | 'bird' | 'plant' | 'crystal' | 'beast';
+const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
+  silver: ['orb', '#34404c', '#3fb0ff', 'y'],
+  'silver-knight': ['mech', '#3a3f48', '#f0a030', 'y'],
+  'pink-diamond': ['pillar', '#c8c8d0', '#f0a030', 'y'],
+  'huge-pink-diamond': ['pillar', '#b0b0bc', '#ff7ad9', 'y'],
+  'koh-i-noor-diamond': ['pillar', '#d8dce8', '#3a6bff', 'b'],
+  malachite: ['plant', '#8fbf3a', '#2f8f3a', 'y'],
+  'vivid-malachite': ['plant', '#a0c83a', '#2fbf5a', 'y'],
+  'uranium-238': ['mech', '#9aa0a8', '#555555', 'y'],
+  'uranium-235': ['mech', '#e0a020', '#555555', 'y'],
+  'depleted-kyparium': ['mech', '#4fc0e0', '#333333', 'b'],
+  'asteriated-ruby': ['bird', '#3a2a30', '#e05a20', 'y'],
+  volcano: ['crystal', '#6a4a2a', '#e08020', 'y'],
+  bloodstone: ['orb', '#a02020', '#e8e0d0', 'y'],
+  'antique-bloodstone': ['house', '#8a5a3a', '#6a3020', 'y'],
+  'the-crown-prince': ['house', '#9a9ab8', '#6a6a90', 'b'],
+  jade: ['pillar', '#505860', '#e0b040', 'y'],
+  quartz: ['bird', '#8a4a3a', '#f0e0d0', 'y'],
+  'grey-jade': ['mech', '#5a8ac0', '#8a6a4a', 'y'],
+  'monkey-king-jade': ['beast', '#e0a060', '#e03a3a', 'y'],
+  'diamond-cullinan': ['orb', '#f0e0a0', '#ffffff', 'y'],
+  'lucky-chinese-jade': ['house', '#a02a2a', '#e0b040', 'y'],
+  'charming-lazurite': ['bird', '#e8c8a0', '#8a4ae0', 'y'],
+  'golden-jubilee': ['bird', '#e04a20', '#f2c52e', 'y'],
+  gold: ['plant', '#c07020', '#e04a20', 'y'],
+  'egypt-gold': ['mech', '#b08a20', '#f2c52e', 'y'],
+  'dark-emerald': ['pillar', '#3a3a44', '#e06a20', 'y'],
+  'emerald-golem': ['bird', '#6a6a70', '#c8c8c8', 'y'],
+  'paraiba-tourmaline': ['crystal', '#6a3a5a', '#c8c8d0', 'y'],
+  'elaborately-carved-tourmaline': ['beast', '#6a4a2a', '#e0a040', 'y'],
+  'sapphire-star-of-adam': ['beast', '#3a4a8a', '#4fa0e0', 'y'],
+  'deep-sea-pearl': ['plant', '#d8c830', '#e8e8e8', 'y'],
+  'chrysoberyl-cat-s-eye': ['plant', '#5a3a2a', '#3a5a8a', 'y'],
+  'red-coral': ['beast', '#e06040', '#c04040', 'y'],
+  'natural-zumurud': ['pillar', '#4a3a8a', '#2fbf5a', 'y'],
+  'carmen-lucia': ['orb', '#5a2a3a', '#c04a5a', 'b'],
+  'yellow-sapphire': ['crystal', '#d8e4f0', '#a0c8f0', 'y'],
+  'northern-saber-s-eye': ['beast', '#e0e0e8', '#40c0d0', 'y'],
+  'star-sapphire': ['crystal', '#c8d8e8', '#8ab0d8', 'b'],
+  obsidian: ['orb', '#3a3030', '#e05a20', 'y'],
+  agate: ['beast', '#e0c080', '#a07040', 'y'],
+  'fantastic-miss-shrimp': ['bird', '#e0a020', '#3a3030', 'y'],
+  'yaphets-stone': ['bird', '#f0f0e0', '#e0b040', 'y'],
+  'burning-stone': ['crystal', '#3a4a6a', '#4fa0e0', 'b'],
+  'the-great-stone': ['pillar', '#6a6a6a', '#8fbf3a', 'y'],
+};
+export const hasModel = (key: string) => key in MODELS;
+
+/** Draw a special tower's head centred at (mx, my) within radius r. False if it has none. */
+function towerModel(g: CanvasRenderingContext2D, key: string, mx: number, my: number, r: number) {
+  const md = MODELS[key];
+  if (!md) return false;
+  const [body, c, a, eye] = md;
+  const poly = (pts: number[], fill: string) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    for (let i = 0; i < pts.length; i += 2) g.lineTo(mx + pts[i] * r, my + pts[i + 1] * r);
+    g.fill();
+  };
+  const disc = (x: number, y: number, rr: number, fill: string) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    g.arc(mx + x * r, my + y * r, rr * r, 0, 7);
+    g.fill();
+  };
+  let ey = -0.1; // eye centre y
+  let er = 0.3; // eye radius
+  switch (body) {
+    case 'orb':
+      disc(0, 0.05, 0.85, shade(c, 0.6));
+      disc(-0.08, -0.02, 0.75, c);
+      for (let i = 0; i < 8; i++) {
+        const t = (i / 8) * 6.283;
+        const p = (k: number, d: number) => [Math.cos(t + k) * d, Math.sin(t + k) * d];
+        poly([...p(0, 0.7), ...p(0.3, 0.98), ...p(0.5, 0.7)], a);
+      }
+      er = 0.36;
+      break;
+    case 'pillar':
+      poly([-0.55, 0.9, 0.55, 0.9, 0.45, -0.3, -0.45, -0.3], shade(c, 0.7));
+      poly([-0.55, 0.9, 0, 0.9, 0, -0.3, -0.45, -0.3], c);
+      for (const y of [0.1, 0.5]) poly([-0.6, y, 0.6, y, 0.6, y + 0.14, -0.6, y + 0.14], a);
+      ey = -0.45;
+      break;
+    case 'house':
+      poly([-0.6, 0.9, 0.6, 0.9, 0.6, 0, -0.6, 0], shade(c, 0.8));
+      poly([-0.8, 0.05, 0, -0.85, 0.8, 0.05], a);
+      poly([-0.8, 0.05, 0, -0.85, 0, 0.05], shade(a, 1.3));
+      poly([-0.15, 0.9, 0.15, 0.9, 0.15, 0.5, -0.15, 0.5], '#1a1410');
+      ey = -0.2;
+      er = 0.26;
+      break;
+    case 'mech':
+      poly([-0.35, -0.95, -0.2, -0.95, -0.2, -0.4, -0.35, -0.4], a);
+      poly([0.2, -0.95, 0.35, -0.95, 0.35, -0.4, 0.2, -0.4], a);
+      poly([-0.8, -0.5, 0.8, -0.5, 0.65, 0.75, -0.65, 0.75], shade(c, 0.7));
+      poly([-0.8, -0.5, 0.8, -0.5, 0.75, -0.2, -0.75, -0.2], c);
+      poly([-0.15, 0.75, 0.15, 0.75, 0.1, 0.98, -0.1, 0.98], a);
+      ey = 0.15;
+      break;
+    case 'bird':
+      poly([-0.2, -0.1, -0.98, -0.5, -0.8, 0.2, -0.95, 0.55, -0.2, 0.4], a);
+      poly([0.2, -0.1, 0.98, -0.5, 0.8, 0.2, 0.95, 0.55, 0.2, 0.4], shade(a, 0.75));
+      disc(0, 0.2, 0.5, c);
+      poly([-0.3, -0.35, -0.2, -0.85, 0, -0.45, 0.2, -0.85, 0.3, -0.35], shade(c, 0.8));
+      ey = 0.05;
+      break;
+    case 'plant':
+      for (let i = 0; i < 5; i++) {
+        const t = -2.8 + i * 0.7;
+        const x = Math.cos(t);
+        const y = Math.sin(t);
+        const q = [x * 0.95 - y * 0.25, y * 0.95 + x * 0.25, x * 0.95, y * 0.95];
+        poly(
+          [x * 0.2, 0.2 + y * 0.2, ...q, x * 0.95 + y * 0.25, y * 0.95 - x * 0.25],
+          i % 2 ? a : shade(a, 1.3),
+        );
+      }
+      poly([-0.12, 0.95, 0.12, 0.95, 0.08, 0.1, -0.08, 0.1], shade(c, 0.6));
+      disc(0, 0, 0.45, c);
+      break;
+    case 'crystal':
+      poly([-0.7, 0.9, -0.85, -0.2, -0.45, 0.2], shade(c, 0.7));
+      poly([0.7, 0.9, 0.9, -0.3, 0.45, 0.2], shade(c, 0.8));
+      poly([-0.5, 0.9, -0.35, -0.95, 0, -0.6, 0.35, -0.95, 0.5, 0.9], c);
+      poly([0, -0.6, 0.35, -0.95, 0.5, 0.9, 0, 0.9], shade(c, 0.75));
+      poly([-0.25, 0.9, 0, 0.5, 0.25, 0.9], a);
+      ey = 0.05;
+      break;
+    case 'beast':
+      poly([-0.75, -0.2, -0.65, -0.95, -0.25, -0.55], a);
+      poly([0.75, -0.2, 0.65, -0.95, 0.25, -0.55], a);
+      disc(0, 0.1, 0.8, shade(c, 0.75));
+      disc(-0.05, 0.05, 0.7, c);
+      disc(-0.4, 0.45, 0.18, a);
+      disc(0.4, 0.45, 0.18, a);
+      er = 0.34;
+  }
+  drawEye(g, mx, my + ey * r, er * r, eye === 'b');
+  return true;
+}
+
+/** The ward eye every tower carries: rim, sclera, iris, pupil, catchlight. */
+function drawEye(g: CanvasRenderingContext2D, x: number, y: number, er: number, blue: boolean) {
+  const disc = (dx: number, dy: number, rr: number, fill: string) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    g.arc(x + dx, y + dy, rr, 0, 7);
+    g.fill();
+  };
+  disc(0, 0, er * 1.12, '#1a1410');
+  disc(0, 0, er, blue ? '#e8f0ff' : '#f7d23a');
+  disc(0, 0, er * 0.62, blue ? '#3a8aff' : '#e0701e');
+  disc(0, 0, er * 0.32, '#0a0808');
+  disc(-er * 0.35, -er * 0.35, er * 0.18, '#fff');
+}
+
+/** Cut gem centred at (m, m): four facets with baked light from the top-left. */
+function gemFacets(g: CanvasRenderingContext2D, c: string, m: number, my: number, rad: number) {
+  const facets: [number, number, number][] = [
+    [-1, 0, 1.3],
+    [0, -1, 1.1],
+    [1, 0, 0.75],
+    [0, 1, 0.55],
+  ];
+  facets.forEach(([dx, dy, k], i) => {
+    const [nx, ny] = facets[(i + 1) % 4];
+    g.fillStyle = shade(c, k);
+    g.beginPath();
+    g.moveTo(m, my);
+    g.lineTo(m + dx * rad, my + dy * rad);
+    g.lineTo(m + nx * rad, my + ny * rad);
+    g.fill();
+  });
+}
+
+const ring = (n: number, rx: number, ry: number, dy = 0, rot = 0) =>
+  Array.from({ length: n }, (_, i) => {
+    const t = rot + (i / n) * 6.283;
+    return [Math.cos(t) * rx, Math.sin(t) * ry + dy];
+  });
+// Unit outlines per gem type (y down), each cut like the real stone.
+const CUTS: Record<string, number[][]> = {
+  B: ring(10, 0.72, 0.95), // sapphire: oval
+  R: ring(8, 0.9, 0.9, 0, 0.39).map(([x, y]) => [x * 0.95, y * 0.95]), // ruby: cushion
+  G: [
+    [-0.45, -0.9],
+    [0.45, -0.9],
+    [0.7, -0.65],
+    [0.7, 0.65],
+    [0.45, 0.9],
+    [-0.45, 0.9],
+    [-0.7, 0.65],
+    [-0.7, -0.65],
+  ], // emerald: step cut
+  Y: [
+    ...ring(12, 0.72, 0.62, 0.3).slice(0, 7), // round bottom, right to left
+    [-0.5, -0.35],
+    [0, -0.98],
+    [0.5, -0.35],
+  ], // topaz: pear
+  Q: [
+    [-0.35, -0.95],
+    [0.35, -0.95],
+    [0.55, -0.7],
+    [0.55, 0.7],
+    [0.35, 0.95],
+    [-0.35, 0.95],
+    [-0.55, 0.7],
+    [-0.55, -0.7],
+  ], // aquamarine: hex prism
+};
+
+/** Real-gem head centred at (m, m): faceted outline + table, cabochon opal, crystal amethyst. */
+// Where each gem's eye sits (unit coords) and whether it is blue; the rest are yellow.
+const GEM_EYE: Record<string, [number, boolean]> = {
+  D: [-0.3, true],
+  P: [0.25, false],
+  Y: [0.25, false],
+};
+
+/** Base gem head: its real cut, then the ward eye on the stone. */
+function gemCut(g: CanvasRenderingContext2D, gem: string, c: string, m: number, rad: number) {
+  gemBody(g, gem, c, m, rad);
+  const [ey, blue] = GEM_EYE[gem] ?? [0, false];
+  drawEye(g, m, m + ey * rad, rad * (gem === 'Q' ? 0.34 : 0.4), blue);
+}
+
+function gemBody(g: CanvasRenderingContext2D, gem: string, c: string, m: number, rad: number) {
+  const P = (x: number, y: number) => [m + x * rad, m + y * rad] as const;
+  const face = (pts: number[][], fill: string) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    for (const [x, y] of pts) g.lineTo(...P(x, y));
+    g.fill();
+  };
+  // Facet brightness from its outward direction vs light from the top-left.
+  const lit = (x: number, y: number) =>
+    shade(c, 1 + 0.45 * ((-x - y) / (Math.hypot(x, y) || 1)) * 0.7);
+  if (gem === 'E') {
+    // Opal: smooth domed cabochon with play-of-colour flecks.
+    const gr = g.createRadialGradient(...P(-0.3, -0.35), rad * 0.1, ...P(0, 0), rad);
+    gr.addColorStop(0, '#fff');
+    gr.addColorStop(0.5, c);
+    gr.addColorStop(1, shade(c, 0.55));
+    g.fillStyle = gr;
+    g.beginPath();
+    g.ellipse(m, m, rad * 0.8, rad * 0.95, 0, 0, 7);
+    g.fill();
+    ['#4fe0d8', '#ff7ad9', '#7ad05a', '#f2a03a'].forEach((f, i) => {
+      g.fillStyle = f + 'b0';
+      g.beginPath();
+      g.arc(...P([-0.3, 0.3, 0.2, -0.25][i], [0.1, -0.2, 0.45, 0.5][i]), rad * 0.13, 0, 7);
+      g.fill();
+    });
+    return;
+  }
+  if (gem === 'P') {
+    // Amethyst: cluster of three pointed crystals, each with a lit and a shaded half.
+    for (const [x, h, w] of [
+      [-0.45, 0.6, 0.28],
+      [0.45, 0.55, 0.28],
+      [0, 0.95, 0.36],
+    ]) {
+      face(
+        [
+          [x - w, 0.9],
+          [x - w, 0.9 - h],
+          [x, 0.9 - h - 0.35],
+          [x, 0.9],
+        ],
+        shade(c, 1.25),
+      );
+      face(
+        [
+          [x + w, 0.9],
+          [x + w, 0.9 - h],
+          [x, 0.9 - h - 0.35],
+          [x, 0.9],
+        ],
+        shade(c, 0.7),
+      );
+    }
+    return;
+  }
+  if (gem === 'D') {
+    // Diamond, brilliant cut side-on: flat table, crown facets, pointed pavilion.
+    const girdle = -0.2;
+    const crown = [-0.95, -0.55, 0, 0.55, 0.95];
+    for (let i = 0; i < 4; i++)
+      face(
+        [
+          [crown[i], girdle],
+          [crown[i + 1], girdle],
+          [crown[i + 1] * 0.55, -0.7],
+          [crown[i] * 0.55, -0.7],
+        ],
+        shade(c, 1.2 - i * 0.12),
+      );
+    for (let i = 0; i < 4; i++)
+      face(
+        [
+          [crown[i], girdle],
+          [crown[i + 1], girdle],
+          [0, 0.98],
+        ],
+        shade(c, 1.05 - i * 0.15),
+      );
+    face(
+      [
+        [-0.52, -0.7],
+        [0.52, -0.7],
+        [0.4, -0.8],
+        [-0.4, -0.8],
+      ],
+      '#fff',
+    );
+    return;
+  }
+  const out = CUTS[gem] ?? ring(8, 0.9, 0.9);
+  const tab = out.map(([x, y]) => [x * 0.5, y * 0.5 - 0.05]);
+  out.forEach(([x, y], i) => {
+    const [nx, ny] = out[(i + 1) % out.length];
+    face([[x, y], [nx, ny], tab[(i + 1) % out.length], tab[i]], lit(x + nx, y + ny));
+  });
+  face(tab, shade(c, 1.15));
+  if (gem === 'G')
+    face(
+      out.map(([x, y]) => [x * 0.75, y * 0.75 - 0.03]),
+      shade(c, 1.15),
+    ); // step
+  if (gem === 'G') face(tab, shade(c, 1.25));
+  face([tab[0], tab[1], [tab[1][0] * 0.4, tab[1][1] * 0.4]], 'rgba(255,255,255,0.35)');
+}
+
+/** Standing tower into an s × s(1 + TOWER_H + TALL) canvas: gem-cut stone, plinth, shaft, head. */
+function drawTower(
+  g: CanvasRenderingContext2D,
+  s: number,
+  key: string,
+  gem: string,
+  quality: number,
+) {
+  const T = s * TALL;
+  const [, c, a] = quality ? ['', shade(GEM_COLOR[gem], 0.5), GEM_COLOR[gem]] : MODELS[key];
+  // Gem-cut stone: dark gem-tinted block, top face cut into four lit facets around a
+  // table, small inlaid gems at the corners and studs along the front face.
+  const st = mix(a, '#6b6b6b', 0.55);
+  g.fillStyle = shade(st, 0.7);
+  g.fillRect(0, T + s, s, s * TOWER_H);
+  const q = s * 0.22;
+  const tri = (pts: number[], col: string) => {
+    g.fillStyle = col;
+    g.beginPath();
+    for (let i = 0; i < pts.length; i += 2) g.lineTo(pts[i], T + pts[i + 1]);
+    g.fill();
+  };
+  tri([0, 0, s, 0, s - q, q, q, q], shade(st, 1.35));
+  tri([0, 0, q, q, q, s - q, 0, s], shade(st, 1.15));
+  tri([s, 0, s, s, s - q, s - q, s - q, q], shade(st, 0.85));
+  tri([0, s, q, s - q, s - q, s - q, s, s], shade(st, 0.7));
+  tri([q, q, s - q, q, s - q, s - q, q, s - q], st);
+  for (const [x, y] of [
+    [q / 2, q / 2],
+    [s - q / 2, q / 2],
+    [q / 2, s - q / 2],
+    [s - q / 2, s - q / 2],
+  ])
+    gemFacets(g, a, x, T + y, s * 0.08);
+  for (let i = 1; i <= 3; i++)
+    gemFacets(g, a, (i * s) / 4, T + s * (1 + TOWER_H / 2), s * TOWER_H * 0.35);
+  const cx = s / 2,
+    foot = T + s * 0.62,
+    head = s * (quality ? 0.24 + 0.035 * quality : 0.46);
+  // Soft contact shadow, then a two-step drum plinth in the accent colour.
+  g.fillStyle = 'rgba(0,0,0,0.35)';
+  g.beginPath();
+  g.ellipse(cx + s * 0.04, foot + s * 0.04, s * 0.4, s * 0.16, 0, 0, 7);
+  g.fill();
+  const drum = (w: number, y0: number, h: number, col: string) => {
+    const gr = g.createLinearGradient(cx - w, 0, cx + w, 0);
+    gr.addColorStop(0, shade(col, 1.25));
+    gr.addColorStop(0.45, col);
+    gr.addColorStop(1, shade(col, 0.45));
+    g.fillStyle = gr;
+    g.beginPath();
+    g.ellipse(cx, y0, w, w * 0.38, 0, 0, Math.PI);
+    g.lineTo(cx - w, y0 - h);
+    g.ellipse(cx, y0 - h, w, w * 0.38, 0, Math.PI, 0, true);
+    g.fill();
+    g.fillStyle = shade(col, 1.1);
+    g.beginPath();
+    g.ellipse(cx, y0 - h, w, w * 0.38, 0, 0, 7);
+    g.fill();
+  };
+  drum(s * 0.36, foot, s * 0.1, shade(a, 0.8));
+  drum(s * 0.26, foot - s * 0.1, s * 0.08, a);
+  // Shaft up to the head: a rounded column, lit from the left.
+  const top = s * 0.48;
+  drum(s * 0.12, foot - s * 0.18, foot - s * 0.18 - top, shade(c, 0.85));
+  // Head on its own canvas so the rounding wash only touches the head's pixels.
+  const hd = bake(head * 2 + 2, head * 2 + 2, (h) => {
+    const o = head + 1;
+    if (quality) gemCut(h, gem, GEM_COLOR[gem], o, head);
+    else towerModel(h, key, o, o, head);
+    const gl = h.createRadialGradient(o - head * 0.4, o - head * 0.5, 0, o, o, head * 1.1);
+    gl.addColorStop(0, 'rgba(255,255,255,0.18)');
+    gl.addColorStop(0.6, 'rgba(255,255,255,0)');
+    gl.addColorStop(1, 'rgba(0,0,0,0.3)');
+    h.globalCompositeOperation = 'source-atop';
+    h.fillStyle = gl;
+    h.fillRect(0, 0, o * 2, o * 2);
+  });
+  g.drawImage(hd, cx - head - 1, top - head - 1);
+}
+
+const icons = new Map<string, string>();
+/** Tower portrait for the panel and book: the model's upper half, as a cached data URL. */
+export function towerIcon(d: { name: string; type: string; quality: number }) {
+  const key = towerKey(d) + d.quality;
+  let url = icons.get(key);
+  if (!url) {
+    const s = 96;
+    const full = bake(s, s * (1 + TOWER_H + TALL), (g) =>
+      drawTower(g, s, towerKey(d), d.type, d.quality),
+    );
+    url = bake(s, s, (g) => g.drawImage(full, 0, 0, s, s * 1.05, 0, 0, s, s)).toDataURL();
+    icons.set(key, url);
+  }
+  return url;
 }
 
 export class Renderer {
@@ -190,73 +636,24 @@ export class Renderer {
     return s;
   }
 
-  /** Stone block with a lit top face and darker front face; optional gem on top. */
-  private block(color: string, gem = '', quality = 0, key = '') {
+  /** Standing tower sprite at the current zoom. */
+  private tower(key: string, gem: string, quality: number) {
     const s = this.cell;
-    const im = key ? this.img(key) : null;
-    return this.sprite(`b${color}${gem}${quality}${im ? key : ''}`, s, s * (1 + BLOCK_H), (g) => {
+    return this.sprite(`t${key}${quality}`, s, s * (1 + TOWER_H + TALL), (g) =>
+      drawTower(g, s, key, gem, quality),
+    );
+  }
+
+  /** Stone block with a lit top face and darker front face. */
+  private block(color: string) {
+    const s = this.cell;
+    return this.sprite(`b${color}`, s, s * (1 + BLOCK_H), (g) => {
       g.fillStyle = shade(color, 0.6);
       g.fillRect(0, s, s, s * BLOCK_H);
       g.fillStyle = color;
       g.fillRect(0, 0, s, s);
       g.fillStyle = shade(color, 1.25);
       g.fillRect(0, 0, s, Math.max(1, s / 10));
-      if (!gem) return;
-      if (im) {
-        this.token(g, im, s / 2, s / 2, s * 0.44, GEM_COLOR[gem]);
-        if (quality) {
-          g.fillStyle = '#000a';
-          g.fillRect(s * 0.62, s * 0.66, s * 0.38, s * 0.34);
-          g.fillStyle = '#fff';
-          g.font = `bold ${Math.max(7, s * 0.3)}px sans-serif`;
-          g.textAlign = 'right';
-          g.textBaseline = 'bottom';
-          g.fillText(String(quality), s - 1, s);
-        }
-        return;
-      }
-      const c = GEM_COLOR[gem],
-        m = s / 2,
-        rad = s * (quality ? 0.2 + 0.045 * quality : 0.42);
-      if (!quality) {
-        // Special tower: 8-point star with alternating lit/shaded facets and a white core.
-        for (let i = 0; i < 8; i++) {
-          const a0 = (i / 8) * 6.283,
-            a1 = ((i + 1) / 8) * 6.283,
-            am = (a0 + a1) / 2;
-          g.fillStyle = shade(c, i % 2 ? 0.6 : 1.2 - 0.05 * i);
-          g.beginPath();
-          g.moveTo(m, m);
-          g.lineTo(m + Math.cos(a0) * rad * 0.5, m + Math.sin(a0) * rad * 0.5);
-          g.lineTo(m + Math.cos(am) * rad, m + Math.sin(am) * rad);
-          g.lineTo(m + Math.cos(a1) * rad * 0.5, m + Math.sin(a1) * rad * 0.5);
-          g.fill();
-        }
-        g.fillStyle = '#fff';
-        g.fillRect(m - 1, m - 1, 2, 2);
-        return;
-      }
-      // Four facets with baked light from the top-left.
-      const facets: [number, number, number][] = [
-        [-1, 0, 1.3],
-        [0, -1, 1.1],
-        [1, 0, 0.75],
-        [0, 1, 0.55],
-      ];
-      facets.forEach(([dx, dy, k], i) => {
-        const [nx, ny] = facets[(i + 1) % 4];
-        g.fillStyle = shade(c, k);
-        g.beginPath();
-        g.moveTo(m, m);
-        g.lineTo(m + dx * rad, m + dy * rad);
-        g.lineTo(m + nx * rad, m + ny * rad);
-        g.fill();
-      });
-      g.fillStyle = '#000';
-      g.font = `bold ${Math.max(7, s * 0.3)}px sans-serif`;
-      g.textAlign = 'right';
-      g.textBaseline = 'bottom';
-      g.fillText(String(quality), s - 1, s);
     });
   }
 
@@ -293,7 +690,7 @@ export class Renderer {
 
   private drawStatic() {
     const { maze, cell: s } = this;
-    const top = Math.ceil(s * BLOCK_H);
+    const top = Math.ceil(s * (BLOCK_H + TALL));
     const L = this.staticLayer;
     L.width = maze.w * s;
     L.height = maze.h * s + top;
@@ -340,13 +737,29 @@ export class Renderer {
           cell = maze.cells[i];
         if (cell !== WALL && cell !== ROCK) continue;
         const t = towers.get(i);
-        const spr =
-          cell === WALL
-            ? this.block('#1c1c24')
-            : t
-              ? this.block('#6b6b6b', t.def.type, t.def.quality, towerKey(t.def))
-              : this.block('#8a8a8a');
-        g.drawImage(spr, c * s, (r - BLOCK_H) * s);
+        if (t)
+          // The tower's base sits on its cell; plain stones stand taller.
+          g.drawImage(
+            this.tower(towerKey(t.def), t.def.type, t.def.quality),
+            c * s,
+            (r - TOWER_H - TALL) * s,
+          );
+        else
+          g.drawImage(this.block(cell === WALL ? '#1c1c24' : '#8a8a8a'), c * s, (r - BLOCK_H) * s);
+      }
+    // Quality numbers last, so a tower in front never hides the one behind's number.
+    g.fillStyle = '#fff';
+    g.strokeStyle = '#000';
+    g.lineWidth = Math.max(2, s / 12);
+    g.font = `bold ${Math.max(7, s * 0.3)}px sans-serif`;
+    g.textAlign = 'right';
+    g.textBaseline = 'bottom';
+    for (const t of this.combat.towers)
+      if (t.def.quality) {
+        const x = (t.c + 1) * s - 2,
+          y = (t.r + 1) * s - 1;
+        g.strokeText(String(t.def.quality), x, y);
+        g.fillText(String(t.def.quality), x, y);
       }
     this.staticDirty = false;
   }
@@ -371,26 +784,55 @@ export class Renderer {
     }
   }
 
-  /** Emit cosmetic hit sparks, splash rings and burn-aura embers (call once per sim tick). */
+  /** Burn-aura towers with at least one enemy inside, refreshed each sim tick. */
+  private burning = new Set<Tower>();
+
+  /** Emit cosmetic hit sparks, splash rings and burn embers (call once per sim tick). */
   sparks() {
     const { combat } = this;
     for (const { from, to } of combat.shots) {
       const a = Math.random() * 7; // cosmetic only, so Math.random is fine
       const y = to.y - (to.def.flying ? FLY_Z : 0);
-      this.emit(to.x, y - 0.3, Math.cos(a) * 2, Math.sin(a) * 2 - 1, 0.4, 0);
-      const fx = combat.fx(from.def);
-      if (fx.cleave || fx.frost) this.burst(to.x, y, 8, fx.cleave ? 4 : 3, fx.frost ? 3 : 1);
+      const kind = shotKind(combat, from);
+      if (kind === 'frost')
+        // Snow: a few flakes that puff out and drift down.
+        for (let k = 0; k < 4; k++)
+          this.emit(to.x, y - 0.3, Math.cos(a + k) * 1.5, 0.6 + Math.random(), 0.7, 3);
+      else
+        this.emit(
+          to.x,
+          y - 0.3,
+          Math.cos(a) * 2,
+          Math.sin(a) * 2 - 1,
+          0.4,
+          kind === 'lightning' ? 4 : 0,
+        );
+      if (combat.fx(from.def).cleave) this.burst(to.x, y, 8, 4, 1);
     }
+    // Burn auras only show where they are actually hurting someone: embers on each enemy inside.
+    this.burning.clear();
     for (const t of combat.towers)
       for (const e of combat.fx(t.def).enemy) {
         if (!e.dps) continue;
-        const reach = e.range / UNITS_PER_CELL,
-          a = Math.random() * 6.283,
-          d = Math.sqrt(Math.random()) * reach;
-        const x = t.c + 0.5 + Math.cos(a) * d,
-          y = t.r + 0.5 + Math.sin(a) * d;
-        this.emit(x, y, 0, -1.2, 0.9, Math.random() < 0.4 ? 2 : 1);
+        const reach = e.range / UNITS_PER_CELL;
+        for (const cr of this.sim.creeps) {
+          if (!cr.alive || Math.hypot(t.c + 0.5 - cr.x, t.r + 0.5 - cr.y) > reach) continue;
+          this.burning.add(t);
+          const y = cr.y - (cr.def.flying ? FLY_Z : 0.15);
+          this.emit(
+            cr.x + (Math.random() - 0.5) * 0.5,
+            y,
+            0,
+            -1.2,
+            0.6,
+            Math.random() < 0.4 ? 2 : 1,
+          );
+        }
       }
+    // Disarmed towers shed purple motes.
+    for (const t of combat.towers)
+      if (t.disarmT > 0 && Math.random() < 0.5)
+        this.emit(t.c + 0.2 + Math.random() * 0.6, t.r - TALL, 0, -0.8, 0.8, 5);
   }
 
   /** alpha = fraction of the way from the previous tick to the current one; dt = frame seconds. */
@@ -401,17 +843,17 @@ export class Renderer {
     const Y = (y: number) => (panY + y * s) | 0;
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * BLOCK_H)) | 0);
+    ctx.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
 
     if (this.flash >= 0 && now < this.flashUntil) {
       ctx.fillStyle = 'rgba(220,50,50,0.6)';
       ctx.fillRect(X(this.flash % this.maze.w), Y((this.flash / this.maze.w) | 0), s, s);
     }
 
-    // Burn auras (Volcano, Asteriated Ruby...): a slow pulsing heat ring.
+    // Burn auras (Volcano, Asteriated Ruby...): a pulsing heat ring while an enemy is inside.
     const pulse = 0.3 + 0.12 * Math.sin(now / 250);
     if (this.showRanges)
-      for (const t of this.combat.towers)
+      for (const t of this.burning)
         for (const e of this.combat.fx(t.def).enemy) {
           if (!e.dps) continue;
           ctx.strokeStyle = `rgba(255,110,30,${pulse})`;
@@ -428,7 +870,7 @@ export class Renderer {
     for (const h of this.hints)
       ctx.strokeRect(
         X(h % this.maze.w) + 2,
-        Y(((h / this.maze.w) | 0) - BLOCK_H) + 2,
+        Y(((h / this.maze.w) | 0) - TOWER_H) + 2,
         s - 4,
         s - 4,
       );
@@ -468,21 +910,53 @@ export class Renderer {
       ctx.drawImage(sp, X(x) - sp.width / 2, Y(y) - sp.height / 2);
     }
 
-    // Tracers: thin white; the Silver line fires a thick glowing beam.
-    for (const thick of [false, true]) {
-      ctx.strokeStyle = thick ? 'rgba(225,238,255,0.9)' : 'rgba(255,255,255,0.8)';
-      ctx.lineWidth = thick ? Math.max(3, s / 5) : 1;
-      ctx.shadowColor = thick ? '#bcd8ff' : 'transparent';
-      ctx.shadowBlur = thick ? s / 2 : 0;
+    // Tracers by shot kind: thin white, icy blue (slow), thick silver beam, forked lightning.
+    const head = (t: Tower) => [X(t.c + 0.5), Y(t.r + 0.48 - TOWER_H - TALL)] as const;
+    const hit = (cr: Creep) => [X(cr.x), Y(cr.y - (cr.def.flying ? FLY_Z : 0.15))] as const;
+    for (const [kind, colour, width, glow] of TRACERS) {
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = Math.max(1, width * s);
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = glow === 'transparent' ? 0 : s / 2;
       ctx.beginPath();
       for (const { from, to } of this.combat.shots) {
-        if (SILVER.has(from.def.name) !== thick) continue;
-        ctx.moveTo(X(from.c + 0.5), Y(from.r + 0.5 - BLOCK_H));
-        ctx.lineTo(X(to.x), Y(to.y - (to.def.flying ? FLY_Z : 0.15)));
+        if (shotKind(this.combat, from) !== kind) continue;
+        const [x0, y0] = head(from),
+          [x1, y1] = hit(to);
+        ctx.moveTo(x0, y0);
+        if (kind === 'lightning') {
+          // Jagged bolt: re-rolled every frame so it crackles.
+          const n = 6,
+            nx = -(y1 - y0),
+            ny = x1 - x0,
+            len = Math.hypot(nx, ny) || 1;
+          for (let k = 1; k < n; k++) {
+            const j = (Math.random() - 0.5) * s * 0.5;
+            ctx.lineTo(
+              x0 + ((x1 - x0) * k) / n + (nx / len) * j,
+              y0 + ((y1 - y0) * k) / n + (ny / len) * j,
+            );
+          }
+        }
+        ctx.lineTo(x1, y1);
       }
       ctx.stroke();
     }
     ctx.shadowBlur = 0;
+
+    // Disarmed towers: a purple shackle ring spinning round the head.
+    ctx.strokeStyle = '#c06aff';
+    ctx.lineWidth = Math.max(2, s / 10);
+    for (const t of this.combat.towers) {
+      if (t.disarmT <= 0) continue;
+      const [x, y] = head(t),
+        a = now / 200;
+      ctx.beginPath();
+      ctx.ellipse(x, y, s * 0.5, s * 0.2, 0, a, a + 2.2);
+      ctx.moveTo(x + Math.cos(a + 3.14) * s * 0.5, y + Math.sin(a + 3.14) * s * 0.2);
+      ctx.ellipse(x, y, s * 0.5, s * 0.2, 0, a + 3.14, a + 5.3);
+      ctx.stroke();
+    }
 
     // Particles: swap-remove dead ones; integer rects, fillStyle switched only on colour change.
     const p = this.px,
@@ -503,7 +977,23 @@ export class Renderer {
   }
 }
 
-const SILVER = new Set(['Silver', 'Silver Knight', 'Huge Pink Diamond', 'Koh-i-noor Diamond']);
-// 0 spark, 1 fire, 2 ember, 3 frost
-const PARTICLE_COLOR = ['#ffe9a0', '#ff7a1a', '#ffcf40', '#bfe8ff'];
+type Shot = 'normal' | 'frost' | 'beam' | 'lightning';
+const BEAM = new Set(['Silver', 'Silver Knight', 'Koh-i-noor Diamond']);
+const LIGHTNING = new Set(['Pink Diamond', 'Huge Pink Diamond']);
+/** How a tower's attack is drawn. */
+export function shotKind(combat: Combat, t: Tower): Shot {
+  if (BEAM.has(t.def.name)) return 'beam';
+  if (LIGHTNING.has(t.def.name)) return 'lightning';
+  const f = combat.fx(t.def);
+  return f.slow || f.frost ? 'frost' : 'normal';
+}
+// [kind, stroke, width in cells, glow colour]
+const TRACERS: [Shot, string, number, string][] = [
+  ['normal', 'rgba(255,255,255,0.8)', 0, 'transparent'],
+  ['frost', 'rgba(170,220,255,0.9)', 0.06, '#7cc4ff'],
+  ['beam', 'rgba(225,238,255,0.9)', 0.2, '#bcd8ff'],
+  ['lightning', 'rgba(255,215,250,0.95)', 0.07, '#ff7ad9'],
+];
+// 0 spark, 1 fire, 2 ember, 3 snow, 4 lightning spark, 5 disarm mote
+const PARTICLE_COLOR = ['#ffe9a0', '#ff7a1a', '#ffcf40', '#e8f6ff', '#ffc8f4', '#c06aff'];
 const expand = (c: string) => '#' + [...c.slice(1)].map((h) => h + h).join('');

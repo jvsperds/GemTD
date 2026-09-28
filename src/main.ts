@@ -2,11 +2,12 @@ import waves from '../data/waves.json';
 import * as db from './persist';
 import rawAdvanced from '../data/raw/advanced_towers.json';
 import rawBase from '../data/raw/base_towers.json';
-import { GEM_COLOR, portrait, Renderer, towerKey } from './render';
+import { skillIcon } from './icons';
+import { GEM_COLOR, Renderer, towerIcon } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { newGame, type Difficulty } from './sim/setup';
-import type { Tower } from './sim/towers';
+import { AURA, type Tower } from './sim/towers';
 import { CASTLE_HP, TICK, type WaveEntry } from './sim/waves';
 import { initBook, mazeRows, measure, type Guide } from './book';
 import { initMenu } from './ui';
@@ -279,24 +280,34 @@ const ABILITY = new Map(
     t.abilities.map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
   ),
 );
-const ABILITY_GLYPH: [RegExp, string][] = [
-  [/huiyao/, '🔥'],
-  [/slow|lanbaoshi|jihan/, '❄'],
-  [/du/, '☠'],
-  [/jianshe/, '💥'],
-  [/baoji|crit/, '⚡'],
-  [/shandian/, '🌩'],
-  [/aura|guanghuan|maoyan|jingzhun|tanlan/, '✺'],
-  [/jianjia|jin|bixi|zheyi/, '🛡'],
-  [/speed/, '⏩'],
-  [/fenlie/, '🏹'],
-  [/yun|shihua/, '💫'],
-];
 const panel = document.querySelector<HTMLElement>('#panel')!;
 const portraitEl = document.querySelector<HTMLElement>('#portrait')!;
 const nameEl = document.querySelector<HTMLElement>('#name')!;
 const attrs = document.querySelector<HTMLElement>('#attrs')!;
 const cards = document.querySelector<HTMLElement>('#cards')!;
+const statusEl = document.querySelector<HTMLElement>('#status')!;
+/** Auras and debuffs currently on a tower: [icon id, level badge, tooltip, is a debuff]. */
+function statuses(t: Tower): [string, string, string, boolean][] {
+  const a = t.aura,
+    out: [string, string, string, boolean][] = [];
+  if (a.as) {
+    const n = AURA.indexOf(a.as) + 1;
+    const lvl = n ? String(n) : 'MAX+';
+    out.push([
+      'tower_speed_aura',
+      n ? lvl : '+',
+      `Attack speed aura ${lvl}\n+${a.as}% attack speed`,
+      false,
+    ]);
+  }
+  if (a.dmg) out.push(['tower_baoji', '', `Damage aura\n+${a.dmg * 100}% damage`, false]);
+  if (a.range) out.push(['status_range', '', `Range aura\n+${a.range} attack range`, false]);
+  if (a.aim) out.push(['status_aim', '', 'Aim aura\nAttacks cannot miss (ignores evasion)', false]);
+  if (a.calm) out.push(['status_calm', '', 'Calm aura\nImmune to Disarm', false]);
+  if (t.disarmT > 0)
+    out.push(['status_disarm', '', `Disarmed\nCannot attack for ${t.disarmT.toFixed(1)}s`, true]);
+  return out;
+}
 const barFill = document.querySelector<HTMLElement>('#bar i')!;
 const barText = document.querySelector<HTMLElement>('#bar span')!;
 const el = (tag: string, cls = '', text = '') => {
@@ -323,8 +334,16 @@ function setAttrs(rows: [string, string | Node][]) {
     }),
   );
 }
+/** Ability/odds card; glyph is text, or a data: URL drawn as the icon. */
 function card(glyph: string, label: string, tip: string, bg: string) {
-  const c = el('div', 'card', glyph);
+  const url = glyph.startsWith('data:');
+  const c = el('div', 'card', url ? '' : glyph);
+  if (url) {
+    const im = document.createElement('img');
+    im.src = glyph;
+    im.alt = '';
+    c.append(im);
+  }
   c.title = tip;
   c.style.background = bg;
   c.append(el('small', '', label));
@@ -389,7 +408,7 @@ function drawBuilder() {
 function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share: number) {
   const d = t.def;
   const colour = GEM_COLOR[d.quality ? d.type : 'S'];
-  setPortrait(portrait(towerKey(d)), '◆', colour);
+  setPortrait(towerIcon(d), '◆', colour);
   nameEl.textContent = d.name;
   const dmg = el('span', '', String(d.damage));
   if (d.bonusDamage) dmg.append(el('span', 'up', ` +${d.bonusDamage}`));
@@ -406,9 +425,8 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
       .map((id) => {
         const a = ABILITY.get(id)!;
         const name = a.name ?? id;
-        const glyph = ABILITY_GLYPH.find(([re]) => re.test(id))?.[1] ?? '✦';
         return card(
-          glyph,
+          skillIcon(id),
           name,
           `${name}: ${a.tip ?? ''}`,
           `radial-gradient(circle, ${colour}88, #120d19)`,
@@ -493,7 +511,8 @@ function updateHud() {
     sim.phase +
     live?.def.name +
     live?.kills +
-    share;
+    share +
+    (live ? statuses(live).map((x) => x[0] + x[1]) : '');
   if (key !== lastHud) {
     lastHud = key;
     hud.innerHTML = s;
@@ -505,6 +524,18 @@ function updateHud() {
     if (builder) drawBuilder();
     else if (live) drawTower(live, recipes, share);
     else drawHero(xpPct, lvlTo);
+    statusEl.replaceChildren(
+      ...(live && !builder ? statuses(live) : []).map(([id, badge, tip, bad]) => {
+        const b = el('span', bad ? 'bad' : '');
+        const im = document.createElement('img');
+        im.src = skillIcon(id);
+        im.alt = tip.split('\n')[0];
+        b.append(im);
+        if (badge) b.append(el('b', '', badge));
+        b.title = tip;
+        return b;
+      }),
+    );
     book.draw();
     // Highlight every tower that can combine into something right now.
     view.hints =
@@ -609,6 +640,6 @@ requestAnimationFrame(function frame(now) {
   requestAnimationFrame(frame);
 });
 // PWA install/offline cache; service workers don't exist on file:// (the single file works as-is).
-if (location.protocol.startsWith('http') && 'serviceWorker' in navigator)
+if (import.meta.env.PROD && location.protocol.startsWith('http') && 'serviceWorker' in navigator)
   navigator.serviceWorker.register('sw.js').catch(() => {});
 document.body.dataset.ready = '1';
