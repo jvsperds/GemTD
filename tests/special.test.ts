@@ -224,3 +224,17 @@ test('burn aura and stun from special towers', () => {
   expect(1e6 - cr.hp).toBeGreaterThanOrEqual(60 - 1);
   expect(parseFx(DEFS['Dark Emerald']).stun).toBe(0.1);
 });
+
+test('Natural Zumurud copies skills of the two strongest towers in its 3x3', () => {
+  const { combat } = setup();
+  const z = combat.place('Natural Zumurud', 10, 10)!;
+  combat.place('Huge Pink Diamond', 11, 10);
+  combat.place('Uranium-238', 9, 11);
+  combat.place('B1', 10, 11);
+  combat.place('Y1', 13, 10); // out of 3x3
+  combat.refreshAuras();
+  const f = combat.tfx(z);
+  expect(f.targets).toBe(10);
+  expect(f.cleave).not.toBeNull();
+  expect(f.slow).toBe(120); // diamond's slow3, not B1's (weaker tower dropped)
+});

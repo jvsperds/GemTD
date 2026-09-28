@@ -111,7 +111,7 @@ export class Game {
       const greedy =
         k &&
         combat.towers.some((o) => {
-          const r = combat.fx(o.def).greedAura;
+          const r = combat.tfx(o).greedAura;
           return r && Math.hypot(o.c - k.c, o.r - k.r) * UNITS_PER_CELL <= r;
         }) &&
         this.rand() < GREED.chance;

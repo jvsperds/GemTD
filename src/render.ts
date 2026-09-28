@@ -1121,12 +1121,12 @@ export class Renderer {
           0.4,
           kind === 'lightning' ? 4 : 0,
         );
-      if (combat.fx(from.def).cleave) this.burst(to.x, y, 8, 4, 1);
+      if (combat.tfx(from).cleave) this.burst(to.x, y, 8, 4, 1);
     }
     // Burn auras only show where they are actually hurting someone: embers on each enemy inside.
     this.burning.clear();
     for (const t of combat.towers)
-      for (const e of combat.fx(t.def).enemy) {
+      for (const e of combat.tfx(t).enemy) {
         if (!e.dps) continue;
         const reach = e.range / UNITS_PER_CELL;
         for (const cr of this.sim.creeps) {
@@ -1170,7 +1170,7 @@ export class Renderer {
     const pulse = 0.3 + 0.12 * Math.sin(now / 250);
     if (this.showRanges)
       for (const t of this.burning)
-        for (const e of this.combat.fx(t.def).enemy) {
+        for (const e of this.combat.tfx(t).enemy) {
           if (!e.dps) continue;
           ctx.strokeStyle = `rgba(255,110,30,${pulse})`;
           ctx.fillStyle = `rgba(255,80,20,${pulse / 3})`;
@@ -1225,7 +1225,7 @@ export class Renderer {
     // Pedals lie flat on the path: glowing while armed, dim with a refill arc while cooling down,
     // and a shock ring in the spell's colour when a creep sets one off.
     for (const t of this.combat.towers) {
-      const pd = this.combat.fx(t.def).pedal;
+      const pd = this.combat.tfx(t).pedal;
       if (!pd) continue;
       const [spell, k] = pd,
         col = spellColor(spell),
@@ -1437,7 +1437,7 @@ const LIGHTNING = new Set(['Pink Diamond', 'Huge Pink Diamond']);
 export function shotKind(combat: Combat, t: Tower): Shot {
   if (BEAM.has(t.def.name)) return 'beam';
   if (LIGHTNING.has(t.def.name)) return 'lightning';
-  const f = combat.fx(t.def);
+  const f = combat.tfx(t);
   return f.slow || f.frost ? 'frost' : 'normal';
 }
 // [kind, stroke, width in cells, glow colour]

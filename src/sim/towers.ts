@@ -57,6 +57,8 @@ export interface Tower {
   howl: { v: number; t: number }; // Howl pedal: +damage fraction
   // Ally auras covering this tower (distinct gem types stack; copies too on easy), refreshed when towers change.
   aura: { range: number; as: number; dmg: number; aim: number; calm: number };
+  // Natural Zumurud: effects including skills copied from neighbours, refreshed with auras.
+  copied?: Fx;
 }
 
 /** Recipe code of a tower def: `B3` for gems, the name for special towers. */
@@ -99,6 +101,7 @@ export const LIGHTNING = { chance: 0.3, damage: 150, jumps: 5, radius: 1000 };
 export const FORK = { chance: 0.25, targets: 3 }; // default: 3 bolts of attack damage, magic
 export const MELANCHOLY = { chance: 0.03, time: 5 };
 export const KILL_BONUS = 0.1; // special towers: +10% damage per 10 kills
+export const ZUMURUD = 'Natural Zumurud';
 export const MVP_BONUS = 0.1;
 
 interface EnemyAura {
@@ -233,6 +236,28 @@ export class Combat {
   private rand: () => number;
   private fxCache = new Map<GemDef, Fx>();
 
+  /** A tower's effects, including Natural Zumurud's copied skills. */
+  tfx(t: Tower) {
+    return t.copied ?? this.fx(t.def);
+  }
+
+  /** Natural Zumurud copies every skill of the two strongest towers in its 3x3 (not pedals or other Zumuruds). */
+  private copySkills(z: Tower) {
+    const dps = (o: Tower) => (o.def.damage + o.def.bonusDamage) / o.def.attackRate;
+    const src = this.towers
+      .filter(
+        (o) =>
+          o !== z &&
+          o.def.name !== ZUMURUD &&
+          !o.def.pedal &&
+          Math.abs(o.c - z.c) <= 1 &&
+          Math.abs(o.r - z.r) <= 1,
+      )
+      .sort((a, b) => dps(b) - dps(a))
+      .slice(0, 2);
+    z.copied = parseFx({ ...z.def, abilities: [...z.def.abilities, ...src.flatMap((o) => o.def.abilities)] });
+  }
+
   /** Stacking key for a tower's effects: its gem type, or the tower itself when copies stack. */
   private stackKey(t: Tower): Tower | string {
     return this.stackCopies ? t : t.def.name;
@@ -306,7 +331,7 @@ export class Combat {
     const seen = new Set<Tower | string>();
     let sum = 0;
     for (const o of this.towers) {
-      const a = pick(this.fx(o.def));
+      const a = pick(this.tfx(o));
       if (a && a[0] && !seen.has(this.stackKey(o)) && this.tdist(o, t) <= a[0]) {
         seen.add(this.stackKey(o));
         sum += a[1];
@@ -329,6 +354,9 @@ export class Combat {
   /** O(towers²); on placement and whenever the tower set changes. */
   refreshAuras() {
     this.auraDefs = this.towers.map((t) => t.def);
+    for (const t of this.towers)
+      if (t.def.name === ZUMURUD) this.copySkills(t);
+      else t.copied = undefined;
     for (const t of this.towers) {
       const a = t.aura;
       a.range = this.allyAura(t, (f) => [f.rangeAura, 300]);
@@ -346,7 +374,7 @@ export class Combat {
 
   /** Attack speed: own +AS plus the strongest AS aura in range. */
   attacksPerSec(t: Tower) {
-    const bonus = this.fx(t.def).as + t.aura.as + this.heroAs + (t.haste.t > 0 ? t.haste.v : 0);
+    const bonus = this.tfx(t).as + t.aura.as + this.heroAs + (t.haste.t > 0 ? t.haste.v : 0);
     return Math.max(20, 100 + bonus) / 100 / t.def.attackRate;
   }
 
@@ -396,7 +424,7 @@ export class Combat {
 
   private attack(t: Tower, cr: Creep) {
     const d = t.def,
-      f = this.fx(d);
+      f = this.tfx(t);
     this.shots.push({ from: t, to: cr });
     // Evasion (unless an aim aura covers the tower); Refraction blocks whole instances.
     if (hasAbility(cr, 'guai_shanbi') && !t.aura.aim && this.rand() < EVASION) return;
@@ -533,7 +561,7 @@ export class Combat {
   /** Invisible creeps can only be targeted inside some tower's True Sight (its attack range). */
   private visible(cr: Creep) {
     if (!hasAbility(cr, 'riki_permanent_invisibility')) return true;
-    return this.towers.some((o) => this.fx(o.def).trueSight && this.dist(o, cr) <= this.range(o));
+    return this.towers.some((o) => this.tfx(o).trueSight && this.dist(o, cr) <= this.range(o));
   }
 
   private canHit(t: Tower, cr: Creep) {
@@ -551,7 +579,7 @@ export class Combat {
       const key = this.stackKey(t);
       const dup = seen.has(key);
       seen.add(key);
-      for (const a of this.fx(t.def).enemy)
+      for (const a of this.tfx(t).enemy)
         for (const cr of this.sim.creeps) {
           if (!cr.alive || this.dist(t, cr) > a.range) continue;
           if (a.flyingOnly && !cr.def.flying) continue;
@@ -590,7 +618,7 @@ export class Combat {
     }
     for (const t of this.towers) {
       t.cooldown = Math.max(0, t.cooldown - TICK);
-      const spell = this.fx(t.def).pedal;
+      const spell = this.tfx(t).pedal;
       if (spell) {
         // Triggered by a ground creep stepping onto the pedal's cell.
         const cr =
@@ -620,7 +648,7 @@ export class Combat {
       if (!t.target || t.cooldown > 0) continue;
       t.cooldown += 1 / this.attacksPerSec(t);
       this.attack(t, t.target);
-      let extra = this.fx(t.def).targets - 1;
+      let extra = this.tfx(t).targets - 1;
       for (const cr of creeps)
         if (extra > 0 && cr !== t.target && this.canHit(t, cr)) {
           this.attack(t, cr);
