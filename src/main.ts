@@ -5,11 +5,12 @@ import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { DEFS, newGame, type Difficulty } from './sim/setup';
 import type { GemDef, SpecialDef, Tower } from './sim/towers';
-import { TICK, type WaveEntry } from './sim/waves';
+import { CASTLE_HP, TICK, type WaveEntry } from './sim/waves';
 import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const hud = document.querySelector<HTMLElement>('#hud')!;
+const hintEl = document.querySelector<HTMLElement>('#hint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const stress = location.hash === '#stress';
 const settings = await db.get('settings');
@@ -82,6 +83,10 @@ function act(a: string) {
   if (a === 'menu') return menu.toggle();
   if (a === 'guide') return ((view.guide = !view.guide), view.invalidate());
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
+  if (a === 'speed') {
+    speed = settings.speed = { 1: 2, 2: 4 }[settings.speed] ?? 1;
+    return db.set('settings', settings);
+  }
   if (replaying) return;
   if (a === 'stone') removing = !removing;
   else if (a === 'level') run(['level']);
@@ -163,7 +168,7 @@ async function recordScore() {
   });
   await db.set('scores', scores);
   await db.set('save', null);
-  menu.show();
+  menu.show({ score: score(game), won: sim.phase === 'won' });
 }
 function topUpStress() {
   for (let k = sim.creeps.length; k < 400; k++) {
@@ -193,6 +198,15 @@ function sounds() {
   prev = { kills: game.kills, hp: sim.castleHp, phase: sim.phase };
 }
 
+const QUALITY_COLOR = ['#8a8070', '#2fbf5a', '#3a6bff', '#a24de0', '#f2c52e'];
+let prevGold = game.gold,
+  prevHp = sim.castleHp;
+function flashEl(id: string, cls: string) {
+  const e = document.getElementById(id);
+  e?.classList.add(cls); // fresh element each HUD rebuild, so the animation replays
+}
+const label = (a: string, t: string) =>
+  (buttons.find((b) => b.dataset.a === a)!.querySelector('span')!.textContent = t);
 let lastHud = '',
   lastLog = -1;
 function updateHud() {
@@ -201,59 +215,109 @@ function updateHud() {
     view.invalidate();
   }
   const step = game.step;
-  const odds = game.odds
-    .map((p, q) => (p ? `Q${q + 1} ${p}%` : ''))
-    .filter(Boolean)
-    .join(' ');
+  const odds = game.odds;
   const hint = removing
-    ? 'click a stone to remove it'
+    ? 'Click a stone to shatter it'
     : step === 'place'
-      ? `click to place gem ${game.placed.length + 1}/5`
+      ? `Place gem ${game.placed.length + 1} of 5`
       : step === 'choose'
         ? sel
-          ? `selected ${sel.def.name}${sel.kills ? ` · ${sel.kills} kills` : ''}${sel.mvp ? ` · MVP ×${sel.mvp}` : ''}`
-          : 'click one of this round’s gems to select it'
+          ? `Selected ${sel.def.name}: keep, merge or combine it`
+          : 'Click one of this round’s gems to select it'
         : step === 'won'
           ? `You win! Score ${score(game)}`
           : step === 'lost'
             ? `Game over. Score ${score(game)}`
             : speed
-              ? `wave in progress ×${speed}`
-              : 'paused (Space)';
-  const mode = `${replaying ? 'REPLAY · ' : ''}${cfg.daily ? `Daily ${cfg.daily} · ` : ''}${cfg.difficulty} · `;
+              ? `Wave in progress ×${speed}`
+              : 'Paused (Space)';
+  const lvlFrom = game.xpFor[game.level - 1] ?? 0,
+    lvlTo = game.xpFor[game.level];
+  const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
+  const hp = Math.max(0, sim.castleHp);
+  const tags = [replaying && 'Replay', cfg.daily && `Daily ${cfg.daily}`, cfg.difficulty].filter(
+    Boolean,
+  );
   const s =
-    mode +
-    `Wave ${sim.wave}/${sim.lastWave} · HP ${sim.castleHp} · Gold ${game.gold} · ` +
-    `Level ${game.level} (${Math.floor(game.xp)}/${Math.ceil(game.xpFor[game.level] ?? game.xp)} XP) · ` +
-    `odds ${odds} · ${Math.floor(game.seconds)}s — ${hint}`;
+    tags.map((t) => `<span class="tag">${t}</span>`).join('') +
+    `<span class="chip"><b>Wave</b> ${sim.wave}/${sim.lastWave}</span>` +
+    `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
+    `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
+    `<span class="chip" title="${Math.floor(game.xp)}/${lvlTo ? Math.ceil(lvlTo) : 'max'} XP"><b>Level</b> ${game.level}<span class="bar xp"><i style="width:${xpPct}%"></i></span></span>` +
+    `<span class="chip" title="Gem quality odds: ${odds.map((p, q) => `Q${q + 1} ${p}%`).join(', ')}"><b>Odds</b> <span class="bar odds">${odds.map((p, q) => `<i style="width:${p}%;background:${QUALITY_COLOR[q]}"></i>`).join('')}</span></span>` +
+    `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`;
   const recipes = sel && combat.towers.includes(sel) ? game.recipesFor(sel) : [];
-  const key = s + recipes.map((x) => x.name) + combat.towers.length + sim.phase + sel?.def.name;
+  const key =
+    s +
+    hint +
+    speed +
+    removing +
+    view.guide +
+    recipes.map((x) => x.name) +
+    combat.towers.length +
+    sim.phase +
+    sel?.def.name;
   if (key !== lastHud) {
     lastHud = key;
-    hud.textContent = s;
-    combos.replaceChildren(
+    hud.innerHTML = s;
+    hintEl.textContent = hint;
+    if (game.gold > prevGold) flashEl('gold', 'pop');
+    if (hp < prevHp) flashEl('hp', 'hit');
+    [prevGold, prevHp] = [game.gold, hp];
+    combos.replaceChildren();
+    const live = sel && combat.towers.includes(sel) ? sel : null;
+    if (live) {
+      const d = live.def;
+      const h = document.createElement('h3');
+      h.innerHTML = `<span class="gem" style="background:${GEM_COLOR[d.quality ? d.type : 'S']}"></span>`;
+      h.append(d.name);
+      const st = document.createElement('div');
+      st.className = 'stats';
+      st.textContent = `⚔ ${d.damage + d.bonusDamage} dmg · ◎ ${d.range} range · ☠ ${live.kills} kills${live.mvp ? ` · MVP ×${live.mvp}` : ''}`;
+      combos.append(h, st);
+    }
+    if (recipes.length) {
+      const t = document.createElement('h4');
+      t.textContent = 'Combine now';
+      combos.append(t);
+    }
+    combos.append(
       ...recipes.map((x) => {
         const b = document.createElement('button');
         b.dataset.a = 'combine:' + x.name;
-        b.textContent = `Combine → ${x.name}`;
+        b.textContent = `✦ ${x.name}`;
         b.title = x.parts.map((p) => p.def.name).join(' + ');
         return b;
       }),
     );
     // Recipe hints: every special tower the selected gem is an ingredient of.
-    if (sel) {
-      const code = sel.def.quality ? sel.def.type + sel.def.quality : sel.def.name;
-      const uses = Object.values(DEFS)
-        .filter((d) => (d as GemDef & Partial<SpecialDef>).recipes?.some((r) => r.includes(code)))
-        .map(
-          (d) =>
-            `${d.name} = ${(d as GemDef & SpecialDef).recipes.find((r) => r.includes(code))!.join('+')}`,
-        );
+    if (live) {
+      const code = (t: Tower) => (t.def.quality ? t.def.type + t.def.quality : t.def.name);
+      const mine = code(live);
+      const owned = new Set(combat.towers.map(code));
+      const uses = Object.values(DEFS).filter((d) =>
+        (d as GemDef & Partial<SpecialDef>).recipes?.some((r) => r.includes(mine)),
+      ) as (GemDef & SpecialDef)[];
       if (uses.length) {
-        const tip = document.createElement('span');
-        tip.className = 'tip';
-        tip.textContent = `${sel.def.name} (dmg ${sel.def.damage + sel.def.bonusDamage}, range ${sel.def.range}) · used in: ${uses.join(' · ')}`;
-        combos.append(tip);
+        const t = document.createElement('h4');
+        t.textContent = 'Used in';
+        combos.append(t);
+      }
+      for (const d of uses) {
+        const u = document.createElement('div');
+        u.className = 'use';
+        const name = document.createElement('b');
+        name.textContent = d.name + ' = ';
+        u.append(name);
+        d.recipes
+          .find((r) => r.includes(mine))!
+          .forEach((part, i) => {
+            const e = document.createElement('span');
+            e.textContent = (i ? ' + ' : '') + part;
+            if (owned.has(part)) e.className = 'own';
+            u.append(e);
+          });
+        combos.append(u);
       }
     }
     // Highlight every tower that can combine into something right now.
@@ -271,11 +335,19 @@ function updateHud() {
       level: game.levelCost !== null && game.gold >= game.levelCost,
       guide: true,
       pause: true,
+      speed: true,
       menu: true,
     };
     for (const b of buttons) b.disabled = !en[b.dataset.a!];
-    buttons[3].textContent = `Downgrade ${DOWNGRADE_COST}g (D)`;
-    buttons[5].textContent = `Buy level ${game.levelCost ?? '—'}g (L)`;
+    label('down', `Downgrade ${DOWNGRADE_COST}g`);
+    label('level', `Level ${game.levelCost ?? '—'}g`);
+    label('speed', `×${settings.speed}`);
+    label('pause', speed ? 'Pause' : 'Resume');
+    for (const b of buttons)
+      b.classList.toggle(
+        'on',
+        (b.dataset.a === 'stone' && removing) || (b.dataset.a === 'guide' && view.guide),
+      );
   }
 }
 
