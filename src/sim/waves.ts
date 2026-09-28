@@ -12,6 +12,7 @@ export interface WaveEntry {
   magicResist: number;
   flying: boolean;
   boss: boolean;
+  giant?: boolean; // 10x-HP streak event copy
   abilities: string[];
 }
 
@@ -235,7 +236,7 @@ export class WaveSim {
     if (n > 1 && this.streak >= GIANT.streak && this.rand() < GIANT.chance) {
       const k = Math.floor(this.rand() * n);
       const d = this.queue[k];
-      this.queue[k] = { ...d, name: `Giant ${d.name}`, hp: d.hp * GIANT.hp };
+      this.queue[k] = { ...d, giant: true, hp: d.hp * GIANT.hp };
     }
     this.hurt = false;
     this.spawnTimer = 0;

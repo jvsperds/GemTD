@@ -86,11 +86,11 @@ test('giant: 10x-HP creep only after a no-damage streak', () => {
   const s = sim();
   s.rand = () => 0;
   s.startWave();
-  expect(s['queue'].some((d: { name: string }) => d.name.startsWith('Giant'))).toBe(false);
+  expect(s['queue'].some((d) => d.giant)).toBe(false);
   s.phase = 'build';
   s.streak = GIANT.streak;
   s.startWave();
-  const giants = s['queue'].filter((d: { name: string }) => d.name.startsWith('Giant'));
+  const giants = s['queue'].filter((d) => d.giant);
   expect(giants).toHaveLength(1);
   expect(giants[0].hp).toBe(s['queue'][1].hp * GIANT.hp);
 });

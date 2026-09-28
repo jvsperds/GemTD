@@ -979,7 +979,7 @@ export class Renderer {
 
   /** Creep model at the current zoom; `flip` faces it left. */
   private creepSprite(cr: Creep, flip: boolean) {
-    const rad = this.cell * (cr.def.boss ? 0.6 : 0.4);
+    const rad = this.cell * (cr.def.boss ? 0.6 : cr.def.giant ? 0.7 : 0.4);
     const m = rad * 1.25;
     return this.sprite(`c${cr.def.name}${rad}${flip}`, m * 2, m * 2, (g) => {
       if (flip) g.setTransform(-1, 0, 0, 1, m * 2, 0);
@@ -1284,7 +1284,7 @@ export class Renderer {
     sortByY(order);
 
     for (const cr of order) {
-      const sh = this.shadow(cr.def.boss);
+      const sh = this.shadow(cr.def.boss || !!cr.def.giant);
       const x = cr.px + (cr.x - cr.px) * alpha,
         y = cr.py + (cr.y - cr.py) * alpha;
       ctx.drawImage(sh, X(x) - sh.width / 2, Y(y) - sh.height / 2);

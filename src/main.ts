@@ -533,7 +533,7 @@ function creepStatuses(cr: Creep): [string, string, string, boolean][] {
 function drawCreep(cr: Creep) {
   const d = cr.def;
   setPortrait(creepIcon(d.name), '●');
-  nameEl.textContent = d.name + (d.boss ? ' (boss)' : '');
+  nameEl.textContent = (d.giant ? 'Giant ' : '') + d.name + (d.boss ? ' (boss)' : '');
   const armor = armorOf(cr);
   setAttrs([
     ['❤ HP', `${Math.ceil(cr.hp)} / ${Math.ceil(d.hp)}`],
