@@ -261,11 +261,16 @@ const buttons = [
 ];
 for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
 const combos = document.querySelector<HTMLElement>('#combos')!;
-for (const box of [combos, document.querySelector<HTMLElement>('#cards')!])
-  box.addEventListener('click', (e) => {
-    const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset.a;
-    if (a) act(a);
-  });
+// The HUD rebuilds these buttons every tick during a wave, so a mouse click (down and up on the
+// same element) rarely lands: act on pointerdown, and on click only for keyboard activation.
+for (const box of [combos, document.querySelector<HTMLElement>('#cards')!]) {
+  const fire = (e: Event) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-a]');
+    if (b && !b.disabled) act(b.dataset.a!);
+  };
+  box.addEventListener('pointerdown', (e) => e.button === 0 && fire(e));
+  box.addEventListener('click', (e) => e.detail === 0 && fire(e));
+}
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   view.setZoom(view.zoom * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX, e.clientY);
@@ -774,19 +779,23 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
     ['☠ Kills', String(t.kills)],
     ['★ MVP', String(t.mvp)],
   ]);
-  cards.replaceChildren(
-    ...d.abilities
+  const skillCards = (src: typeof d, from = '') =>
+    src.abilities
       .filter((id) => ABILITY.has(id) && !/^tower_attack/.test(id))
       .map((id) => {
         const a = ABILITY.get(id)!;
         const name = a.name ?? id;
+        const c = GEM_COLOR[src.quality ? src.type : 'S'];
         return card(
           skillIcon(id),
           name,
-          `${name}: ${a.tip ?? ''}`,
-          `radial-gradient(circle, ${colour}88, #0e1115)`,
+          `${name}${from}: ${a.tip ?? ''}`,
+          `radial-gradient(circle, ${c}88, #0e1115)`,
         );
-      }),
+      });
+  cards.replaceChildren(
+    ...skillCards(d),
+    ...(t.copiedFrom ?? []).flatMap((o) => skillCards(o, ` (copied from ${o.name})`)),
   );
   barFill.style.width = `${share}%`;
   barText.textContent = `${share}% of all damage`;

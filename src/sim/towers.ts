@@ -61,6 +61,7 @@ export interface Tower {
   aura: { range: number; as: number; dmg: number; aim: number; calm: number; src: AuraSrc[] };
   // Natural Zumurud: effects including skills copied from neighbours, refreshed with auras.
   copied?: Fx;
+  copiedFrom?: GemDef[];
 }
 
 /** Recipe code of a tower def: `B3` for gems, the name for special towers. */
@@ -270,6 +271,7 @@ export class Combat {
       )
       .sort((a, b) => dps(b) - dps(a))
       .slice(0, 2);
+    z.copiedFrom = src.map((o) => o.def);
     z.copied = parseFx({
       ...z.def,
       abilities: [...z.def.abilities, ...src.flatMap((o) => o.def.abilities)],
@@ -382,7 +384,7 @@ export class Combat {
     this.auraDefs = this.towers.map((t) => t.def);
     for (const t of this.towers)
       if (t.def.name === ZUMURUD) this.copySkills(t);
-      else t.copied = undefined;
+      else t.copied = t.copiedFrom = undefined;
     for (const t of this.towers) {
       const a = t.aura;
       a.src = [];
