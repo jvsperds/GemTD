@@ -29,8 +29,8 @@ test('Shakalaka: valid maze', () => {
   const m = build(GUIDES.find((g) => g.name === 'Shakalaka')!.rows);
   const route = m.route();
   expect(route).not.toBeNull();
-  // ponytail: 3 of 6 legs as transcribed; raise to 6 once the outer walls are confirmed.
-  expect(m.middlePasses(route!)).toBe(3);
+  // ponytail: 1 of 6 legs as transcribed (no corner cutting); raise to 6 once the outer walls are confirmed.
+  expect(m.middlePasses(route!)).toBe(1);
 });
 
 test('empty map: only the two axis legs cross the middle', () => {
