@@ -3,6 +3,8 @@
 // Remove stone are extra actions). Unkept gems become stones and the wave starts.
 // Combine builds a special tower from recipe ingredients anywhere on the board (BUILD.md §2.4).
 import { codeOf, rng, type Combat, type GemDef, type SpecialDef, type Tower } from './towers';
+import { HEROES, type Perk } from './heroes';
+import { ROCK } from './maze';
 import { DURATION, SKILLS, goldOf, type Loadout } from './skills';
 import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL } from './waves';
 
@@ -13,6 +15,17 @@ export interface LevelDef {
 }
 
 export const GEMS_PER_ROUND = 5;
+/** The 8 cells around a centre, clockwise on screen from the top-left. */
+const RING = [
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+  [-1, 1],
+  [-1, 0],
+] as const;
 export const GEM_TYPES = ['B', 'D', 'E', 'G', 'P', 'Q', 'R', 'Y'];
 export const DOWNGRADE_COST = 200;
 export const MAX_QUALITY = 6;
@@ -23,7 +36,8 @@ export const LEVEL_EVERY_WAVES = 4.5; // never-buying player reaches level 9 at 
 export type Cmd =
   | ['place' | 'keep' | 'merge2' | 'merge4' | 'down' | 'stone', number, number]
   | ['combine', number, number, string]
-  | ['skill', number, number, string] // cell of the target tower (ignored for castle skills)
+  // Target cell (the tower for tower skills; ignored by castle skills), then an optional picked cell.
+  | ['skill', number, number, string, number?, number?]
   | ['level'];
 /** Logged command with the wave tick it was issued at (commands may land mid-wave). */
 export type LogEntry = [at: number, cmd: Cmd];
@@ -51,6 +65,20 @@ export class Game {
   log: LogEntry[] = [];
   skills: Loadout = {}; // hero skills brought to this game; saved with it so replays match
   pray: { gem?: string; quality?: number; chance: number } | null = null; // for the next gem
+  hero = ''; // hero id; '' = no hero (tests, old saves)
+  get perk(): Perk {
+    return HEROES[this.hero]?.perk ?? {};
+  }
+  /** Pick the hero; call before replaying commands. */
+  setHero(id: string) {
+    this.hero = id;
+    this.sim.bossBite = this.perk.bossBite ?? 0;
+    this.combat.heroAs = this.perk.attackSpeed ?? 0;
+  }
+  /** Gold per cast of skill `id` after the hero's discount. */
+  skillGold(id: string) {
+    return Math.round(goldOf(id, this.skills[id]) * (1 - (this.perk.skillGold ?? 0)));
+  }
   onCommand: (() => void) | null = null;
   /** XP needed to reach level L is xpFor[L - 1]. */
   readonly xpFor: number[];
@@ -85,8 +113,9 @@ export class Game {
           return r && Math.hypot(o.c - k.c, o.r - k.r) * UNITS_PER_CELL <= r;
         }) &&
         this.rand() < GREED.chance;
-      this.gold += killGold(sim.wave, cr.def.boss) * (greedy ? GREED.mult : 1);
-      this.xp += cr.def.hp * XP_PER_HP;
+      const gold = killGold(sim.wave, cr.def.boss) * (greedy ? GREED.mult : 1);
+      this.gold += Math.round(gold * (1 + (this.perk.killGold ?? 0)));
+      this.xp += cr.def.hp * XP_PER_HP * (1 + (this.perk.xp ?? 0));
       this.kills++;
       while (this.level < this.levels.length && this.xp >= this.xpFor[this.level]) this.level++;
     };
@@ -109,7 +138,8 @@ export class Game {
   }
 
   get levelCost() {
-    return this.levels[this.level - 1].upgradeCost;
+    const cost = this.levels[this.level - 1].upgradeCost;
+    return cost === null ? null : Math.round(cost * (1 - (this.perk.levelCost ?? 0)));
   }
 
   get seconds() {
@@ -137,8 +167,8 @@ export class Game {
           ? this.removeStone(c, r)
           : op === 'level'
             ? this.buyLevel()
-            : op === 'skill'
-              ? this.cast(name, t)
+            : cmd[0] === 'skill'
+              ? this.cast(name, c, r, cmd[4], cmd[5])
               : !!t &&
                 (op === 'keep'
                   ? this.keep(t)
@@ -169,8 +199,8 @@ export class Game {
     if (this.sim.phase !== 'wave') return;
     this.ticks++;
     const { guard, evade } = this.sim;
-    for (const b of [guard, evade, ...this.combat.towers.flatMap((t) => [t.haste, t.aim])])
-      if (b.t > 0) b.t -= TICK;
+    const buffs = this.combat.towers.flatMap((t) => [t.haste, t.aim, t.crit, t.bonds]);
+    for (const b of [guard, evade, this.sim.revenge, ...buffs]) if (b.t > 0) b.t -= TICK;
     this.sim.tick();
     this.combat.tick();
     if (this.sim.phase === 'wave') return;
@@ -242,6 +272,8 @@ export class Game {
     if (!t) return null;
     let type = GEM_TYPES[Math.floor(this.rand() * GEM_TYPES.length)];
     let q = this.rollQuality();
+    const up = this.perk.qualityUp; // Prism: sometimes one quality higher
+    if (up && this.rand() < up) q = Math.min(q + 1, MAX_QUALITY);
     const p = this.pray; // a Pray skill cast this round biases this one gem
     if (p) {
       this.pray = null;
@@ -299,41 +331,124 @@ export class Game {
     return this.sim.maze.removeRock(c, r);
   }
 
+  /** Whether skill `id` can be cast now (before any map cells are picked). */
   canCast(id: string, t?: Tower) {
     const s = SKILLS[id];
     return (
       !!s &&
       !!this.skills[id] &&
       !this.over &&
-      this.gold >= goldOf(id, this.skills[id]) &&
+      this.gold >= this.skillGold(id) &&
       (!s.tower || !!t) &&
+      (!(s.build || s.pray) || this.sim.phase === 'build') &&
       (id !== 'heal' || this.sim.castleHp < CASTLE_HP) &&
       (id !== 'hammer' ||
         (this.step === 'choose' && this.placed.includes(t!) && t!.def.quality > 1)) &&
-      (!s.pray || this.sim.phase === 'build')
+      (id !== 'timelapse' || this.placed.length > 0) &&
+      (id !== 'candy' || !this.sim.candy)
     );
   }
 
-  /** Cast hero skill `id` (on tower `t` for tower skills) for its gold cost. */
-  cast(id: string, t?: Tower) {
+  /** Cast hero skill `id` at cell (c, r) (the tower, for tower skills), with an optional second
+   * picked cell. Gold is only spent when the skill takes effect. */
+  cast(id: string, c: number, r: number, c2 = -1, r2 = -1) {
+    const t = this.combat.towerAt(c, r);
     if (!this.canCast(id, t)) return false;
-    const s = SKILLS[id],
-      v = s.value[this.skills[id] - 1];
-    this.gold -= goldOf(id, this.skills[id]);
-    if (s.pray) this.pray = { ...s.pray, chance: v };
-    else if (id === 'hammer') t!.def = this.combat.gems[t!.def.type + (t!.def.quality - 1)];
-    else if (id === 'heal')
-      this.sim.castleHp = Math.min(CASTLE_HP, this.sim.castleHp + 1 + Math.floor(this.rand() * v));
-    else {
-      const b =
-        id === 'guard'
-          ? this.sim.guard
-          : id === 'evade'
-            ? this.sim.evade
-            : t![id as 'haste' | 'aim'];
-      [b.v, b.t] = [v, DURATION];
+    const ok = this.effect(id, SKILLS[id].value[this.skills[id] - 1], t, c, r, c2, r2);
+    if (ok) this.gold -= this.skillGold(id);
+    return ok;
+  }
+
+  private effect(
+    id: string,
+    v: number,
+    t: Tower | undefined,
+    c: number,
+    r: number,
+    c2: number,
+    r2: number,
+  ) {
+    const { sim, combat } = this,
+      { maze } = sim;
+    const pray = SKILLS[id].pray;
+    if (pray) {
+      this.pray = { ...pray, chance: v };
+      return true;
     }
-    return true;
+    const inside = ([x, y]: number[]) => x >= 0 && y >= 0 && x < maze.w && y < maze.h;
+    const moved = () => (combat.refreshAuras(), true);
+    switch (id) {
+      case 'heal':
+        sim.castleHp = Math.min(CASTLE_HP, sim.castleHp + 1 + Math.floor(this.rand() * v));
+        return true;
+      case 'guard':
+      case 'evade':
+      case 'revenge':
+        [sim[id].v, sim[id].t] = [v, DURATION * (1 + (this.perk.duration ?? 0))];
+        return true;
+      case 'haste':
+      case 'aim':
+      case 'crit':
+      case 'bonds':
+        [t![id].v, t![id].t] = [v, DURATION * (1 + (this.perk.duration ?? 0))];
+        return true;
+      case 'hammer':
+        t!.def = combat.gems[t!.def.type + (t!.def.quality - 1)];
+        return moved();
+      case 'adjswap': {
+        // Tower and stone cells are both rocks, so moving between them never changes the route.
+        const stones = RING.map(([dc, dr]) => [t!.c + dc, t!.r + dr]).filter(
+          ([x, y]) =>
+            inside([x, y]) && maze.cells[maze.idx(x, y)] === ROCK && !combat.towerAt(x, y),
+        );
+        if (!stones.length) return false;
+        [t!.c, t!.r] = stones[Math.floor(this.rand() * stones.length)];
+        return moved();
+      }
+      case 'swap': {
+        const o = combat.towerAt(c2, r2);
+        if (!o || o === t) return false;
+        [t!.c, t!.r, o.c, o.r] = [o.c, o.r, t!.c, t!.r];
+        return moved();
+      }
+      case 'stonehenge': {
+        const [dc, dr] = [Math.sign(c2 - c), Math.sign(r2 - r)];
+        if (!dc && !dr) return false;
+        let n = 0;
+        for (let x = c, y = r; n < v && maze.placeRock(x, y); x += dc, y += dr) n++;
+        return n > 0;
+      }
+      case 'whirl': {
+        const ring = RING.map(([dc, dr]) => [c + dc, r + dr]);
+        if (!ring.every(inside) || ring.some(([x, y]) => maze.noBuild[maze.idx(x, y)]))
+          return false;
+        const cells = ring.map(([x, y]) => maze.idx(x, y));
+        const before = cells.map((i) => maze.cells[i]);
+        const towers = ring.map(([x, y]) => combat.towerAt(x, y));
+        // RING runs clockwise on screen; each cell takes its clockwise neighbour's content.
+        cells.forEach((i, k) => (maze.cells[i] = before[(k + 1) % 8]));
+        if (!maze.route()) {
+          cells.forEach((i, k) => (maze.cells[i] = before[k]));
+          return false;
+        }
+        towers.forEach((o, k) => o && ([o.c, o.r] = ring[(k + 7) % 8]));
+        return moved();
+      }
+      case 'candy': {
+        if (!maze.walkable(c, r) || maze.noBuild[maze.idx(c, r)]) return false;
+        const wp = maze.waypoints;
+        wp.splice(1, 0, [c, r]);
+        const ok = !!maze.route();
+        wp.splice(1, 1);
+        if (ok) sim.candy = [c, r];
+        return ok;
+      }
+      case 'timelapse':
+        for (const p of this.placed) combat.remove(p.c, p.r);
+        this.placed = [];
+        return moved();
+    }
+    return false;
   }
 
   buyLevel() {

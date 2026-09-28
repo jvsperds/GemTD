@@ -50,6 +50,8 @@ export interface Tower {
   // Hero skill buffs: value and seconds left.
   haste: { v: number; t: number };
   aim: { v: number; t: number };
+  crit: { v: number; t: number };
+  bonds: { v: number; t: number };
   // Strongest ally auras covering this tower, refreshed each tick (same aura doesn't stack).
   aura: { range: number; as: number; dmg: number; aim: number; calm: number };
 }
@@ -66,6 +68,8 @@ export function allDefs(gems: Record<string, GemDef>, towers: Record<string, Spe
 }
 
 // ponytail: durations/chances marked "default" are guesses until the Lua values are known.
+// ponytail: Crit skill chance is a guess; the wiki only lists the multiplier.
+export const SKILL_CRIT_CHANCE = 0.2;
 const SLOW = [60, 90, 120, 150, 180, 480];
 const POISON = [2, 4, 8, 16, 32, 128];
 const ARMOR = [2, 4, 8, 16, 32, 64];
@@ -215,6 +219,7 @@ const magicImmune = (cr: Creep) => hasAbility(cr, 'enemy_momian');
 
 export class Combat {
   towers: Tower[] = [];
+  heroAs = 0; // hero passive: +% attack speed for every tower
   shots: { from: Tower; to: Creep }[] = [];
   onHeal: (() => void) | null = null;
   private rand: () => number;
@@ -250,6 +255,8 @@ export class Combat {
       disarmT: 0,
       haste: { v: 0, t: 0 },
       aim: { v: 0, t: 0 },
+      crit: { v: 0, t: 0 },
+      bonds: { v: 0, t: 0 },
       aura: { range: 0, as: 0, dmg: 0, aim: 0, calm: 0 },
     };
     this.towers.push(t);
@@ -316,14 +323,17 @@ export class Combat {
 
   /** Attack speed: own +AS plus the strongest AS aura in range. */
   attacksPerSec(t: Tower) {
-    const bonus = this.fx(t.def).as + t.aura.as + (t.haste.t > 0 ? t.haste.v : 0);
+    const bonus = this.fx(t.def).as + t.aura.as + this.heroAs + (t.haste.t > 0 ? t.haste.v : 0);
     return Math.max(20, 100 + bonus) / 100 / t.def.attackRate;
   }
 
   /** Damage multiplier from MVP stacks, kill bonus (special towers) and damage auras. */
   damageMult(t: Tower) {
     const kills = t.def.quality ? 0 : Math.floor(t.kills / 10) * KILL_BONUS;
-    return 1 + t.mvp * MVP_BONUS + kills + t.aura.dmg;
+    // Revenge hero skill: +1% damage per castle HP below its threshold.
+    const { revenge, castleHp } = this.sim;
+    const rev = revenge.t > 0 ? Math.max(0, revenge.v - castleHp) / 100 : 0;
+    return 1 + t.mvp * MVP_BONUS + kills + t.aura.dmg + rev;
   }
 
   /** Physical hit on a creep; returns damage dealt. */
@@ -369,6 +379,7 @@ export class Combat {
     }
     let dmg = (d.damage + d.bonusDamage) * this.damageMult(t);
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
+    if (t.crit.t > 0 && this.rand() < SKILL_CRIT_CHANCE) dmg *= t.crit.v;
     // Debuffs land before damage so armor reduction counts on this hit. Strongest wins, timer refreshes.
     if (f.armor) {
       cr.armorRed = Math.max(cr.armorRed, f.armor);
@@ -392,6 +403,13 @@ export class Combat {
     if (f.gaze && this.rand() < GAZE.chance)
       for (const o of this.near(cr, GAZE.range)) o.stunT = o.ampT = GAZE.time;
     this.hit(t, cr, dmg);
+    if (t.bonds.t > 0) {
+      // Fatal Bonds hero skill: pure damage to the enemy farthest from the tower.
+      let far: Creep | null = null;
+      for (const o of this.sim.creeps)
+        if (o.alive && (!far || this.dist(t, o) > this.dist(t, far))) far = o;
+      if (far) this.deal(t, far, (dmg * t.bonds.v) / 100);
+    }
     if (f.magicPct) this.magic(t, cr, dmg * f.magicPct);
     if (f.cleave) {
       const [pct, radius] = f.cleave;

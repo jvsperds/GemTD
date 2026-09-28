@@ -7,7 +7,8 @@ import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { newGame, type Difficulty } from './sim/setup';
-import { MAX_BRING, SKILLS, goldOf, shellsFor, skillTip, type Loadout } from './sim/skills';
+import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
+import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
 import { AURA, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
@@ -34,7 +35,7 @@ import { initDmgChart } from './dmgchart';
 import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
-const hud = document.querySelector<HTMLElement>('#hud')!;
+const hud = document.querySelector<HTMLElement>('#hudinfo')!;
 const hintEl = document.querySelector<HTMLElement>('#hint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const stress = location.hash === '#stress';
@@ -47,6 +48,7 @@ type Start = {
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout; // a replay's hero skills
+  hero?: string;
 };
 let start: Start | null = null;
 try {
@@ -60,17 +62,18 @@ const cfg = start ??
   save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
 const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
 const hero = await db.get('hero');
-// A new game takes the hero's current skills; a resume or replay keeps the ones it started with.
-game.skills = start?.replay
-  ? (start.skills ?? {})
-  : save
-    ? (save.skills ?? {})
-    : Object.fromEntries(
-        (hero.bring ?? [])
-          .filter((id) => hero.skills[id])
-          .slice(0, MAX_BRING)
-          .map((id) => [id, hero.skills[id]]),
-      );
+// A new game takes the picked hero and skills; a resume or replay keeps the ones it started with.
+const past = start?.replay ? start : save;
+const pick = HEROES[hero.hero ?? ''] ? hero.hero! : DEFAULT_HERO;
+game.setHero(past ? (past.hero ?? '') : pick);
+game.skills = past
+  ? (past.skills ?? {})
+  : Object.fromEntries(
+      (hero.bring ?? [])
+        .filter((id) => hero.skills[id])
+        .slice(0, bringLimit(pick))
+        .map((id) => [id, hero.skills[id]]),
+    );
 if (save) game.replay(save.commands); // resume: waves before the last command replay headless
 const replaying = start?.replay ?? null; // watch mode: commands are fed live, input is off
 const builder = !!start?.builder; // maze builder: free stone editing, no gems or waves
@@ -81,6 +84,8 @@ const { maze } = sim;
 (window as unknown as { gemtd: typeof game }).gemtd = game; // for e2e / debugging
 const view = new Renderer(canvas, maze, sim, combat);
 let removing = false; // Remove-stone mode
+// A skill waiting for map clicks (Swap, StoneHenge, Whirl, Candy); cells as flat [c, r, ...].
+let picking: { id: string; tower: Tower | null; cells: number[] } | null = null;
 let sel: Tower | null = null;
 let selCreep: Creep | null = null;
 let speed = settings.speed; // 0 = paused
@@ -123,6 +128,7 @@ const saveNow = () =>
     commands: game.log,
     version: db.VERSION,
     skills: game.skills,
+    hero: game.hero,
   });
 if (!replaying && !stress && !builder) {
   game.onCommand = saveNow;
@@ -147,6 +153,22 @@ canvas.addEventListener('click', (e) => {
     if (ok) mazeVer++;
     else [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
     sfx.play(ok ? 'place' : 'refuse');
+    return view.invalidate();
+  }
+  if (picking) {
+    // A skill waiting for map cells: collect them, then cast.
+    picking.cells.push(c, r);
+    const s = SKILLS[picking.id];
+    if (picking.cells.length / 2 < s.picks!.length) return;
+    const [c1, r1, c2, r2] = picking.cells;
+    const cmd: Cmd = s.tower
+      ? ['skill', picking.tower!.c, picking.tower!.r, picking.id, c1, r1]
+      : ['skill', c1, r1, picking.id, c2, r2];
+    picking = null;
+    if (!run(cmd)) {
+      [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
+      sfx.play('refuse');
+    }
     return view.invalidate();
   }
   const cr = removing ? null : view.creepAt(e.clientX, e.clientY);
@@ -184,15 +206,18 @@ function act(a: string) {
     return view.invalidate();
   }
   if (a === 'path') return ((view.showPath = !view.showPath), view.invalidate());
-  if (a === 'deselect') return ((sel = selCreep = null), (removing = false));
+  if (a === 'deselect') return ((sel = selCreep = picking = null), (removing = false));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
   if (a === 'speed') {
     speed = settings.speed = { 1: 2, 2: 4, 4: 10 }[settings.speed] ?? 1;
     return db.set('settings', settings);
   }
   if (replaying) return;
-  if (a.startsWith('skill:')) run(['skill', sel?.c ?? -1, sel?.r ?? -1, a.slice(6)]);
-  else if (a === 'stone') removing = !removing;
+  if (a.startsWith('skill:')) {
+    const id = a.slice(6);
+    if (SKILLS[id].picks) picking = picking?.id === id ? null : { id, tower: sel, cells: [] };
+    else run(['skill', sel?.c ?? -1, sel?.r ?? -1, id]);
+  } else if (a === 'stone') removing = !removing;
   else if (a === 'level') run(['level']);
   else if (sel) {
     const { c, r } = sel;
@@ -217,13 +242,16 @@ const keys: Record<string, string> = {
   b: 'menu',
   ' ': 'pause',
 };
-const buttons = [...document.querySelectorAll<HTMLButtonElement>('#actions button')];
+const buttons = [
+  ...document.querySelectorAll<HTMLButtonElement>('#actions button, #dock button, #menubtn'),
+];
 for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
 const combos = document.querySelector<HTMLElement>('#combos')!;
-combos.addEventListener('click', (e) => {
-  const a = (e.target as HTMLElement).dataset.a;
-  if (a) act(a);
-});
+for (const box of [combos, document.querySelector<HTMLElement>('#cards')!])
+  box.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest<HTMLElement>('[data-a]')?.dataset.a;
+    if (a) act(a);
+  });
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   view.setZoom(view.zoom * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX, e.clientY);
@@ -308,6 +336,7 @@ async function recordScore() {
     version: db.VERSION,
     commands: game.log,
     skills: game.skills,
+    hero: game.hero,
   });
   await db.set('scores', scores);
   await db.set('save', null);
@@ -395,6 +424,20 @@ function statuses(t: Tower): [string, string, string, boolean][] {
       'status_range',
       '',
       `Aim\nRange at least ${t.aim.v}, ${Math.ceil(t.aim.t)}s left`,
+      false,
+    ]);
+  if (t.crit.t > 0)
+    out.push([
+      'tower_baoji',
+      '',
+      `Crit\n20% chance for ${t.crit.v}× damage, ${Math.ceil(t.crit.t)}s left`,
+      false,
+    ]);
+  if (t.bonds.t > 0)
+    out.push([
+      'status_aim',
+      '',
+      `Fatal Bonds\n${t.bonds.v}% pure damage to the farthest enemy, ${Math.ceil(t.bonds.t)}s left`,
       false,
     ]);
   if (t.disarmT > 0)
@@ -499,6 +542,7 @@ function drawCreep(cr: Creep) {
   const f = Math.max(0, cr.hp / d.hp) * 100;
   barFill.style.width = `${f}%`;
   barText.textContent = `${Math.ceil(cr.hp)} / ${Math.ceil(d.hp)} HP`;
+  combos.className = '';
   combos.replaceChildren();
 }
 const barFill = document.querySelector<HTMLElement>('#bar i')!;
@@ -551,7 +595,7 @@ function skillButtons(t?: Tower) {
       const b = el(
         'button',
         'skill',
-        `${s.icon} ${s.name} ${goldOf(id, lvl)}g`,
+        `${s.icon} ${s.name} ${game.skillGold(id)}g`,
       ) as HTMLButtonElement;
       b.dataset.a = 'skill:' + id;
       b.title = `${s.name} (level ${lvl}): ${skillTip(id, lvl)}`;
@@ -559,10 +603,31 @@ function skillButtons(t?: Tower) {
       return b;
     });
 }
+/** Ability slot button in the main row: icon, caption, hotkey badge, skill level pips. */
+function slot(
+  icon: string,
+  caption: string,
+  tip: string,
+  a: string,
+  key: string,
+  o: { off?: boolean; on?: boolean; lvl?: number },
+) {
+  const b = document.createElement('button');
+  b.className = 'slot' + (o.on ? ' on' : '');
+  b.dataset.a = a;
+  b.title = tip;
+  b.disabled = !!o.off;
+  b.append(el('i', '', icon), el('small', '', caption));
+  if (key) b.append(el('kbd', '', key));
+  if (o.lvl) b.append(el('u', '', '•'.repeat(o.lvl)));
+  return b;
+}
 /** Default view: the builder "hero" — level, XP, gem odds. */
 function drawHero(xpPct: number, lvlTo: number | undefined) {
-  setPortrait(undefined, '👑');
-  nameEl.textContent = 'Gem Builder';
+  const h = HEROES[game.hero];
+  setPortrait(undefined, h?.icon ?? '👑', h ? RARITY_COLOR[h.rarity] : '');
+  nameEl.textContent = h ? `${h.name} ${h.title}` : 'Gem Builder';
+  nameEl.title = h ? `${h.rarity} hero: ${h.tip}` : '';
   setAttrs([
     ['Level', String(game.level)],
     ['Gold', String(game.gold)],
@@ -570,21 +635,44 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
     ['Towers', String(combat.towers.length)],
     ['Kills', String(game.kills)],
   ]);
+  // Ability row: Level and Stone, then the brought skills (tower skills need a selected tower).
+  const ids = Object.keys(game.skills).filter((id) => SKILLS[id]);
+  const cost = game.levelCost;
   cards.replaceChildren(
-    ...game.odds.map((p, q) =>
-      card(
-        '◆',
-        `${p}%`,
-        `Chance of a quality ${q + 1} gem`,
-        `radial-gradient(circle, ${QUALITY_COLOR[q]}${p ? 'aa' : '22'}, #0e1115)`,
-      ),
-    ),
+    slot('✨', `Level ${cost ?? '—'}g`, 'Buy the next builder level', 'level', 'L', {
+      off: !!replaying || cost === null || game.gold < cost,
+    }),
+    slot('⛏', 'Stone', 'Shatter a stone (while placing gems)', 'stone', 'R', {
+      off: !!replaying || game.step !== 'place',
+      on: removing,
+    }),
+    ...ids.map((id) => {
+      const s = SKILLS[id],
+        lvl = game.skills[id];
+      return slot(
+        s.icon,
+        `${s.name} ${game.skillGold(id)}g`,
+        `${s.name} (level ${lvl}): ${skillTip(id, lvl)}${s.tower ? '\nSelect a tower to cast' : ''}`,
+        'skill:' + id,
+        '',
+        { off: !!replaying || !!s.tower || !game.canCast(id), on: picking?.id === id, lvl },
+      );
+    }),
   );
   barFill.style.width = `${xpPct}%`;
   barText.textContent = lvlTo
     ? `Level ${game.level} · ${Math.floor(game.xp)} / ${Math.ceil(lvlTo)} XP`
     : `Level ${game.level} · max`;
-  combos.replaceChildren(...skillButtons());
+  // Gem quality odds, one row below the XP bar.
+  combos.className = 'oddsrow';
+  combos.replaceChildren(
+    ...game.odds.map((p, q) => {
+      const o = el('span', 'odds', `◆ ${p}%`);
+      o.style.color = p ? QUALITY_COLOR[q] : '#555';
+      o.title = `Chance of a quality ${q + 1} gem`;
+      return o;
+    }),
+  );
 }
 /** Maze builder: live evaluation of the current stones. */
 let measured = -1,
@@ -612,6 +700,7 @@ function drawBuilder() {
   );
   barFill.style.width = `${(stats.passes / 6) * 100}%`;
   barText.textContent = `${stats.passes} of 6 legs pass through the middle`;
+  combos.className = '';
   combos.replaceChildren();
 }
 /** Selected tower: portrait, stats, ability cards, combines and recipe uses. */
@@ -645,6 +734,7 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
   );
   barFill.style.width = `${share}%`;
   barText.textContent = `${share}% of all damage`;
+  combos.className = '';
   combos.replaceChildren(
     ...recipes.map((x) => {
       const b = el('button', '', `✦ ${x.name}`);
@@ -666,21 +756,23 @@ function updateHud() {
   const step = game.step;
   const hint = builder
     ? 'Maze builder: click to add or remove stones · 📖 Book → Maze helpers to load or compare'
-    : removing
-      ? 'Click a stone to shatter it'
-      : step === 'place'
-        ? `Place gem ${game.placed.length + 1} of 5`
-        : step === 'choose'
-          ? sel
-            ? `Selected ${sel.def.name}: keep, merge or combine it`
-            : 'Click one of this round’s gems to select it'
-          : step === 'won'
-            ? `You win! Score ${score(game)}`
-            : step === 'lost'
-              ? `Game over. Score ${score(game)}`
-              : speed
-                ? `Wave in progress ×${speed}`
-                : 'Paused (Space)';
+    : picking
+      ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
+      : removing
+        ? 'Click a stone to shatter it'
+        : step === 'place'
+          ? `Place gem ${game.placed.length + 1} of 5`
+          : step === 'choose'
+            ? sel
+              ? `Selected ${sel.def.name}: keep, merge or combine it`
+              : 'Click one of this round’s gems to select it'
+            : step === 'won'
+              ? `You win! Score ${score(game)}`
+              : step === 'lost'
+                ? `Game over. Score ${score(game)}`
+                : speed
+                  ? `Wave in progress ×${speed}`
+                  : 'Paused (Space)';
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
@@ -700,6 +792,10 @@ function updateHud() {
         (game.pray
           ? `<span class="chip" title="Pray: ${game.pray.chance}% chance for the next gem">🙏 ${game.pray.chance}%</span>`
           : '') +
+        (sim.revenge.t > 0
+          ? `<span class="chip" title="Revenge: towers +1% damage per HP below ${sim.revenge.v}">🔥 ${Math.ceil(sim.revenge.t)}s</span>`
+          : '') +
+        (sim.candy ? `<span class="chip" title="Candy Marker at ${sim.candy}">🍬</span>` : '') +
         (sim.guard.t > 0
           ? `<span class="chip" title="Guard: bites deal ${sim.guard.v} less">🛡 ${Math.ceil(sim.guard.t)}s</span>`
           : '') +
@@ -791,7 +887,6 @@ function updateHud() {
     };
     for (const b of buttons) b.disabled = !en[b.dataset.a!];
     label('down', `Down ${DOWNGRADE_COST}g`);
-    label('level', `Level ${game.levelCost ?? '—'}g`);
     label('speed', `×${settings.speed}`);
     label('pause', speed ? 'Pause' : 'Resume');
     label('guide', guide?.name ?? 'Guide');

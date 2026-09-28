@@ -2,7 +2,8 @@
 import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
-import { MAX_BRING, SKILLS, goldOf, skillTip, type Loadout } from './sim/skills';
+import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
+import { SKILLS, bringLimit, goldOf, skillTip, type Loadout } from './sim/skills';
 
 /** Start a new game (or a replay) on the next load. */
 function startNext(o: {
@@ -12,6 +13,7 @@ function startNext(o: {
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout;
+  hero?: string;
 }) {
   try {
     sessionStorage.setItem('gemtd.start', JSON.stringify(o));
@@ -90,6 +92,7 @@ export function initMenu(
               daily: x.daily,
               replay: x.commands,
               skills: x.skills,
+              hero: x.hero,
             });
           td.append(b);
         }
@@ -99,16 +102,49 @@ export function initMenu(
     );
     if (!list.length) rows.innerHTML = '<tr><td colspan="9">No scores yet</td></tr>';
   }
-  /** Hero tab: buy or upgrade skills with shells, and pick up to MAX_BRING to bring. */
+  /** Hero tab: pick or unlock a hero, buy or upgrade skills, and choose which to bring. */
   async function drawShop() {
     const hero = await db.get('hero');
-    const bring = (hero.bring ?? []).filter((id) => hero.skills[id]);
+    const owned = new Set([DEFAULT_HERO, ...(hero.heroes ?? [])]);
+    const picked = owned.has(hero.hero ?? '') ? hero.hero! : DEFAULT_HERO;
+    const limit = bringLimit(picked);
+    const bring = (hero.bring ?? []).filter((id) => hero.skills[id]).slice(0, limit);
     const save = async () => {
       await db.set('hero', { ...hero, bring });
       drawShop();
     };
     $('shells').textContent = String(hero.shells);
-    $('bringing').textContent = `${bring.length}/${MAX_BRING}`;
+    const h = HEROES[picked];
+    $('loadout').textContent =
+      `${h.icon} ${h.name} · ` +
+      (bring.map((id) => `${SKILLS[id].icon} ${SKILLS[id].name}`).join(', ') || 'no skills');
+    $('bringing').textContent = `${bring.length}/${limit}`;
+    $('herolist').replaceChildren(
+      ...Object.entries(HEROES).map(([id, h]) => {
+        const b = document.createElement('button');
+        const have = owned.has(id);
+        b.className = 'herocard' + (id === picked ? ' on' : '');
+        b.style.setProperty('--rarity', RARITY_COLOR[h.rarity]);
+        b.innerHTML = `<i></i><b></b><small class="rarity"></small><small></small><small class="cost"></small>`;
+        const [icon, name, rarity, tip, cost] = b.children;
+        icon.textContent = h.icon;
+        name.textContent = `${h.name} ${h.title}`;
+        rarity.textContent = h.rarity;
+        tip.textContent = h.tip;
+        cost.textContent =
+          id === picked ? '✓ Selected' : have ? 'Select' : `Unlock: 🐚 ${h.shells}`;
+        b.disabled = !have && hero.shells < h.shells;
+        b.onclick = () => {
+          if (!have) {
+            hero.shells -= h.shells;
+            hero.heroes = [...(hero.heroes ?? []), id];
+          }
+          hero.hero = id;
+          save();
+        };
+        return b;
+      }),
+    );
     $('shop').replaceChildren(
       ...Object.entries(SKILLS).map(([id, s]) => {
         const lvl = hero.skills[id] ?? 0;
@@ -126,7 +162,7 @@ export function initMenu(
         b.onclick = () => {
           hero.shells -= price;
           hero.skills = { ...hero.skills, [id]: lvl + 1 };
-          if (!lvl && bring.length < MAX_BRING) bring.push(id);
+          if (!lvl && bring.length < limit) bring.push(id);
           save();
         };
         item.append(b);
@@ -135,7 +171,7 @@ export function initMenu(
           const t = document.createElement('button');
           t.className = on ? 'bring on' : 'bring';
           t.textContent = on ? '✓ Bringing' : '+ Bring';
-          t.disabled = !on && bring.length >= MAX_BRING;
+          t.disabled = !on && bring.length >= limit;
           t.onclick = () => {
             if (on) bring.splice(bring.indexOf(id), 1);
             else bring.push(id);
@@ -172,6 +208,7 @@ export function initMenu(
     };
   const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
   $('close').onclick = () => (menu.hidden = true);
+  $('changeloadout').onclick = () => tab('hero');
   $('newgame').onclick = () => newGame();
   $('builder').onclick = () =>
     confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });

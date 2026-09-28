@@ -19,6 +19,7 @@ export interface ScoreRow {
   version: number;
   commands?: LogEntry[];
   skills?: Loadout; // hero skills the run had, for replays
+  hero?: string;
 }
 export interface Save {
   seed: number;
@@ -27,12 +28,15 @@ export interface Save {
   commands: LogEntry[];
   version: number;
   skills?: Loadout;
+  hero?: string;
 }
 /** Meta progress across games: shells earned and hero skill levels bought with them. */
 export interface Hero {
   shells: number;
   skills: Loadout;
-  bring?: string[]; // owned skills taken into the next game, at most MAX_BRING
+  bring?: string[]; // owned skills taken into the next game, at most MAX_BRING (+1 for some heroes)
+  heroes?: string[]; // unlocked heroes besides the free one
+  hero?: string; // picked for the next game
 }
 export interface Settings {
   name: string;
