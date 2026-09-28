@@ -1,0 +1,472 @@
+[
+  {
+    "name": "Dark Emerald",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Emerald + Flawless Sapphire + Flawed Topaz",
+    "damage": 80.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 4.7,
+    "effect": "10% stun 2s"
+  },
+  {
+    "name": "Emerald Golem",
+    "elite": false,
+    "secret": false,
+    "recipe": "Dark Emerald + Gold + Regular Diamond",
+    "damage": 150.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 4.7,
+    "effect": "10% stun + corrupt 1 + 1% stone-gaze (AoE root + petrify)"
+  },
+  {
+    "name": "Gold",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Amethyst + Flawless Amethyst + Flawed Diamond",
+    "damage": 60.0,
+    "attacksPerSec": 1.25,
+    "rangeCells": 4.0,
+    "effect": "corrupt 1: armor -32"
+  },
+  {
+    "name": "Egypt Gold",
+    "elite": false,
+    "secret": false,
+    "recipe": "Gold + Perfect Amethyst + Flawed Aquamarine",
+    "damage": 120.0,
+    "attacksPerSec": 1.25,
+    "rangeCells": 4.7,
+    "effect": "corrupt 2: armor -48 + greedy gold aura"
+  },
+  {
+    "name": "Jade",
+    "elite": false,
+    "secret": false,
+    "recipe": "Regular Emerald + Regular Opal + Flawed Sapphire",
+    "damage": 10.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 5.3,
+    "effect": "poison 4"
+  },
+  {
+    "name": "Grey Jade",
+    "elite": false,
+    "secret": false,
+    "recipe": "Jade + Flawless Sapphire + Regular Aquamarine",
+    "damage": 30.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 5.3,
+    "effect": "poison 5 + overlook (+range aura)"
+  },
+  {
+    "name": "Lucky Chinese Jade",
+    "elite": false,
+    "secret": false,
+    "recipe": "Quartz + Jade + Regular Emerald",
+    "damage": 30.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 6.0,
+    "effect": "poison 5 + recover + anti-fly 1 aura"
+  },
+  {
+    "name": "Monkey King Jade",
+    "elite": false,
+    "secret": false,
+    "recipe": "Grey Jade + Flawless Emerald + Flawed Amethyst",
+    "damage": 80.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 6.7,
+    "effect": "poison 5 + MKB true-strike aura"
+  },
+  {
+    "name": "Diamond Cullinan",
+    "elite": true,
+    "secret": false,
+    "recipe": "Monkey King Jade + Great Diamond + Great Sapphire",
+    "damage": 3164.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 8.0,
+    "effect": "MKB + overlook + crit + dmg max"
+  },
+  {
+    "name": "Malachite",
+    "elite": false,
+    "secret": false,
+    "recipe": "Chipped Opal + Chipped Emerald + Chipped Aquamarine",
+    "damage": 15.0,
+    "attacksPerSec": 1.25,
+    "rangeCells": 4.0,
+    "effect": "splits each shot across 3 targets"
+  },
+  {
+    "name": "Vivid Malachite",
+    "elite": false,
+    "secret": false,
+    "recipe": "Malachite + Flawed Diamond + Regular Topaz",
+    "damage": 50.0,
+    "attacksPerSec": 1.43,
+    "rangeCells": 4.7,
+    "effect": "splits each shot across 5 targets"
+  },
+  {
+    "name": "Uranium-238",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Topaz + Regular Sapphire + Flawed Opal",
+    "damage": 120.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 4.7,
+    "effect": "irradiates up to 9 targets at once"
+  },
+  {
+    "name": "Uranium-235",
+    "elite": false,
+    "secret": false,
+    "recipe": "Uranium-238 + Vivid Malachite + Malachite",
+    "damage": 240.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 5.3,
+    "effect": "hotter rays — 10 targets, faster decay"
+  },
+  {
+    "name": "Depleted-Kyparium",
+    "elite": true,
+    "secret": false,
+    "recipe": "Uranium-235 + Great Aquamarine + Great Topaz",
+    "damage": 410.0,
+    "attacksPerSec": 2.5,
+    "rangeCells": 60.0,
+    "effect": "radiation with no range limit — up to 15 targets, the whole board glows"
+  },
+  {
+    "name": "Chrysoberyl Cat's Eye",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Emerald + Flawless Diamond + Regular Aquamarine",
+    "damage": 6.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 3.3,
+    "effect": "haste aura + inspire (+50% dmg)"
+  },
+  {
+    "name": "Deepsea Pearl",
+    "elite": false,
+    "secret": false,
+    "recipe": "Flawless Aquamarine + Flawless Diamond + Flawed Opal",
+    "damage": 80.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 3.3,
+    "effect": "resist: nearby disarm immunity"
+  },
+  {
+    "name": "Natural Zumurud",
+    "elite": false,
+    "secret": false,
+    "recipe": "Deepsea Pearl + Perfect Emerald + Regular Diamond",
+    "damage": 80.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 3.3,
+    "effect": "haste + resist"
+  },
+  {
+    "name": "Red Coral",
+    "elite": false,
+    "secret": false,
+    "recipe": "Deepsea Pearl + Chrysoberyl Cat's Eye + Flawless Opal",
+    "damage": 80.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 3.3,
+    "effect": "aura 4 + aura 5 + inspire + resist"
+  },
+  {
+    "name": "Black Opal",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Opal + Flawless Diamond + Regular Aquamarine",
+    "damage": 90.0,
+    "attacksPerSec": 1.43,
+    "rangeCells": 4.0,
+    "effect": "hunts single targets with heavy critical strikes"
+  },
+  {
+    "name": "Carmen-Lucia",
+    "elite": true,
+    "secret": false,
+    "recipe": "Red Coral + Great Opal + Great Aquamarine",
+    "damage": 200.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 3.3,
+    "effect": "otomad (+500) + inspire + resist"
+  },
+  {
+    "name": "Asteriated Ruby",
+    "elite": false,
+    "secret": false,
+    "recipe": "Flawed Ruby + Chipped Ruby + Chipped Amethyst",
+    "damage": 0.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 4.0,
+    "effect": ""
+  },
+  {
+    "name": "Volcano",
+    "elite": false,
+    "secret": false,
+    "recipe": "Asteriated Ruby + Flawless Ruby + Regular Amethyst",
+    "damage": 0.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 4.0,
+    "effect": ""
+  },
+  {
+    "name": "Bloodstone",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Ruby + Flawless Aquamarine + Regular Amethyst",
+    "damage": 35.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 4.7,
+    "effect": "30% Lightning Chain (150×5)"
+  },
+  {
+    "name": "Antique Bloodstone",
+    "elite": false,
+    "secret": false,
+    "recipe": "Bloodstone + Volcano + Flawed Ruby",
+    "damage": 70.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 5.3,
+    "effect": "25% forked lightning (10000×5)"
+  },
+  {
+    "name": "The Crown Prince",
+    "elite": true,
+    "secret": false,
+    "recipe": "Antique Bloodstone + Great Ruby + Great Emerald",
+    "damage": 220.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 5.3,
+    "effect": "forked lightning + poison max"
+  },
+  {
+    "name": "Yellow Sapphire",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Sapphire + Flawless Topaz + Flawless Ruby",
+    "damage": 20.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 4.0,
+    "effect": "ice: −70% move aura"
+  },
+  {
+    "name": "Star Sapphire",
+    "elite": true,
+    "secret": false,
+    "recipe": "Yellow Sapphire + Great Sapphire + Great Opal",
+    "damage": 80.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 4.0,
+    "effect": "ice2 + aura max + slow max"
+  },
+  {
+    "name": "Northern Saber's Eye",
+    "elite": true,
+    "secret": false,
+    "recipe": "Yellow Sapphire + Bloodstone + Perfect Sapphire",
+    "damage": 120.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 3.3,
+    "effect": "a freezing aura while its shots split across the pack"
+  },
+  {
+    "name": "The Burning Stone",
+    "elite": true,
+    "secret": true,
+    "recipe": "Perfect Ruby + Flawless Ruby + Perfect Amethyst + Flawless Amethyst",
+    "damage": 0.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 4.0,
+    "effect": ""
+  },
+  {
+    "name": "Ehome",
+    "elite": true,
+    "secret": true,
+    "recipe": "Chipped Opal + Flawed Opal + Regular Opal + Flawless Opal + Perfect Opal",
+    "damage": 6.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 3.3,
+    "effect": "aura max (+70) + otomad (+500) — both auras stack"
+  },
+  {
+    "name": "Geluanshi",
+    "elite": true,
+    "secret": true,
+    "recipe": "Perfect Sapphire + Perfect Emerald + Flawless Sapphire + Flawless Emerald",
+    "damage": 300.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 5.3,
+    "effect": "pierce max + anti-fly 3 + decadent 2 (Yaphets Stone)"
+  },
+  {
+    "name": "Agate",
+    "elite": true,
+    "secret": true,
+    "recipe": "Perfect Aquamarine + Perfect Opal + Perfect Emerald",
+    "damage": 430.0,
+    "attacksPerSec": 2.5,
+    "rangeCells": 60.0,
+    "effect": "global rapid split"
+  },
+  {
+    "name": "Wings Stone",
+    "elite": true,
+    "secret": true,
+    "recipe": "Chipped Topaz + Flawed Topaz + Regular Topaz + Flawless Topaz + Perfect Topaz",
+    "damage": 512.0,
+    "attacksPerSec": 1.43,
+    "rangeCells": 4.0,
+    "effect": "every shot detonates at full force around its mark"
+  },
+  {
+    "name": "Obsidian",
+    "elite": true,
+    "secret": true,
+    "recipe": "Perfect Sapphire + Perfect Topaz + Perfect Diamond",
+    "damage": 820.0,
+    "attacksPerSec": 1.25,
+    "rangeCells": 5.3,
+    "effect": "cleave 5 + slow 5"
+  },
+  {
+    "name": "Fantastic Miss Shrimp",
+    "elite": true,
+    "secret": true,
+    "recipe": "Perfect Emerald + Perfect Sapphire + Perfect Ruby",
+    "damage": 1225.0,
+    "attacksPerSec": 2.0,
+    "rangeCells": 6.7,
+    "effect": "chain + forked lightning storm"
+  },
+  {
+    "name": "The Great Stone",
+    "elite": true,
+    "secret": true,
+    "recipe": "Any four identical Perfect gems — in a single round",
+    "damage": 2009.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 5.3,
+    "effect": "★ the apex gem — crushing crits that shatter everything nearby"
+  },
+  {
+    "name": "Silver",
+    "elite": false,
+    "secret": false,
+    "recipe": "Chipped Sapphire + Chipped Topaz + Chipped Diamond",
+    "damage": 40.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 4.0,
+    "effect": "chills everything it strikes, slowing the march"
+  },
+  {
+    "name": "Pink Diamond",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Diamond + Regular Diamond + Regular Topaz",
+    "damage": 80.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 4.0,
+    "effect": "lands critical hits for sudden bursts of damage"
+  },
+  {
+    "name": "Silver Knight",
+    "elite": false,
+    "secret": false,
+    "recipe": "Silver + Flawed Aquamarine + Regular Ruby",
+    "damage": 140.0,
+    "attacksPerSec": 1.25,
+    "rangeCells": 4.7,
+    "effect": "cleaving blows that chill the whole pack"
+  },
+  {
+    "name": "Huge Pink Diamond",
+    "elite": false,
+    "secret": false,
+    "recipe": "Pink Diamond + Silver Knight + Silver",
+    "damage": 400.0,
+    "attacksPerSec": 1.33,
+    "rangeCells": 6.7,
+    "effect": "long-range crits that cleave and chill"
+  },
+  {
+    "name": "Koh-i-noor Diamond",
+    "elite": true,
+    "secret": false,
+    "recipe": "Huge Pink Diamond + Great Amethyst + Great Diamond",
+    "damage": 1300.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 4.7,
+    "effect": "crits, cleaves, and shreds armor bare"
+  },
+  {
+    "name": "Quartz",
+    "elite": false,
+    "secret": false,
+    "recipe": "Flawless Emerald + Regular Ruby + Flawed Amethyst",
+    "damage": 15.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 3.3,
+    "effect": "anti-fly 1 aura"
+  },
+  {
+    "name": "Charming Lazurite",
+    "elite": false,
+    "secret": false,
+    "recipe": "Quartz + Flawless Amethyst + Flawed Topaz",
+    "damage": 20.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 5.3,
+    "effect": "anti-fly 2 aura: armor + slow + magic shred"
+  },
+  {
+    "name": "Paraiba Tourmaline",
+    "elite": false,
+    "secret": false,
+    "recipe": "Perfect Aquamarine + Flawless Opal + Flawed Emerald",
+    "damage": 30.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 4.0,
+    "effect": "decadent: armor -15 aura"
+  },
+  {
+    "name": "Elaborately Carved Tourmaline",
+    "elite": false,
+    "secret": false,
+    "recipe": "Paraiba Tourmaline + Dark Emerald + Flawed Emerald",
+    "damage": 130.0,
+    "attacksPerSec": 1.67,
+    "rangeCells": 4.7,
+    "effect": "stun + decadent 2 aura (armor −30)"
+  },
+  {
+    "name": "Sapphire Star Of Adam",
+    "elite": true,
+    "secret": false,
+    "recipe": "Elaborately Carved Tourmaline + Great Emerald + Great Amethyst",
+    "damage": 240.0,
+    "attacksPerSec": 1.0,
+    "rangeCells": 5.3,
+    "effect": "freezing cold + pierce max + decadent 2 + poison max"
+  },
+  {
+    "name": "Golden Jubilee",
+    "elite": true,
+    "secret": false,
+    "recipe": "Charming Lazurite + Great Topaz + Great Ruby",
+    "damage": 772.0,
+    "attacksPerSec": 1.43,
+    "rangeCells": 5.3,
+    "effect": "anti-fly 2 + Burned (+100% magic per attack)"
+  }
+]

@@ -87,8 +87,8 @@ test('upgrade chain and the 5-gem alternative recipe; old towers combine without
   expect(game.step).toBe('place');
   expect(combat.damageMult(s)).toBeCloseTo(1.2);
 
-  const p = [1, 2, 3, 4, 5].map((q, k) => combat.place('P' + q, 20 + 2 * k, 24)!);
-  expect(game.recipesFor(p[2]).map((r) => r.name)).toContain('Koh-i-noor Diamond');
+  const p = [1, 2, 3, 4, 5].map((q, k) => combat.place('Y' + q, 20 + 2 * k, 24)!);
+  expect(game.recipesFor(p[2]).map((r) => r.name)).toContain('Wings Stone');
 });
 
 test('invisible creeps need a True Sight tower in range', () => {
@@ -155,7 +155,7 @@ test('untouchable disarms attackers; disarm aura stops adjacent towers unless a 
   ticks(combat, 30 * 2);
   expect(d.hp).toBe(1e6);
   const calm = combat.place('B1', 10, 12)!;
-  calm.def = DEFS['Deep Sea Pearl'];
+  calm.def = DEFS['Deepsea Pearl'];
   expect(parseFx(calm.def).calmAura).toBeGreaterThan(0);
   ticks(combat, 30 * 2);
   expect(d.hp).toBeLessThan(1e6);

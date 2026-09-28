@@ -1,7 +1,7 @@
 {
  "Silver": {
   "name": "Silver",
-  "damage": 30.0,
+  "damage": 40.0,
   "bonusDamage": 0.0,
   "attackRate": 1.0,
   "range": 600.0,
@@ -19,7 +19,7 @@
  },
  "Silver Knight": {
   "name": "Silver Knight",
-  "damage": 100.0,
+  "damage": 140.0,
   "bonusDamage": 0.0,
   "attackRate": 0.8,
   "range": 700.0,
@@ -38,7 +38,7 @@
  },
  "Pink Diamond": {
   "name": "Pink Diamond",
-  "damage": 30.0,
+  "damage": 0.0,
   "bonusDamage": 80.0,
   "attackRate": 1.0,
   "range": 600.0,
@@ -49,18 +49,18 @@
   "recipes": [
    [
     "D5",
-    "Y3",
-    "D3"
+    "D3",
+    "Y3"
    ]
   ],
   "secret": false
  },
  "Huge Pink Diamond": {
   "name": "Huge Pink Diamond",
-  "damage": 150.0,
+  "damage": 240.0,
   "bonusDamage": 160.0,
-  "attackRate": 0.8,
-  "range": 700.0,
+  "attackRate": 0.752,
+  "range": 1005,
   "abilities": [
    "tower_jianshe3",
    "tower_baoji1",
@@ -94,13 +94,6 @@
     "Huge Pink Diamond",
     "P6",
     "D6"
-   ],
-   [
-    "P1",
-    "P2",
-    "P3",
-    "P4",
-    "P5"
    ]
   ],
   "secret": false
@@ -117,8 +110,8 @@
   "recipes": [
    [
     "E1",
-    "Q1",
-    "G1"
+    "G1",
+    "Q1"
    ]
   ],
   "secret": false
@@ -145,7 +138,7 @@
   "name": "Uranium-238",
   "damage": 120.0,
   "bonusDamage": 0.0,
-  "attackRate": 0.7,
+  "attackRate": 0.5,
   "range": 700.0,
   "abilities": [
    "tower_fenliejian_you"
@@ -153,17 +146,17 @@
   "recipes": [
    [
     "Y5",
-    "E2",
-    "B3"
+    "B3",
+    "E2"
    ]
   ],
   "secret": false
  },
  "Uranium-235": {
   "name": "Uranium-235",
-  "damage": 60.0,
+  "damage": 80.0,
   "bonusDamage": 160.0,
-  "attackRate": 0.7,
+  "attackRate": 0.5,
   "range": 800.0,
   "abilities": [
    "tower_fenliejian_you",
@@ -183,7 +176,7 @@
   "damage": 90.0,
   "bonusDamage": 320.0,
   "attackRate": 0.4,
-  "range": 5000.0,
+  "range": 9000,
   "abilities": [
    "tower_attack5",
    "tower_fenliejian_you",
@@ -194,13 +187,6 @@
     "Uranium-235",
     "Q6",
     "Y6"
-   ],
-   [
-    "Q1",
-    "Q2",
-    "Q3",
-    "Q4",
-    "Q5"
    ]
   ],
   "secret": false
@@ -209,7 +195,7 @@
   "name": "Asteriated Ruby",
   "damage": 0.0,
   "bonusDamage": 0.0,
-  "attackRate": 1.0,
+  "attackRate": 0.5,
   "range": 600.0,
   "abilities": [
    "tower_huiyao"
@@ -227,7 +213,7 @@
   "name": "Volcano",
   "damage": 0.0,
   "bonusDamage": 0.0,
-  "attackRate": 1.0,
+  "attackRate": 0.5,
   "range": 600.0,
   "abilities": [
    "tower_huiyao2"
@@ -280,7 +266,7 @@
  },
  "The Crown Prince": {
   "name": "The Crown Prince",
-  "damage": 70.0,
+  "damage": 220.0,
   "bonusDamage": 0.0,
   "attackRate": 1.0,
   "range": 800.0,
@@ -295,13 +281,6 @@
     "Antique Bloodstone",
     "R6",
     "G6"
-   ],
-   [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5"
    ]
   ],
   "secret": false
@@ -383,9 +362,9 @@
  },
  "Diamond Cullinan": {
   "name": "Diamond Cullinan",
-  "damage": 2514.0,
+  "damage": 2524.0,
   "bonusDamage": 640.0,
-  "attackRate": 0.8,
+  "attackRate": 0.5,
   "range": 1200.0,
   "abilities": [
    "tower_jingzhun",
@@ -399,13 +378,6 @@
     "Monkey King Jade",
     "D6",
     "B6"
-   ],
-   [
-    "D1",
-    "D2",
-    "D3",
-    "D4",
-    "D5"
    ]
   ],
   "secret": false
@@ -423,8 +395,8 @@
   ],
   "recipes": [
    [
-    "Jade",
     "Quartz",
+    "Jade",
     "G3"
    ]
   ],
@@ -432,7 +404,7 @@
  },
  "Charming Lazurite": {
   "name": "Charming Lazurite",
-  "damage": 30.0,
+  "damage": 20.0,
   "bonusDamage": 0.0,
   "attackRate": 0.6,
   "range": 800.0,
@@ -450,7 +422,7 @@
  },
  "Golden Jubilee": {
   "name": "Golden Jubilee",
-  "damage": 1.0,
+  "damage": 772.0,
   "bonusDamage": 0.0,
   "attackRate": 0.7,
   "range": 800.0,
@@ -464,13 +436,6 @@
     "Charming Lazurite",
     "Y6",
     "R6"
-   ],
-   [
-    "Y1",
-    "Y2",
-    "Y3",
-    "Y4",
-    "Y5"
    ]
   ],
   "secret": false
@@ -495,7 +460,7 @@
  },
  "Egypt Gold": {
   "name": "Egypt Gold",
-  "damage": 100.0,
+  "damage": 120.0,
   "bonusDamage": 0.0,
   "attackRate": 0.8,
   "range": 700.0,
@@ -532,7 +497,7 @@
  },
  "Emerald Golem": {
   "name": "Emerald Golem",
-  "damage": 170.0,
+  "damage": 150.0,
   "bonusDamage": 0.0,
   "attackRate": 0.5,
   "range": 700.0,
@@ -543,8 +508,8 @@
   ],
   "recipes": [
    [
-    "Gold",
     "Dark Emerald",
+    "Gold",
     "D3"
    ]
   ],
@@ -589,7 +554,7 @@
  },
  "Sapphire Star Of Adam": {
   "name": "Sapphire Star Of Adam",
-  "damage": 42.0,
+  "damage": 240.0,
   "bonusDamage": 0.0,
   "attackRate": 1.0,
   "range": 800.0,
@@ -605,19 +570,12 @@
     "Elaborately Carved Tourmaline",
     "G6",
     "P6"
-   ],
-   [
-    "G1",
-    "G2",
-    "G3",
-    "G4",
-    "G5"
    ]
   ],
   "secret": false
  },
- "Deep Sea Pearl": {
-  "name": "Deep Sea Pearl",
+ "Deepsea Pearl": {
+  "name": "Deepsea Pearl",
   "damage": 80.0,
   "bonusDamage": 0.0,
   "attackRate": 0.6,
@@ -647,7 +605,7 @@
   ],
   "recipes": [
    [
-    "E5",
+    "G5",
     "D4",
     "Q3"
    ]
@@ -656,7 +614,7 @@
  },
  "Red Coral": {
   "name": "Red Coral",
-  "damage": 120.0,
+  "damage": 80.0,
   "bonusDamage": 0.0,
   "attackRate": 0.6,
   "range": 500.0,
@@ -669,8 +627,8 @@
   ],
   "recipes": [
    [
+    "Deepsea Pearl",
     "Chrysoberyl Cat's Eye",
-    "Deep Sea Pearl",
     "E4"
    ]
   ],
@@ -685,7 +643,7 @@
   "abilities": [],
   "recipes": [
    [
-    "Deep Sea Pearl",
+    "Deepsea Pearl",
     "G5",
     "D3"
    ]
@@ -694,7 +652,7 @@
  },
  "Carmen-Lucia": {
   "name": "Carmen-Lucia",
-  "damage": 6.0,
+  "damage": 200.0,
   "bonusDamage": 0.0,
   "attackRate": 1.0,
   "range": 500.0,
@@ -711,13 +669,6 @@
     "Red Coral",
     "E6",
     "Q6"
-   ],
-   [
-    "E1",
-    "E2",
-    "E3",
-    "E4",
-    "E5"
    ]
   ],
   "secret": false
@@ -742,7 +693,7 @@
  },
  "Northern Saber's Eye": {
   "name": "Northern Saber's Eye",
-  "damage": 60.0,
+  "damage": 120.0,
   "bonusDamage": 0.0,
   "attackRate": 1.0,
   "range": 500.0,
@@ -761,7 +712,7 @@
  },
  "Star Sapphire": {
   "name": "Star Sapphire",
-  "damage": 20.0,
+  "damage": 80.0,
   "bonusDamage": 0.0,
   "attackRate": 1.0,
   "range": 600.0,
@@ -777,13 +728,6 @@
     "Yellow Sapphire",
     "B6",
     "E6"
-   ],
-   [
-    "B1",
-    "B2",
-    "B3",
-    "B4",
-    "B5"
    ]
   ],
   "secret": false
@@ -813,8 +757,8 @@
   "name": "Agate",
   "damage": 110.0,
   "bonusDamage": 320.0,
-  "attackRate": 0.3,
-  "range": 5000.0,
+  "attackRate": 0.4,
+  "range": 9000,
   "abilities": [
    "tower_fenliejian_xianyan",
    "e10012",
@@ -844,18 +788,18 @@
   ],
   "recipes": [
    [
-    "R5",
     "G5",
-    "B5"
+    "B5",
+    "R5"
    ]
   ],
   "secret": true
  },
- "Yaphets Stone": {
-  "name": "Yaphets Stone",
-  "damage": 140.0,
+ "Geluanshi": {
+  "name": "Geluanshi",
+  "damage": 300.0,
   "bonusDamage": 0.0,
-  "attackRate": 1.0,
+  "attackRate": 0.5,
   "range": 800.0,
   "abilities": [
    "tower_bixi2",
@@ -873,8 +817,8 @@
   ],
   "secret": true
  },
- "Burning Stone": {
-  "name": "Burning Stone",
+ "The Burning Stone": {
+  "name": "The Burning Stone",
   "damage": 0.0,
   "bonusDamage": 0.0,
   "attackRate": 0.5,
@@ -886,8 +830,8 @@
   "recipes": [
    [
     "R5",
-    "P5",
     "R4",
+    "P5",
     "P4"
    ]
   ],
@@ -905,6 +849,66 @@
    "tower_jianshe6",
    "e10007"
   ],
-  "recipes": []
+  "recipes": [],
+  "secret": true
+ },
+ "Black Opal": {
+  "name": "Black Opal",
+  "damage": 90.0,
+  "bonusDamage": 0,
+  "attackRate": 0.699,
+  "range": 600,
+  "abilities": [
+   "tower_baoji1"
+  ],
+  "recipes": [
+   [
+    "E5",
+    "D4",
+    "Q3"
+   ]
+  ],
+  "secret": false
+ },
+ "Ehome": {
+  "name": "Ehome",
+  "damage": 6.0,
+  "bonusDamage": 0,
+  "attackRate": 1,
+  "range": 495,
+  "abilities": [
+   "tower_speed_aura6",
+   "tower_speed_aura_guichu"
+  ],
+  "recipes": [
+   [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5"
+   ]
+  ],
+  "secret": true
+ },
+ "Wings Stone": {
+  "name": "Wings Stone",
+  "damage": 512.0,
+  "bonusDamage": 0,
+  "attackRate": 0.699,
+  "range": 600,
+  "abilities": [
+   "tower_jianshe6"
+  ],
+  "recipes": [
+   [
+    "Y1",
+    "Y2",
+    "Y3",
+    "Y4",
+    "Y5"
+   ]
+  ],
+  "secret": true
  }
 }
