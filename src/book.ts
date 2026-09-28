@@ -4,6 +4,7 @@ import { GUIDES } from './guide';
 import * as db from './persist';
 import { towerIcon } from './render';
 import { Maze, ROCK, type MapData } from './sim/maze';
+import { PEDAL_TIPS } from './sim/pedals';
 import { DEFS } from './sim/setup';
 import { codeOf, type GemDef, type SpecialDef, type Tower } from './sim/towers';
 
@@ -67,6 +68,7 @@ function thumb(rows: string[]) {
 export function initBook(opts: {
   towers: () => Tower[];
   selected: () => Tower | null;
+  tip?: (d: SpecialDef) => string;
   guide: () => Guide | null;
   showGuide: (g: Guide | null) => void;
   build?: (g: Guide) => void; // maze builder only: load a guide as stones
@@ -83,17 +85,32 @@ export function initBook(opts: {
     library = (await db.get('mazes')).map((m) => ({ name: m.name, rows: m.rows, lib: true }));
   };
 
-  function recipes() {
+  function recipes(pedals = false) {
     const sel = opts.selected();
     const mine = sel && codeOf(sel.def);
     const owned = new Set(opts.towers().map((t) => codeOf(t.def)));
     const all = (Object.values(DEFS) as (GemDef & Partial<SpecialDef>)[]).filter(
-      (d) => d.recipes?.length && (!mine || d.recipes.some((r) => r.includes(mine))),
+      (d) =>
+        d.recipes?.length &&
+        !d.pedal === !pedals &&
+        (!mine || d.recipes.some((r) => r.includes(mine))),
     );
-    body.append(el('p', 'note', sel ? `Recipes using ${sel.def.name}` : 'All tower recipes'));
+    const what = pedals ? 'pedal' : 'tower';
+    body.append(
+      el('p', 'note', sel ? `${what} recipes using ${sel.def.name}` : `All ${what} recipes`),
+    );
+    if (pedals)
+      body.append(
+        el(
+          'p',
+          'note',
+          'Pedals cast a spell on creeps that come near. 3× same → Sparkling → 3× → Blingbling.',
+        ),
+      );
     for (const d of all) {
       const r = (mine && d.recipes!.find((x) => x.includes(mine))) || d.recipes![0];
       const row = el('div', 'recipe');
+      row.title = opts.tip?.(d as SpecialDef) ?? '';
       const im = document.createElement('img');
       im.src = towerIcon({ ...d, type: 'S', quality: 0 });
       im.alt = '';
@@ -101,10 +118,15 @@ export function initBook(opts: {
       const text = el('div');
       text.append(el('b', '', d.name + (r.every((p) => owned.has(p)) ? ' ✓' : '')));
       const parts = el('div', 'parts');
-      r.forEach((p, i) =>
-        parts.append(el('span', owned.has(p) ? 'own' : '', (i ? ' + ' : '') + p)),
-      );
+      if (r.length > 1 && r.every((p) => p === r[0]))
+        parts.append(el('span', owned.has(r[0]) ? 'own' : '', `${r.length}× ${r[0]}`));
+      else
+        r.forEach((p, i) =>
+          parts.append(el('span', owned.has(p) ? 'own' : '', (i ? ' + ' : '') + p)),
+        );
       text.append(parts);
+      const tip = d.pedal && PEDAL_TIPS.get(d.abilities[0])?.tip;
+      if (tip) text.append(el('div', 'parts', tip));
       row.append(text);
       body.append(row);
     }
@@ -164,6 +186,7 @@ export function initBook(opts: {
     for (const b of tabs) b.classList.toggle('on', b.dataset.book === tab);
     body.replaceChildren();
     if (tab === 'recipes') recipes();
+    else if (tab === 'pedals') recipes(true);
     else mazes();
   }
   for (const b of tabs) b.onclick = () => ((tab = b.dataset.book!), draw());

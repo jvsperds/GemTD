@@ -106,6 +106,17 @@ const showGuide = (g: Guide | null) => {
 const book = initBook({
   towers: () => combat.towers,
   selected: () => sel,
+  // Recipe tooltip: stats, then each ability's wiki description.
+  tip: (d) =>
+    [
+      d.pedal ? '' : `Damage ${d.damage} · Range ${d.range} · Attack ${d.attackRate}s`,
+      ...d.abilities.flatMap((id) => {
+        const a = ABILITY.get(id);
+        return a ? [`${a.name}: ${a.tip}`] : [];
+      }),
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
   guide: () => guide,
   showGuide,
   build: builder
@@ -180,11 +191,9 @@ canvas.addEventListener('click', (e) => {
     ? run(['stone', c, r])
     : hit
       ? (sel = hit)
-      : game.pedals.length
-        ? run(['pedal', c, r])
-        : game.step === 'place'
-          ? run(['place', c, r])
-          : ((sel = null), true); // clicking empty ground returns to the hero view
+      : game.step === 'place'
+        ? run(['place', c, r])
+        : ((sel = null), true); // clicking empty ground returns to the hero view
   removing = false;
   if (!ok) {
     [view.flash, view.flashUntil] = [maze.idx(c, r), performance.now() + 300];
@@ -388,7 +397,8 @@ const label = (a: string, t: string) =>
 // Ability names/tooltips from the wiki extract, keyed by ability id.
 const ABILITY = new Map(
   [...rawBase, ...rawAdvanced].flatMap((t) =>
-    t.abilities.map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
+    // eNNNN entries are cosmetic effects with no name or tooltip.
+    t.abilities.filter((a) => a.Name).map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
   ),
 );
 for (const [id, a] of PEDAL_TIPS) ABILITY.set(id, a);
@@ -764,21 +774,19 @@ function updateHud() {
       ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
       : removing
         ? 'Click a stone to shatter it'
-        : game.pedals.length
-          ? `Lay your ${game.pedals[0]} on free ground`
-          : step === 'place'
-            ? `Place gem ${game.placed.length + 1} of 5`
-            : step === 'choose'
-              ? sel
-                ? `Selected ${sel.def.name}: keep, merge or combine it`
-                : 'Click one of this round’s gems to select it'
-              : step === 'won'
-                ? `You win! Score ${score(game)}`
-                : step === 'lost'
-                  ? `Game over. Score ${score(game)}`
-                  : speed
-                    ? `Wave in progress ×${speed}`
-                    : 'Paused (Space)';
+        : step === 'place'
+          ? `Place gem ${game.placed.length + 1} of 5`
+          : step === 'choose'
+            ? sel
+              ? `Selected ${sel.def.name}: keep, merge or combine it`
+              : 'Click one of this round’s gems to select it'
+            : step === 'won'
+              ? `You win! Score ${score(game)}`
+              : step === 'lost'
+                ? `Game over. Score ${score(game)}`
+                : speed
+                  ? `Wave in progress ×${speed}`
+                  : 'Paused (Space)';
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
@@ -834,6 +842,7 @@ function updateHud() {
     combat.towers.length +
     sim.phase +
     live?.def.name +
+    (live ? maze.idx(live.c, live.r) : '') + // same-type towers differ only by cell
     live?.kills +
     share +
     (live ? statuses(live).map((x) => x[0] + x[1]) : '') +
@@ -873,8 +882,10 @@ function updateHud() {
         ? combat.towers.filter((t) => game.recipesFor(t).length).map((t) => maze.idx(t.c, t.r))
         : [];
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
+    // Glow the round's gems until one is kept, merged or combined.
+    view.pending = step === 'choose' ? game.placed.map((t) => maze.idx(t.c, t.r)) : [];
     const en: Record<string, boolean> = {
-      keep: !!sel && step === 'choose',
+      keep: !!sel && step === 'choose' && game.placed.includes(sel),
       merge2: !!sel && game.canMerge(sel, 2),
       merge4: !!sel && game.canMerge(sel, 4),
       down: !!sel && game.canDowngrade(sel),
