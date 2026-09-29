@@ -127,9 +127,7 @@ export function initBook(opts: {
         );
       else
         r.forEach((p, i) =>
-          parts.append(
-            el('span', n(p) >= need(p) ? 'own' : '', `${i ? ' + ' : ''}${p} (${n(p)})`),
-          ),
+          parts.append(el('span', n(p) >= need(p) ? 'own' : '', `${i ? ' + ' : ''}${p} (${n(p)})`)),
         );
       text.append(parts);
       const tip = d.pedal && PEDAL_TIPS.get(d.abilities[0])?.tip;

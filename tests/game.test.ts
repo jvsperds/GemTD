@@ -299,8 +299,15 @@ test('missingOne names the gem that completes a recipe on the board', async () =
   const rec = (Object.values(g.combat.gems) as { recipes?: string[][] }[])
     .flatMap((d) => d.recipes ?? [])
     .find((r) => r.every((c) => /^[A-Z]\d$/.test(c)) && new Set(r).size === r.length)!;
-  const cells = [[2, 2], [4, 2], [6, 2], [8, 2]];
-  rec.slice(1).forEach((c, i) => (g.combat.place(c, cells[i][0], cells[i][1])!.def = g.combat.gems[c]));
+  const cells = [
+    [2, 2],
+    [4, 2],
+    [6, 2],
+    [8, 2],
+  ];
+  rec
+    .slice(1)
+    .forEach((c, i) => (g.combat.place(c, cells[i][0], cells[i][1])!.def = g.combat.gems[c]));
   expect(g.missingOne()).toContain(rec[0]);
 });
 
