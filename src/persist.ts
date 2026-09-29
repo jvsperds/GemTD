@@ -47,6 +47,7 @@ export interface Settings {
   name: string;
   speed: number;
   volume: number;
+  music?: number; // music level under volume
   difficulty: string; // for new games
   map?: string; // for new games
   tutorial?: boolean; // first-game hints seen
