@@ -236,7 +236,7 @@ test('shells: 1 per 3 waves, +4 for a win, never more than 20', () => {
   expect(shellsFor(0, false)).toBe(0);
   expect(shellsFor(10, false)).toBe(3);
   expect(shellsFor(50, true)).toBe(20);
-  expect(shellsFor(200, true)).toBe(20); // endless runs stay capped
+  expect(shellsFor(200, true)).toBe(70); // endless keeps accumulating
 });
 
 test('passive skills stack onto the hero perk', () => {
@@ -279,4 +279,16 @@ test('endless: after the last wave, waves run back to back with no build round',
   expect(g.sim.phase).toBe('wave');
   expect(g.sim.wave).toBe(g.sim.lastWave + 1);
   expect(g.sim.current?.name).toBeTruthy();
+});
+
+import { easyLevels } from '../src/sim/setup';
+import qualityData from '../data/quality_levels.json';
+test('easy levels go past 9 toward Perfect/Great', () => {
+  const l = easyLevels(qualityData.levels as never);
+  const last = l[l.length - 1];
+  expect(l.length).toBeGreaterThan(9);
+  expect(l[8].upgradeCost).toBe(260);
+  expect(last.upgradeCost).toBeNull();
+  expect(last.odds).toEqual([0, 0, 0, 0, 55, 45]);
+  for (const x of l) expect(x.odds.reduce((a, b) => a + b)).toBe(100);
 });

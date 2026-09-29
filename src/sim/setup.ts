@@ -23,10 +23,33 @@ export const DIFFICULTY = {
 } as const;
 export type Difficulty = keyof typeof DIFFICULTY;
 
+/** Easy: levels go past 9, each moving 10% from the lowest quality to Perfect/Great (5% each). */
+export function easyLevels(base: LevelDef[]) {
+  const out = base.map((l) => ({ ...l, odds: [...l.odds, 0] }));
+  for (;;) {
+    const last = out[out.length - 1];
+    const odds = [...last.odds];
+    const low = odds.findIndex((p) => p > 0);
+    if (low >= 4) break; // all Perfect/Great already
+    odds[low] -= 10;
+    odds[4] += 5;
+    odds[5] += 5;
+    const prev = out[out.length - 2].upgradeCost!;
+    last.upgradeCost ??= prev + 30;
+    out.push({ level: last.level + 1, odds, upgradeCost: null });
+  }
+  return out;
+}
+
 export function newGame(seed: number, difficulty: Difficulty = 'normal') {
   const sim = new WaveSim(new Maze(map as unknown as MapData), waves as WaveEntry[], seed);
   sim.hpMult = DIFFICULTY[difficulty].hp;
-  const g = new Game(new Combat(sim, DEFS, seed), quality.levels as LevelDef[], seed);
+  const levels = quality.levels as LevelDef[];
+  const g = new Game(
+    new Combat(sim, DEFS, seed),
+    difficulty === 'easy' ? easyLevels(levels) : levels,
+    seed,
+  );
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
   g.combat.stackCopies = difficulty === 'easy';
   return g;
