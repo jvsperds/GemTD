@@ -1,7 +1,7 @@
 // Menu overlay: leaderboards (3 boards + difficulty filter), settings, export/import, new game.
 import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
-import { dailySeed } from './sim/setup';
+import { MUTATORS, dailySeed } from './sim/setup';
 import { QUESTS, type Quest } from './quests';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import {
@@ -19,6 +19,7 @@ function startNext(o: {
   seed: number;
   difficulty: string;
   daily?: string;
+  mutators?: string[];
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout;
@@ -87,7 +88,7 @@ export function initMenu(
           x.wavesCleared,
           x.hpLeft,
           `${x.timeSec}s`,
-          x.difficulty,
+          [x.difficulty, ...(x.mutators ?? []).map((m) => MUTATORS[m]?.name ?? m)].join(' + '),
           new Date(x.date).toLocaleDateString(),
         ]) {
           const td = document.createElement('td');
@@ -104,6 +105,7 @@ export function initMenu(
               seed: x.seed,
               difficulty: x.difficulty,
               daily: x.daily,
+              mutators: x.mutators,
               replay: x.commands,
               skills: x.skills,
               hero: x.hero,
@@ -253,7 +255,13 @@ export function initMenu(
     tab('hero');
   };
   $('newgame').onclick = () =>
-    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+    startNext({
+      seed: (Math.random() * 2 ** 31) | 0,
+      difficulty: settings.difficulty,
+      mutators: [...document.querySelectorAll<HTMLInputElement>('#mutators input:checked')].map(
+        (i) => i.value,
+      ),
+    });
   $('cancelnew').onclick = () => dlg.close();
   $('opennew').onclick = () => newGame();
   $('builder').onclick = () =>
@@ -289,6 +297,14 @@ export function initMenu(
     file.value = '';
   };
 
+  $('mutators').replaceChildren(
+    ...Object.entries(MUTATORS).map(([id, m]) => {
+      const l = document.createElement('label');
+      l.title = m.tip;
+      l.innerHTML = `<input type="checkbox" value="${id}"> ${m.name}`;
+      return l;
+    }),
+  );
   /** The new-game dialog: difficulty, loadout, then Begin. */
   const newGame = () => {
     if (!confirmLeave()) return;

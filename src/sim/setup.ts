@@ -41,7 +41,16 @@ export function easyLevels(base: LevelDef[]) {
   return out;
 }
 
-export function newGame(seed: number, difficulty: Difficulty = 'normal') {
+/** Optional rule changes picked at new game; they're saved with the run and shown on its score. */
+export const MUTATORS: Record<string, { name: string; tip: string }> = {
+  swift: { name: 'Swift', tip: 'Creeps move 30% faster' },
+  tough: { name: 'Tough', tip: 'Creeps have double HP; kills pay double gold' },
+  nomerge: { name: 'No merges', tip: 'Merge ×2 and ×4 are disabled' },
+  bosses: { name: 'Cunning bosses', tip: 'Bosses blink, shield, rush or split on death' },
+};
+
+export function newGame(seed: number, difficulty: Difficulty = 'normal', mutators: string[] = []) {
+  const on = (m: string) => mutators.includes(m);
   const sim = new WaveSim(new Maze(map as unknown as MapData), waves as WaveEntry[], seed);
   sim.hpMult = DIFFICULTY[difficulty].hp;
   const levels = quality.levels as LevelDef[];
@@ -52,6 +61,10 @@ export function newGame(seed: number, difficulty: Difficulty = 'normal') {
   );
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
   g.combat.stackCopies = difficulty === 'easy';
+  if (on('swift')) sim.speedMult = 1.3;
+  if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
+  g.noMerge = on('nomerge');
+  sim.bossTricks = on('bosses');
   return g;
 }
 

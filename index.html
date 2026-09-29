@@ -715,6 +715,12 @@
         font-size: 12px;
         opacity: 0.85;
       }
+      #mutators {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        justify-content: center;
+      }
       #questlist {
         list-style: none;
         padding: 0;
@@ -1260,6 +1266,7 @@
         <button data-diff="normal">🔵 Normal<small>The true path</small></button>
         <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
       </div>
+      <p id="mutators" title="Optional rule changes, shown on the score"></p>
       <p>
         Hero &amp; skills: <b id="loadout">—</b>
         <button id="changeloadout">Change</button>
