@@ -84,10 +84,9 @@ npm run data       # rebuild data/*.json from data/raw (Python)
 `npm run e2e` needs Playwright's Chromium and Firefox (`npx playwright install chromium firefox`)
 and an installed Microsoft Edge.
 
-## Fan project, AI-assisted
+## Fan project
 
-This is an unofficial, non-commercial **fan-made** tribute to Gem TD. It was built with heavy
-assistance from Claude (Anthropic's AI). It is not affiliated with, endorsed by, or
+This is an unofficial, non-commercial **fan-made** tribute to Gem TD. It is not affiliated with, endorsed by, or
 sponsored by Valve Corporation or the original Gem TD authors.
 
 ## Credits and IP
@@ -95,19 +94,3 @@ sponsored by Valve Corporation or the original Gem TD authors.
 Game mechanics follow the Dota 2 custom game Gem TD, credit for the design goes to its creators.
 All art is drawn in code and all sound is synthesised; no Dota 2 or gem-td.com assets, text or
 code are included.
-
-Why a clone is OK here (not legal advice):
-
-- **Rules and mechanics aren't copyrightable.** Copyright covers expression, not ideas, systems or
-  methods of play (US 17 U.S.C. § 102(b); EU *SAS Institute v. World Programming*, C-406/10). Tower
-  defense mazing, random gem draws and combine recipes are game rules.
-- **Expression is.** Copying art, sound, UI layout or "look and feel" too closely can infringe
-  (*Tetris Holding v. Xio Interactive*, 2012; *Spry Fox v. 6waves*, 2012). So this project uses
-  only original, code-drawn visuals and synthesised audio.
-- **Names are trademarks.** "Dota 2" and "Valve" are Valve trademarks, used here only to describe
-  what this game is inspired by. "Gem TD" is used the same way. If a rights holder objects, the
-  project will be renamed or taken down.
-- **Keep it non-commercial.** Selling it would weaken the fan-work position; don't.
-
-The code in this repository is MIT licensed (see [LICENSE](LICENSE)); that license covers this
-code only, not the Gem TD name or concept.
