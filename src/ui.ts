@@ -1,5 +1,6 @@
 // Menu overlay: leaderboards (3 boards + difficulty filter), settings, export/import, new game.
 import * as db from './persist';
+import * as sfx from './sfx';
 import type { Game, LogEntry } from './sim/game';
 import { MAPS, MUTATORS, dailySeed } from './sim/setup';
 import { QUESTS, type Quest } from './quests';
@@ -240,6 +241,13 @@ export function initMenu(
   speed.onchange = () => {
     settings.speed = +speed.value;
     setSpeed(settings.speed);
+    saveSettings();
+  };
+  const musicIn = $<HTMLInputElement>('music');
+  musicIn.value = String(settings.music ?? 0.3);
+  musicIn.oninput = () => {
+    settings.music = +musicIn.value;
+    sfx.setMusic(settings.music);
     saveSettings();
   };
   volume.oninput = () => {

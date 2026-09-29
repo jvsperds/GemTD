@@ -169,6 +169,7 @@ function run(cmd: Cmd) {
   return ok;
 }
 sfx.setVolume(settings.volume);
+sfx.setMusic(settings.music ?? 0.3);
 addEventListener('pointerdown', sfx.unlock);
 addEventListener('keydown', sfx.unlock);
 
@@ -456,6 +457,15 @@ function showBanner() {
 let prev = { kills: 0, hp: sim.castleHp, phase: sim.phase as string };
 function sounds() {
   if (stress) return;
+  sfx.setMood(
+    game.over || builder
+      ? 'off'
+      : sim.phase === 'wave'
+        ? sim.current?.boss
+          ? 'boss'
+          : 'wave'
+        : 'build',
+  );
   if (game.kills > prev.kills) sfx.play('kill');
   if (sim.castleHp < prev.hp) sfx.play('leak');
   if (sim.phase !== prev.phase)
