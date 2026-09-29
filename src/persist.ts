@@ -13,6 +13,7 @@ export interface ScoreRow {
   timeSec: number;
   difficulty: string;
   daily?: string; // local date of a daily-challenge run
+  mutators?: string[];
   seed: number;
   won: boolean;
   date: number;
@@ -24,6 +25,7 @@ export interface ScoreRow {
 export interface Save {
   seed: number;
   difficulty: string;
+  mutators?: string[];
   daily?: string;
   commands: LogEntry[];
   version: number;

@@ -50,6 +50,7 @@ type Start = {
   seed: number;
   difficulty: string;
   daily?: string;
+  mutators?: string[];
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout; // a replay's hero skills
@@ -65,7 +66,7 @@ try {
 const save = stress || start ? null : await db.get('save');
 const cfg = start ??
   save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
-const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
+const game = newGame(cfg.seed, cfg.difficulty as Difficulty, cfg.mutators);
 const hero = await db.get('hero');
 // A new game takes the picked hero and skills; a resume or replay keeps the ones it started with.
 const past = start?.replay ? start : save;
@@ -185,6 +186,7 @@ const saveNow = (commands = game.log) =>
     seed: game.seed,
     difficulty: cfg.difficulty,
     daily: cfg.daily,
+    mutators: cfg.mutators,
     commands,
     version: db.VERSION,
     skills: game.skills,
@@ -500,6 +502,7 @@ async function recordScore() {
     timeSec: Math.round(game.seconds),
     difficulty: cfg.difficulty,
     daily: cfg.daily,
+    mutators: cfg.mutators,
     seed: game.seed,
     won: game.wavesCleared >= sim.lastWave,
     date: Date.now(),

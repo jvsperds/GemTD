@@ -872,6 +872,12 @@
         font-size: 12px;
         opacity: 0.85;
       }
+      #mutators {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        justify-content: center;
+      }
       #questlist {
         list-style: none;
         padding: 0;
@@ -1493,6 +1499,10 @@
           <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
           <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
         </div>
+      </section>
+      <section class="dialog-section">
+        <h3>Mutators</h3>
+        <p id="mutators" title="Optional rule changes, shown on the score"></p>
       </section>
       <section class="loadout-summary">
         <div>
