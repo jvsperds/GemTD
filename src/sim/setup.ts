@@ -23,7 +23,10 @@ export const DIFFICULTY = {
 } as const;
 export type Difficulty = keyof typeof DIFFICULTY;
 
-/** Easy: levels go past 9, each moving 10% from the lowest quality to Perfect/Great (5% each). */
+export const EASY_PERFECT_CAP = 10;
+
+/** Easy: levels go past 9, each moving 10% from the lowest quality to Perfect/Great (5% each,
+ *  Perfect capped at EASY_PERFECT_CAP% with the rest going to Great). */
 export function easyLevels(base: LevelDef[]) {
   const out = base.map((l) => ({ ...l, odds: [...l.odds, 0] }));
   for (;;) {
@@ -32,8 +35,9 @@ export function easyLevels(base: LevelDef[]) {
     const low = odds.findIndex((p) => p > 0);
     if (low >= 4) break; // all Perfect/Great already
     odds[low] -= 10;
-    odds[4] += 5;
-    odds[5] += 5;
+    const perfect = Math.min(5, EASY_PERFECT_CAP - odds[5]);
+    odds[5] += perfect;
+    odds[4] += 10 - perfect;
     const prev = out[out.length - 2].upgradeCost!;
     last.upgradeCost ??= prev + 30;
     out.push({ level: last.level + 1, odds, upgradeCost: null });
@@ -52,6 +56,7 @@ export function newGame(seed: number, difficulty: Difficulty = 'normal') {
   );
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
   g.combat.stackCopies = difficulty === 'easy';
+  if (difficulty === 'easy') g.recipeLuck = 0.03;
   return g;
 }
 
