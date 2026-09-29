@@ -2,6 +2,7 @@
 import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
+import { QUESTS, type Quest } from './quests';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import {
   PASSIVES,
@@ -66,7 +67,11 @@ export function initMenu(
     for (const s of document.querySelectorAll<HTMLElement>('#menu [data-pane]'))
       s.hidden = s.dataset.pane !== t;
   };
-  for (const b of tabs) b.onclick = () => tab(b.dataset.tab!);
+  for (const b of tabs)
+    b.onclick = () => {
+      tab(b.dataset.tab!);
+      if (b.dataset.tab === 'quests') void drawQuests();
+    };
   $<HTMLOptionElement>('dailyopt').value = 'daily:' + today();
 
   async function draw() {
@@ -110,6 +115,18 @@ export function initMenu(
       }),
     );
     if (!list.length) rows.innerHTML = '<tr><td colspan="9">No scores yet</td></tr>';
+  }
+  /** Quests tab: every quest, done ones ticked. */
+  async function drawQuests() {
+    const done = (await db.get('hero')).quests ?? [];
+    $('questlist').replaceChildren(
+      ...QUESTS.map((q) => {
+        const li = document.createElement('li');
+        li.className = done.includes(q.id) ? 'done' : '';
+        li.textContent = `${done.includes(q.id) ? '✓' : '○'} ${q.name}: ${q.tip} (${q.shells} 🐚)`;
+        return li;
+      }),
+    );
   }
   /** Hero tab: pick or unlock a hero, buy or upgrade skills, and choose which to bring. */
   async function drawShop() {
@@ -304,13 +321,14 @@ export function initMenu(
       lines: string[];
       towers: { name: string; share: number; kills: number; mvp: number }[];
     };
+    quests?: Quest[];
   }) => {
     menu.hidden = false;
     over.hidden = !result;
     drawShop();
     if (result) {
       over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
-        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}<button>⚔ Play again</button>
+        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}${(result.quests ?? []).map((q) => `<div class="quest">📜 ${q.name} +${q.shells} 🐚</div>`).join('')}<button>⚔ Play again</button>
         <button>💾 Save maze to library</button>`;
       const [again, keep] = over.querySelectorAll('button');
       again.onclick = newGame;

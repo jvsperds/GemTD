@@ -37,6 +37,7 @@ export interface Hero {
   bring?: string[]; // owned skills taken into the next game, at most MAX_BRING (+1 for some heroes)
   heroes?: string[]; // unlocked heroes besides the free one
   hero?: string; // picked for the next game
+  quests?: string[]; // completed quest ids
 }
 export interface Settings {
   name: string;
