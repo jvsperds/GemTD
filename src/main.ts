@@ -9,6 +9,7 @@ import { BLURB } from './blurbs';
 import { fillIcons, icon } from './hud';
 import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
+import { newlyDone } from './quests';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { newGame, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
@@ -509,15 +510,27 @@ async function recordScore() {
   });
   await db.set('scores', db.retain(scores));
   await db.set('save', null);
-  const shells = shellsFor(game.wavesCleared, game.wavesCleared >= sim.lastWave);
+  const won = game.wavesCleared >= sim.lastWave;
   const h = await db.get('hero');
-  await db.set('hero', { ...h, shells: h.shells + shells });
-  menu.show({
-    score: score(game),
-    won: game.wavesCleared >= sim.lastWave,
-    shells,
-    summary: summary(),
+  const quests = newlyDone(
+    {
+      won,
+      waves: game.wavesCleared,
+      difficulty: cfg.difficulty,
+      daily: !!cfg.daily,
+      fullHp: sim.castleHp >= CASTLE_HP,
+      maxLevel: game.level >= game.levels.length,
+      towers: combat.towers.map((t) => t.def.name),
+    },
+    h.quests,
+  );
+  const shells = shellsFor(game.wavesCleared, won) + quests.reduce((n, q) => n + q.shells, 0);
+  await db.set('hero', {
+    ...h,
+    shells: h.shells + shells,
+    quests: [...(h.quests ?? []), ...quests.map((q) => q.id)],
   });
+  menu.show({ score: score(game), won, shells, summary: summary(), quests });
 }
 /** Game-over recap: run totals, then the five towers that did the most damage. */
 function summary() {

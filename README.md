@@ -61,7 +61,7 @@ Each round:
 3. The wave starts. Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; leaks damage the castle.
 
 Kills give gold and XP. XP raises your level (better gem odds); **Buy level (L)** spends gold to
-level up early. The top-damage tower each wave earns an MVP stack (+10% damage). Special towers
+level up early. **Quests** (menu → Quests) pay bonus shells the first time you meet them. The top-damage tower each wave earns an MVP stack (+10% damage). Special towers
 gain +10% damage per 10 kills.
 
 Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `L` buy level ·
