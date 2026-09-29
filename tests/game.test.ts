@@ -289,8 +289,19 @@ test('easy levels go past 9 toward Perfect/Great', () => {
   expect(l.length).toBeGreaterThan(9);
   expect(l[8].upgradeCost).toBe(260);
   expect(last.upgradeCost).toBeNull();
-  expect(last.odds).toEqual([0, 0, 0, 0, 55, 45]);
+  expect(last.odds).toEqual([0, 0, 0, 0, 90, 10]);
   for (const x of l) expect(x.odds.reduce((a, b) => a + b)).toBe(100);
+});
+
+test('missingOne names the gem that completes a recipe on the board', async () => {
+  const { newGame } = await import('../src/sim/setup');
+  const g = newGame(1, 'easy');
+  const rec = (Object.values(g.combat.gems) as { recipes?: string[][] }[])
+    .flatMap((d) => d.recipes ?? [])
+    .find((r) => r.every((c) => /^[A-Z]\d$/.test(c)) && new Set(r).size === r.length)!;
+  const cells = [[2, 2], [4, 2], [6, 2], [8, 2]];
+  rec.slice(1).forEach((c, i) => (g.combat.place(c, cells[i][0], cells[i][1])!.def = g.combat.gems[c]));
+  expect(g.missingOne()).toContain(rec[0]);
 });
 
 test('undo (replay without the last place) re-rolls the same gem', async () => {

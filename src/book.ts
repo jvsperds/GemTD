@@ -88,7 +88,9 @@ export function initBook(opts: {
   function recipes(pedals = false) {
     const sel = opts.selected();
     const mine = sel && codeOf(sel.def);
-    const owned = new Set(opts.towers().map((t) => codeOf(t.def)));
+    const have = new Map<string, number>();
+    for (const t of opts.towers()) have.set(codeOf(t.def), (have.get(codeOf(t.def)) ?? 0) + 1);
+    const n = (p: string) => have.get(p) ?? 0;
     const all = (Object.values(DEFS) as (GemDef & Partial<SpecialDef>)[]).filter(
       (d) =>
         d.recipes?.length &&
@@ -116,13 +118,18 @@ export function initBook(opts: {
       im.alt = '';
       row.append(im);
       const text = el('div');
-      text.append(el('b', '', d.name + (r.every((p) => owned.has(p)) ? ' ✓' : '')));
+      const need = (p: string) => r.filter((x) => x === p).length;
+      text.append(el('b', '', d.name + (r.every((p) => n(p) >= need(p)) ? ' ✓' : '')));
       const parts = el('div', 'parts');
       if (r.length > 1 && r.every((p) => p === r[0]))
-        parts.append(el('span', owned.has(r[0]) ? 'own' : '', `${r.length}× ${r[0]}`));
+        parts.append(
+          el('span', n(r[0]) >= r.length ? 'own' : '', `${r.length}× ${r[0]} (${n(r[0])})`),
+        );
       else
         r.forEach((p, i) =>
-          parts.append(el('span', owned.has(p) ? 'own' : '', (i ? ' + ' : '') + p)),
+          parts.append(
+            el('span', n(p) >= need(p) ? 'own' : '', `${i ? ' + ' : ''}${p} (${n(p)})`),
+          ),
         );
       text.append(parts);
       const tip = d.pedal && PEDAL_TIPS.get(d.abilities[0])?.tip;

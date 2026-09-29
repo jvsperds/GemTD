@@ -66,6 +66,7 @@ export class Game {
   log: LogEntry[] = [];
   skills: Loadout = {}; // hero skills brought to this game; saved with it so replays match
   pray: { gem?: string; quality?: number; chance: number } | null = null; // for the next gem
+  recipeLuck = 0; // easy: per-level chance a gem completes a recipe (see place)
   pedals: string[] = []; // combined pedals waiting to be laid on the path
   hero = ''; // hero id; '' = no hero (tests, old saves)
   get perk(): Perk {
@@ -304,6 +305,14 @@ export class Game {
     let q = this.rollQuality();
     const up = this.perk.qualityUp; // Prism: sometimes one quality higher
     if (up && this.rand() < up) q = Math.min(q + 1, MAX_QUALITY);
+    // Easy: chance (per hero level) the gem is the last missing ingredient of a recipe on the board.
+    if (this.recipeLuck && this.rand() < this.recipeLuck * this.level) {
+      const want = this.missingOne(t);
+      if (want.length) {
+        const code = want[Math.floor(this.rand() * want.length)];
+        [type, q] = [code[0], +code.slice(1)];
+      }
+    }
     const p = this.pray; // a Pray skill cast this round biases this one gem
     if (p) {
       this.pray = null;
@@ -312,6 +321,25 @@ export class Game {
     t.def = this.combat.gems[type + q];
     this.placed.push(t);
     return t;
+  }
+
+  /** Basic gem codes that alone would complete some recipe with what's on the board (besides `skip`). */
+  missingOne(skip?: Tower) {
+    const have = new Map<string, number>();
+    for (const o of this.combat.towers)
+      if (o !== skip) have.set(codeOf(o.def), (have.get(codeOf(o.def)) ?? 0) + 1);
+    const out = new Set<string>();
+    for (const def of Object.values(this.combat.gems))
+      for (const rec of (def as GemDef & Partial<SpecialDef>).recipes ?? []) {
+        const left = new Map(have);
+        const miss = rec.filter((c) => {
+          const n = left.get(c) ?? 0;
+          left.set(c, n - 1);
+          return n <= 0;
+        });
+        if (miss.length === 1 && /^[A-Z]\d$/.test(miss[0])) out.add(miss[0]);
+      }
+    return [...out].sort();
   }
 
   private same(t: Tower) {
