@@ -419,7 +419,7 @@ function sounds() {
   prev = { kills: game.kills, hp: sim.castleHp, phase: sim.phase };
 }
 
-const QUALITY_COLOR = ['#8a8070', '#2fbf5a', '#3a6bff', '#a24de0', '#f2c52e'];
+const QUALITY_COLOR = ['#8a8070', '#2fbf5a', '#3a6bff', '#a24de0', '#f2c52e', '#ff5a3c'];
 let prevGold = game.gold,
   prevHp = sim.castleHp;
 function flashEl(id: string, cls: string) {

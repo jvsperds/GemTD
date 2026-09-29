@@ -348,8 +348,7 @@ export const goldOf = (id: string, lvl: number) => {
 };
 export type Loadout = Record<string, number>; // skill id -> level 1..4
 /** Shells for a finished game. ponytail: flat rate until playtests. */
-export const MAX_SHELLS = 20;
 export const shellsFor = (wavesCleared: number, won: boolean) =>
-  Math.min(MAX_SHELLS, Math.floor(wavesCleared / 3) + (won ? 4 : 0)); // full clear: 16 + 4
+  Math.floor(wavesCleared / 3) + (won ? 4 : 0); // full clear: 16 + 4; endless keeps adding 1 per 3 waves
 export const skillTip = (id: string, lvl: number) =>
   SKILLS[id].tip.replace('{v}', String(SKILLS[id].value[Math.max(1, lvl) - 1]));
