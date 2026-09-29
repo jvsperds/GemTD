@@ -142,18 +142,18 @@ let mazeVer = 0; // bumped on every builder edit
 if (!save && !start && !stress) menu.newGame(); // fresh visit: pick a trial first
 initDmgChart(() => combat.towers, canvas);
 
-const saveNow = () =>
+const saveNow = (commands = game.log) =>
   db.set('save', {
     seed: game.seed,
     difficulty: cfg.difficulty,
     daily: cfg.daily,
-    commands: game.log,
+    commands,
     version: db.VERSION,
     skills: game.skills,
     hero: game.hero,
   });
 if (!replaying && !stress && !builder) {
-  game.onCommand = saveNow;
+  game.onCommand = () => saveNow();
   if (start) saveNow(); // so a reload before the first move resumes this game, not the old one
 }
 function run(cmd: Cmd) {
@@ -242,6 +242,11 @@ function act(a: string) {
     if (SKILLS[id].picks) picking = picking?.id === id ? null : { id, tower: sel, cells: [] };
     else run(['skill', sel?.c ?? -1, sel?.r ?? -1, id]);
   } else if (a === 'stone') removing = !removing;
+  // Undo: save the log minus the last placement and resume from it. Gem rolls come from the seeded
+  // rng, so the re-placed gem is the same gem: this moves it, it can't reroll it.
+  // ponytail: resumes via reload (replays the whole log); do it in place if late-game undo lags.
+  else if (a === 'undo' && canUndo())
+    void saveNow(game.log.slice(0, -1)).then(() => location.reload());
   else if (a === 'level') run(['level']);
   else if (sel) {
     const { c, r } = sel;
@@ -258,6 +263,7 @@ const keys: Record<string, string> = {
   d: 'down',
   r: 'stone',
   l: 'level',
+  u: 'undo',
   g: 'guide',
   p: 'path',
   v: 'ranges',
@@ -372,7 +378,33 @@ async function recordScore() {
   const shells = shellsFor(game.wavesCleared, game.wavesCleared >= sim.lastWave);
   const h = await db.get('hero');
   await db.set('hero', { ...h, shells: h.shells + shells });
-  menu.show({ score: score(game), won: game.wavesCleared >= sim.lastWave, shells });
+  menu.show({
+    score: score(game),
+    won: game.wavesCleared >= sim.lastWave,
+    shells,
+    summary: summary(),
+  });
+}
+/** Game-over recap: run totals, then the five towers that did the most damage. */
+function summary() {
+  const total = combat.towers.reduce((n, t) => n + t.damageDealt, 0) || 1;
+  const top = [...combat.towers].sort((a, b) => b.damageDealt - a.damageDealt).slice(0, 5);
+  const m = Math.round(game.seconds);
+  return {
+    lines: [
+      `Waves ${game.wavesCleared}`,
+      `Kills ${game.kills}`,
+      `Level ${game.level}`,
+      `Castle ${Math.max(0, Math.round(sim.castleHp))} HP`,
+      `Time ${(m / 60) | 0}:${String(m % 60).padStart(2, '0')}`,
+    ],
+    towers: top.map((t) => ({
+      name: t.def.name,
+      share: Math.round((t.damageDealt / total) * 100),
+      kills: t.kills,
+      mvp: t.mvp,
+    })),
+  };
 }
 function topUpStress() {
   for (let k = sim.creeps.length; k < 400; k++) {
@@ -709,6 +741,9 @@ function slot(
   if (o.lvl) b.append(el('u', '', '•'.repeat(o.lvl)));
   return b;
 }
+/** Only this round's last gem placement can be undone. */
+const canUndo = () =>
+  !replaying && !builder && sim.phase === 'build' && game.log.at(-1)?.[1][0] === 'place';
 /** Default view: the builder "hero" — level, XP, gem odds. */
 function drawHero(xpPct: number, lvlTo: number | undefined) {
   const h = HEROES[game.hero];
@@ -733,6 +768,7 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
       off: !!replaying || game.step !== 'place',
       on: removing,
     }),
+    slot('↶', 'Undo', 'Take back the last gem you placed', 'undo', 'U', { off: !canUndo() }),
     ...ids.map((id) => {
       const s = SKILLS[id],
         lvl = game.skills[id];

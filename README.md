@@ -54,7 +54,7 @@ Kills give gold and XP. XP raises your level (better gem odds); **Buy level (L)*
 level up early. The top-damage tower each wave earns an MVP stack (+10% damage). Special towers
 gain +10% damage per 10 kills.
 
-Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `L` buy level ·
+Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `L` buy level ·
 `Space` pause · `1` `2` `3` speed ×1/×2/×4 · `B` scores & settings · `F3` debug overlay ·
 mouse wheel zoom · right-drag pan.
 
