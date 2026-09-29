@@ -14,6 +14,7 @@ export interface ScoreRow {
   difficulty: string;
   daily?: string; // local date of a daily-challenge run
   mutators?: string[];
+  map?: string;
   seed: number;
   won: boolean;
   date: number;
@@ -26,6 +27,7 @@ export interface Save {
   seed: number;
   difficulty: string;
   mutators?: string[];
+  map?: string;
   daily?: string;
   commands: LogEntry[];
   version: number;
@@ -45,6 +47,8 @@ export interface Settings {
   speed: number;
   volume: number;
   difficulty: string; // for new games
+  map?: string; // for new games
+  tutorial?: boolean; // first-game hints seen
 }
 export interface MazeRow {
   name: string;

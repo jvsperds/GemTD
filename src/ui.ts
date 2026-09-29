@@ -1,7 +1,7 @@
 // Menu overlay: leaderboards (3 boards + difficulty filter; global on the server), settings, new game.
 import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
-import { MUTATORS, dailySeed } from './sim/setup';
+import { MAPS, MUTATORS, dailySeed } from './sim/setup';
 import { QUESTS, type Quest } from './quests';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import {
@@ -20,6 +20,7 @@ function startNext(o: {
   difficulty: string;
   daily?: string;
   mutators?: string[];
+  map?: string;
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout;
@@ -88,7 +89,11 @@ export function initMenu(
           x.wavesCleared,
           x.hpLeft,
           `${x.timeSec}s`,
-          [x.difficulty, ...(x.mutators ?? []).map((m) => MUTATORS[m]?.name ?? m)].join(' + '),
+          [
+            x.difficulty,
+            ...(x.map && x.map !== 'classic' ? [MAPS[x.map]?.name ?? x.map] : []),
+            ...(x.mutators ?? []).map((m) => MUTATORS[m]?.name ?? m),
+          ].join(' + '),
           new Date(x.date).toLocaleDateString(),
         ]) {
           const td = document.createElement('td');
@@ -106,6 +111,7 @@ export function initMenu(
               difficulty: x.difficulty,
               daily: x.daily,
               mutators: x.mutators,
+              map: x.map,
               replay: x.commands,
               skills: x.skills,
               hero: x.hero,
@@ -258,6 +264,7 @@ export function initMenu(
     startNext({
       seed: (Math.random() * 2 ** 31) | 0,
       difficulty: settings.difficulty,
+      map: settings.map,
       mutators: [...document.querySelectorAll<HTMLInputElement>('#mutators input:checked')].map(
         (i) => i.value,
       ),
@@ -268,6 +275,13 @@ export function initMenu(
     confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });
   $('daily').onclick = () =>
     confirmLeave() && startNext({ seed: dailySeed(), difficulty: 'normal', daily: today() });
+  const mapSel = $<HTMLSelectElement>('mapsel');
+  mapSel.replaceChildren(...Object.entries(MAPS).map(([id, m]) => new Option(m.name, id)));
+  mapSel.value = settings.map ?? 'classic';
+  mapSel.onchange = () => {
+    settings.map = mapSel.value;
+    saveSettings();
+  };
   $('mutators').replaceChildren(
     ...Object.entries(MUTATORS).map(([id, m]) => {
       const l = document.createElement('label');

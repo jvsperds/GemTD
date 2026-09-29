@@ -55,9 +55,35 @@ export const MUTATORS: Record<string, { name: string; tip: string }> = {
   bosses: { name: 'Cunning bosses', tip: 'Bosses blink, shield, rush or split on death' },
 };
 
-export function newGame(seed: number, difficulty: Difficulty = 'normal', mutators: string[] = []) {
+/** Layouts: same grid and walls, different checkpoint order. */
+const classic = map as unknown as MapData;
+export const MAPS: Record<string, { name: string; data: MapData }> = {
+  classic: { name: 'Classic', data: classic },
+  // Top, left, bottom, right, then the centre: every leg crosses the middle.
+  cross: {
+    name: 'Crossroads',
+    data: {
+      ...classic,
+      checkpoints: [
+        [18, 4],
+        [4, 18],
+        [18, 32],
+        [32, 18],
+        [18, 18],
+      ],
+    },
+  },
+};
+
+export function newGame(
+  seed: number,
+  difficulty: Difficulty = 'normal',
+  mutators: string[] = [],
+  mapId = 'classic',
+) {
   const on = (m: string) => mutators.includes(m);
-  const sim = new WaveSim(new Maze(map as unknown as MapData), waves as WaveEntry[], seed);
+  const data = (MAPS[mapId] ?? MAPS.classic).data;
+  const sim = new WaveSim(new Maze(data), waves as WaveEntry[], seed);
   sim.hpMult = DIFFICULTY[difficulty].hp;
   const levels = quality.levels as LevelDef[];
   const g = new Game(

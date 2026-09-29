@@ -11,7 +11,7 @@ import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { newlyDone } from './quests';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
-import { newGame, type Difficulty } from './sim/setup';
+import { MAPS, newGame, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
 import { AIM, AIM_ELITE, AURA, type Tower } from './sim/towers';
@@ -51,6 +51,7 @@ type Start = {
   difficulty: string;
   daily?: string;
   mutators?: string[];
+  map?: string;
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout; // a replay's hero skills
@@ -66,7 +67,7 @@ try {
 const save = stress || start ? null : await db.get('save');
 const cfg = start ??
   save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
-const game = newGame(cfg.seed, cfg.difficulty as Difficulty, cfg.mutators);
+const game = newGame(cfg.seed, cfg.difficulty as Difficulty, cfg.mutators, cfg.map);
 const hero = await db.get('hero');
 // A new game takes the picked hero and skills; a resume or replay keeps the ones it started with.
 const past = start?.replay ? start : save;
@@ -141,6 +142,7 @@ const book = initBook({
       .join('\n\n'),
   guide: () => guide,
   showGuide,
+  map: (MAPS[cfg.map ?? ''] ?? MAPS.classic).data,
   build: builder
     ? (g) => {
         // Stones in a valid guide never block part-way, so placing them one by one is safe.
@@ -187,6 +189,7 @@ const saveNow = (commands = game.log) =>
     difficulty: cfg.difficulty,
     daily: cfg.daily,
     mutators: cfg.mutators,
+    map: cfg.map,
     commands,
     version: db.VERSION,
     skills: game.skills,
@@ -503,6 +506,7 @@ async function recordScore() {
     difficulty: cfg.difficulty,
     daily: cfg.daily,
     mutators: cfg.mutators,
+    map: cfg.map,
     seed: game.seed,
     won: game.wavesCleared >= sim.lastWave,
     date: Date.now(),
@@ -905,6 +909,27 @@ function slot(
   if (o.lvl) b.append(el('u', '', '•'.repeat(o.lvl)));
   return b;
 }
+// Tutorial: the first game's first three waves swap the short hints for teaching ones.
+let tutorial = !settings.tutorial && !replaying && !builder && !stress;
+function teach() {
+  if (!tutorial) return '';
+  const step = game.step;
+  if (step === 'place')
+    return game.placed.length
+      ? `Gem ${game.placed.length + 1} of 5 · Gems block creeps like walls: stretch the path between the numbered checkpoints. Misplaced? U undoes.`
+      : 'Welcome! Click an empty tile to place a gem (5 per round). Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; make that walk long.';
+  if (step === 'choose')
+    return !sel
+      ? 'Click the gem you want to keep. The other four become stones and stay in your maze.'
+      : game.recipesFor(sel).length
+        ? 'A cyan outline means a special recipe is ready: press Combine → … to build it.'
+        : game.canMerge(sel, 2)
+          ? 'Two identical gems: Merge (M) keeps one a quality higher. Or Keep (K).'
+          : 'Press Keep (K) to keep this gem. The wave starts right after.';
+  if (step === 'wave')
+    return 'Kills give gold and XP; XP raises your level for better gems (odds under the XP bar).';
+  return '';
+}
 /** Only this round's last gem placement can be undone. */
 const canUndo = () =>
   !replaying && !builder && sim.phase === 'build' && game.log.at(-1)?.[1][0] === 'place';
@@ -1097,19 +1122,26 @@ function updateHud() {
         ? 'Click a stone to shatter it'
         : game.pedals.length
           ? `Lay your ${game.pedals[0]} on the path: creeps set it off by stepping on it`
-          : step === 'place'
-            ? `Place gem ${game.placed.length + 1} of 5`
-            : step === 'choose'
-              ? sel
-                ? `Selected ${sel.def.name}: keep, merge or combine it`
-                : 'Click one of this round’s gems to select it'
-              : step === 'won'
-                ? `You win! Score ${score(game)}`
-                : step === 'lost'
-                  ? `Game over. Score ${score(game)}`
-                  : speed
-                    ? `Wave in progress ×${speed}`
-                    : 'Paused (Space)';
+          : teach()
+            ? teach()
+            : step === 'place'
+              ? `Place gem ${game.placed.length + 1} of 5`
+              : step === 'choose'
+                ? sel
+                  ? `Selected ${sel.def.name}: keep, merge or combine it`
+                  : 'Click one of this round’s gems to select it'
+                : step === 'won'
+                  ? `You win! Score ${score(game)}`
+                  : step === 'lost'
+                    ? `Game over. Score ${score(game)}`
+                    : speed
+                      ? `Wave in progress ×${speed}`
+                      : 'Paused (Space)';
+  if (tutorial && game.wavesCleared >= 3) {
+    tutorial = false;
+    settings.tutorial = true;
+    void db.set('settings', settings);
+  }
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
@@ -1118,6 +1150,7 @@ function updateHud() {
     replaying && 'Replay',
     builder && 'Maze builder',
     cfg.daily && `Daily ${cfg.daily}`,
+    cfg.map && cfg.map !== 'classic' && MAPS[cfg.map]?.name,
     !builder && cfg.difficulty,
   ].filter(Boolean);
   const s =
