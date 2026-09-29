@@ -280,14 +280,37 @@ export function initMenu(
     drawShop();
     dlg.showModal();
   };
+  // Tower names come from the bundled data, so plain interpolation is safe here.
+  const recap = (r?: {
+    lines: string[];
+    towers: { name: string; share: number; kills: number; mvp: number }[];
+  }) =>
+    r
+      ? `<div class="recap">${r.lines.join(' · ')}</div><table class="recap">` +
+        r.towers
+          .map(
+            (t) =>
+              `<tr><td>${t.name}</td><td>${t.share}%</td><td>${t.kills} kills</td><td>${t.mvp ? '★' + t.mvp : ''}</td></tr>`,
+          )
+          .join('') +
+        '</table>'
+      : '';
   /** Open the menu; with a result it leads with the game-over banner. */
-  const show = (result?: { score: number; won: boolean; shells: number }) => {
+  const show = (result?: {
+    score: number;
+    won: boolean;
+    shells: number;
+    summary?: {
+      lines: string[];
+      towers: { name: string; share: number; kills: number; mvp: number }[];
+    };
+  }) => {
     menu.hidden = false;
     over.hidden = !result;
     drawShop();
     if (result) {
       over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
-        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div><button>⚔ Play again</button>
+        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}<button>⚔ Play again</button>
         <button>💾 Save maze to library</button>`;
       const [again, keep] = over.querySelectorAll('button');
       again.onclick = newGame;

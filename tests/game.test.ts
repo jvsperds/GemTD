@@ -292,3 +292,14 @@ test('easy levels go past 9 toward Perfect/Great', () => {
   expect(last.odds).toEqual([0, 0, 0, 0, 55, 45]);
   for (const x of l) expect(x.odds.reduce((a, b) => a + b)).toBe(100);
 });
+
+test('undo (replay without the last place) re-rolls the same gem', async () => {
+  const { newGame } = await import('../src/sim/setup');
+  const a = newGame(7);
+  a.run(['place', 2, 2]);
+  const gem = a.combat.towers[0].def.name;
+  const b = newGame(7);
+  b.replay(a.log.slice(0, -1));
+  b.run(['place', 5, 5]);
+  expect(b.combat.towers[0].def.name).toBe(gem);
+});

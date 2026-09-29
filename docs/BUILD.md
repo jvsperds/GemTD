@@ -311,6 +311,21 @@ Each phase ends with a playable build and its exit criteria.
 ### Phase 8 — Balance & release
 - Balance pass against Dota numbers, Playwright smoke across Chrome/Firefox/Edge, perf check at wave 30+ on a low-end laptop, `README` with "how to play offline".
 
+### Phase 9 — Run recap & undo
+- Game-over recap (totals, top 5 towers by damage share, kills, MVP stacks); `U` undoes this round's last gem placement (same gem, since rolls are seeded).
+
+### Phase 10 — Quests & achievements
+- Per-run goals ("build Uranium-238", "no leaks", "endless wave 70") stored with scores.
+
+### Phase 11 — Mutators & boss abilities
+- New-game modifiers (fast creeps, double HP/gold, no merges); bosses that blink, shield or split.
+
+### Phase 12 — Maps & tutorial
+- Second checkpoint layout with a map picker; first-run walkthrough of place → keep → combine.
+
+### Phase 13 — Music
+- Procedural ambient layer next to `sfx.ts`, louder on boss waves.
+
 ## 5. Testing strategy
 - **Sim unit tests:** pathing, recipe matching, combine rules, damage/armor math, aura stacking, RNG determinism.
 - **Golden replays:** fixed seed + command log must produce identical final state hash — catches accidental nondeterminism.
