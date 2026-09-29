@@ -50,6 +50,16 @@ export const ENDLESS = { hp: 1.15, armor: 1 };
 // Giant: after `streak` waves in a row with no castle damage, a wave may swap one creep for a
 // 10x-HP copy. ponytail: streak/chance are guesses until playtests.
 export const GIANT = { streak: 3, chance: 0.3, hp: 10 };
+// Cunning bosses mutator: each boss wave borrows creep attributes; 'boss_split' breaks the boss
+// into `n` creeps with `hp` of its max HP each on death. ponytail: sizes are guesses until playtests.
+export const BOSS_TRICKS: Record<number, string[]> = {
+  10: ['enemy_shanshuo'],
+  20: ['enemy_zheguang'],
+  30: ['runrunrun'],
+  40: ['boss_split'],
+  50: ['boss_split', 'enemy_shanshuo'],
+};
+export const SPLIT = { n: 4, hp: 0.1 };
 
 /** Seeded PRNG (mulberry32) so the sim is deterministic. */
 export function rng(seed: number) {
@@ -176,7 +186,9 @@ export class WaveSim {
   creeps: Creep[] = [];
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
-  hpMult = 1; // difficulty
+  hpMult = 1; // difficulty (and the Tough mutator)
+  speedMult = 1; // Swift mutator
+  bossTricks = false; // Cunning bosses mutator
   streak = 0; // waves in a row that ended with no castle damage
   private hurt = false; // castle took damage this wave
   current: WaveEntry | null = null; // this wave's creep, for the banner
@@ -234,6 +246,11 @@ export class WaveSim {
       .filter((w) => w.wave === base)
       .map((w) =>
         mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra },
+      )
+      .map((w) =>
+        this.bossTricks && w.boss
+          ? { ...w, abilities: [...w.abilities, ...(BOSS_TRICKS[base] ?? [])] }
+          : w,
       );
     this.current = defs[0];
     const n = defs.some((d) => d.boss) ? 1 : CREEPS_PER_WAVE;
@@ -270,7 +287,23 @@ export class WaveSim {
     }
     if (creep.hp <= 0 && creep.alive) {
       creep.alive = false;
+      if (hasAbility(creep, 'boss_split')) this.split(creep);
       this.onKill?.(creep);
+    }
+  }
+
+  /** Split: smaller non-boss copies carry on from where the boss fell. */
+  private split(cr: Creep) {
+    const def = {
+      ...cr.def,
+      boss: false,
+      hp: cr.def.hp * SPLIT.hp,
+      abilities: cr.def.abilities.filter((a) => a !== 'boss_split'),
+    };
+    for (let k = 0; k < SPLIT.n; k++) {
+      const c = newCreep(def, cr.x, cr.y);
+      [c.seg, c.tc, c.tr, c.dir] = [cr.seg, cr.tc, cr.tr, cr.dir];
+      this.creeps.push(c);
     }
   }
 
@@ -325,7 +358,10 @@ export class WaveSim {
   /** Move speed after rush, % slows (strongest) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
     const pct = Math.max(cr.slowPct, cr.auraSlowPct);
-    const v = cr.def.speed * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) - cr.slow - cr.auraSlow;
+    const v =
+      cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) -
+      cr.slow -
+      cr.auraSlow;
     return Math.max(v, MIN_SPEED);
   }
 
