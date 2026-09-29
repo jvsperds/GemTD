@@ -715,6 +715,14 @@
         font-size: 12px;
         opacity: 0.85;
       }
+      #questlist {
+        list-style: none;
+        padding: 0;
+        line-height: 1.8;
+      }
+      #questlist .done {
+        color: var(--accent);
+      }
       table.recap td {
         padding: 1px 6px;
         text-align: right;
@@ -1272,10 +1280,14 @@
         <button data-tab="scores" class="on">Scores</button>
         <button id="opennew">New game</button>
         <button data-tab="hero">Hero</button>
+        <button data-tab="quests">Quests</button>
         <button data-tab="settings">Settings</button>
         <span style="flex: 1"></span>
         <button id="close">✕ <kbd>B</kbd></button>
       </div>
+      <section data-pane="quests" hidden>
+        <ul id="questlist"></ul>
+      </section>
       <section data-pane="scores">
         <p>
           <label
