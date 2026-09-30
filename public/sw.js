@@ -1,4 +1,4 @@
-/* global self, caches, fetch */
+/* global self, caches, fetch, URL */
 // Offline cache for the installed (served) build. Network-first so a redeploy shows up on the
 // next load; the cache only answers when offline.
 const CACHE = 'gemtd-v2';
@@ -14,6 +14,7 @@ self.addEventListener('activate', (e) =>
   ),
 );
 self.addEventListener('fetch', (e) => {
+  if (new URL(e.request.url).pathname.includes('/api/')) return; // profiles: never cache
   e.respondWith(
     fetch(e.request)
       .then((res) => {

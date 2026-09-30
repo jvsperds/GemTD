@@ -3,4 +3,8 @@ services:
     image: ghcr.io/jvsperds/gemtd:latest
     ports:
       - "5180:80"
+    environment:
+      GEMTD_USERS: "jasper:change-me,friend:change-me-too" # name:password, comma separated
+    volumes:
+      - ./profiles:/data # one <name>.json per player: shells, scores, saves, settings
     restart: unless-stopped
