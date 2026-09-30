@@ -1,6 +1,6 @@
 services:
   gemtd:
-    build: https://github.com/jvsperds/GemTD.git#main
+    image: ghcr.io/jvsperds/gemtd:latest
     ports:
       - "5180:80"
     restart: unless-stopped
