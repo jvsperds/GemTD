@@ -2,8 +2,16 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-09-29
+
+- **Endless:** waves run back to back with a wave banner; shells uncapped; new-game dialog.
+- **Easy mode:** levels past 9 shift odds toward Perfect/Great (Perfect capped at 10%);
+  level-scaled recipe-completing gems; owned counts in the recipe tab.
+- **Heroes:** passive skills shop section (Reaper, Lucky Strike, Bash, Midas Touch); Level and
+  Stone stay outside the bring limit.
+- **Game over:** run recap. **U** undoes the last gem placement.
 - Drop an unreadable saved game at startup instead of showing a blank page.
-- README: note that playing needs no npm, Node or server.
+- README: Play points at releases, Docker pinned to a tag, no npm/Node/server needed to play.
 
 ## 0.1.0 — 2026-09-28
 

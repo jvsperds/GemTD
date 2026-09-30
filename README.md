@@ -30,7 +30,7 @@ Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer t
 `compose.yaml` and deploy.
 
 - **Version:** `#main` in the `build:` URL tracks the latest code; rerun the command to update.
-  Pin a release instead with its tag, e.g. `https://github.com/jvsperds/GemTD.git#v0.1.0`.
+  Pin a release instead with its tag, e.g. `https://github.com/jvsperds/GemTD.git#v0.2.0`.
 - **Local checkout:** set `build: .` to build what's on disk.
 - **Port:** change the left side of `"5180:80"` if 5180 is taken.
 - **Install button:** browsers only offer it over HTTPS, so put it behind a reverse proxy.
