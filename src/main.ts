@@ -324,7 +324,6 @@ canvas.addEventListener('pointermove', (e) => {
     const [c, d] = [...touches.values()];
     view.setZoom((pinch[1] * spread()) / pinch[0], (c[0] + d[0]) / 2, (c[1] + d[1]) / 2);
   }
-  view.invalidate();
 });
 for (const t of ['pointerup', 'pointercancel'] as const)
   canvas.addEventListener(t, (e) => touches.delete(e.pointerId));
