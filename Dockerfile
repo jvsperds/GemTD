@@ -3,6 +3,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
 RUN npx vite build
 
 FROM nginx:alpine
