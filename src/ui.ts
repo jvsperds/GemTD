@@ -55,6 +55,7 @@ export function initMenu(
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')];
   const over = $<HTMLElement>('gameover');
   const dlg = $<HTMLDialogElement>('newdlg');
+  $('build').textContent = __BUILD__ + (import.meta.env.DEV ? ' (dev)' : '');
   name.value = settings.name;
   speed.value = String(settings.speed);
   volume.value = String(settings.volume);
