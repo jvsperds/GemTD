@@ -80,7 +80,25 @@ function open() {
   }));
 }
 
+// Served by server.mjs: the profile lives on the server under the logged-in user.
+// Anywhere else (file://, vite dev, nginx) /api is missing and we stay local.
+let remote: Promise<boolean> | null = null;
+const api = (key: string) => 'api/kv/' + key;
+function isRemote() {
+  return (remote ??= location.protocol.startsWith('http')
+    ? fetch('api/me').then(
+        (r) => r.ok && !r.headers.get('content-type')?.includes('html'),
+        () => false,
+      )
+    : Promise.resolve(false));
+}
+
 export async function get<K extends keyof Stores>(key: K): Promise<Stores[K]> {
+  if (await isRemote()) {
+    const r = await fetch(api(key));
+    if (!r.ok) throw new Error(`load ${key}: ${r.status}`);
+    return (await r.json()) ?? DEFAULTS[key];
+  }
   const d = await open();
   if (!d) {
     try {
@@ -98,6 +116,11 @@ export async function get<K extends keyof Stores>(key: K): Promise<Stores[K]> {
 }
 
 export async function set<K extends keyof Stores>(key: K, value: Stores[K]) {
+  if (await isRemote()) {
+    const r = await fetch(api(key), { method: 'PUT', body: JSON.stringify(value) });
+    if (!r.ok) throw new Error(`save ${key}: ${r.status}`);
+    return;
+  }
   const d = await open();
   if (!d) return localStorage.setItem('gemtd.' + key, JSON.stringify(value));
   return new Promise<void>((res, rej) => {

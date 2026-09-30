@@ -14,6 +14,7 @@ self.addEventListener('activate', (e) =>
   ),
 );
 self.addEventListener('fetch', (e) => {
+  if (new URL(e.request.url).pathname.includes('/api/')) return; // profiles: never cache
   e.respondWith(
     fetch(e.request)
       .then((res) => {
