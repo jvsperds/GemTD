@@ -1,6 +1,7 @@
 /* global self, caches, fetch */
-// Offline cache for the installed (served) build. The game is one file, so cache-first is enough.
-const CACHE = 'gemtd-v1';
+// Offline cache for the installed (served) build. Network-first so a redeploy shows up on the
+// next load; the cache only answers when offline.
+const CACHE = 'gemtd-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', (e) =>
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))),
@@ -14,14 +15,12 @@ self.addEventListener('activate', (e) =>
 );
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then(
-      (hit) =>
-        hit ||
-        fetch(e.request).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return res;
-        }),
-    ),
+    fetch(e.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(e.request)),
   );
 });
