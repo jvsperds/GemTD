@@ -19,19 +19,20 @@ To install it as an app with offline caching, self-host it (below) and use the b
 
 ## Self-host with Docker
 
-[compose.yaml](compose.yaml) builds the game straight from GitHub (no clone needed) and serves it
-with nginx on port **5180**:
+[compose.yaml](compose.yaml) pulls the prebuilt image from GitHub Container Registry and serves
+it with nginx on port **5180**:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer too: paste
 `compose.yaml` and deploy.
 
-- **Version:** `#main` in the `build:` URL tracks the latest code; rerun the command to update.
-  Pin a release instead with its tag, e.g. `https://github.com/jvsperds/GemTD.git#v0.2.0`.
-- **Local checkout:** set `build: .` to build what's on disk.
+- **Version:** `:latest` tracks `main` (rebuilt on every push); update with
+  `docker compose pull && docker compose up -d`, or Dockge's **Update** button. Pin a release
+  instead with its version, e.g. `ghcr.io/jvsperds/gemtd:0.2.0`.
+- **Local checkout:** replace `image:` with `build: .` to build what's on disk.
 - **Port:** change the left side of `"5180:80"` if 5180 is taken.
 - **Install button:** browsers only offer it over HTTPS, so put it behind a reverse proxy.
 
