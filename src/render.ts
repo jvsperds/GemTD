@@ -893,9 +893,12 @@ export class Renderer {
    * phones render at native resolution; public inputs (clicks, pans) stay in CSS pixels. */
   dpr = 1;
 
+  /** Per-frame shadowBlur is costly on mobile GPUs, so touch devices skip live glows. */
+  glow = matchMedia('(pointer: coarse)').matches ? 0 : 1;
+
   /** Fit the map to the window and recentre. */
   resize() {
-    this.dpr = devicePixelRatio || 1;
+    this.dpr = Math.min(devicePixelRatio || 1, 1.5); // phones report 3: 4x the pixels for little visible gain
     this.canvas.width = Math.round(innerWidth * this.dpr);
     this.canvas.height = Math.round(innerHeight * this.dpr);
     this.setZoom(this.zoom, innerWidth / 2, innerHeight / 2, true);
@@ -1184,7 +1187,7 @@ export class Renderer {
       if (t.cooldown > 0) ctx.globalAlpha = 0.45;
       else {
         ctx.shadowColor = col;
-        ctx.shadowBlur = s * (0.3 + 0.2 * Math.sin(now / 250));
+        ctx.shadowBlur = this.glow * s * (0.3 + 0.2 * Math.sin(now / 250));
       }
       ctx.drawImage(sp, cx - s / 2, cy - s / 2);
       ctx.restore();
@@ -1244,7 +1247,7 @@ export class Renderer {
       ctx.save();
       ctx.strokeStyle = `rgba(255,240,150,${0.55 + 0.35 * Math.sin(now / 200)})`;
       ctx.shadowColor = '#ffe066';
-      ctx.shadowBlur = s / 3;
+      ctx.shadowBlur = (this.glow * s) / 3;
       ctx.lineWidth = 2 * this.dpr;
       for (const p of this.pending) {
         const pc = p % this.maze.w,
@@ -1363,7 +1366,7 @@ export class Renderer {
       ctx.strokeStyle = colour;
       ctx.lineWidth = Math.max(1, width * s);
       ctx.shadowColor = glow;
-      ctx.shadowBlur = glow === 'transparent' ? 0 : s / 2;
+      ctx.shadowBlur = glow === 'transparent' ? 0 : (this.glow * s) / 2;
       ctx.beginPath();
       for (const { from, to } of this.combat.shots) {
         if (shotKind(this.combat, from) !== kind) continue;
@@ -1394,7 +1397,7 @@ export class Renderer {
     ctx.save();
     ctx.strokeStyle = SPELL_COLOR.Howl;
     ctx.shadowColor = '#ff6a3a';
-    ctx.shadowBlur = s / 2;
+    ctx.shadowBlur = (this.glow * s) / 2;
     ctx.lineWidth = Math.max(2, s / 8);
     for (const t of this.combat.towers) {
       if (t.howl.t <= 0) continue;
