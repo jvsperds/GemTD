@@ -686,14 +686,11 @@ export class Combat {
       t.cooldown = Math.max(0, t.cooldown - TICK);
       const spell = this.tfx(t).pedal;
       if (spell) {
-        // Triggered by a ground creep stepping onto the pedal's cell.
+        // Triggered by any creep (walking or flying over) entering the pedal's cell.
         const cr =
           t.cooldown > 0
             ? null
-            : creeps.find(
-                (o) =>
-                  o.alive && !o.def.flying && Math.floor(o.x) === t.c && Math.floor(o.y) === t.r,
-              );
+            : creeps.find((o) => o.alive && Math.floor(o.x) === t.c && Math.floor(o.y) === t.r);
         if (cr) {
           t.cooldown = PEDAL.cooldown;
           this.pedal(t, cr, ...spell);
