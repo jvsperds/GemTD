@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { board, mergeScores, type ScoreRow } from '../src/persist';
+import { board, retain, TOP, type ScoreRow } from '../src/persist';
 import { GEMS_PER_ROUND, score, type LogEntry } from '../src/sim/game';
 import { newGame } from '../src/sim/setup';
 
@@ -71,15 +71,14 @@ test('boards sort and filter; fastest lists only full clears', () => {
   expect(board(rows, 'fastest').map((r) => r.timeSec)).toEqual([800, 900]);
 });
 
-test('import merges without duplicates and rejects junk', () => {
-  const have = [row({ seed: 1, date: 1 })];
-  const merged = mergeScores(have, [
-    row({ seed: 1, date: 1 }),
-    row({ seed: 2, date: 1 }),
-    { x: 1 },
+test('only rows that can reach a top-10 board are kept', () => {
+  const rows = Array.from({ length: 30 }, (_, i) => row({ score: i, wavesCleared: i, date: i }));
+  rows.push(row({ score: -1, wavesCleared: 0, difficulty: 'hard', date: 99 })); // tops the hard board
+  const kept = retain(rows);
+  expect(board(rows, 'score')).toHaveLength(TOP);
+  expect(kept.map((r) => r.score).sort((a, b) => a - b)).toEqual([
+    -1, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
   ]);
-  expect(merged).toHaveLength(2);
-  expect(() => mergeScores(have, { nope: 1 })).toThrow();
 });
 
 test('difficulty scales creep HP and the score bonus; daily seed is stable per day', async () => {

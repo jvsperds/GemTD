@@ -397,7 +397,7 @@ async function recordScore() {
   recorded = true;
   const scores = await db.get('scores');
   scores.push({
-    name: settings.name,
+    name: await db.user(),
     score: score(game),
     wavesCleared: game.wavesCleared,
     hpLeft: Math.max(0, sim.castleHp),
@@ -412,7 +412,7 @@ async function recordScore() {
     skills: game.skills,
     hero: game.hero,
   });
-  await db.set('scores', scores);
+  await db.set('scores', db.retain(scores));
   await db.set('save', null);
   const shells = shellsFor(game.wavesCleared, game.wavesCleared >= sim.lastWave);
   const h = await db.get('hero');

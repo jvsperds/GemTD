@@ -171,6 +171,15 @@ createServer(async (req, res) => {
     return res.writeHead(405).end();
   }
   if (url.pathname === '/api/me') return res.end(user);
+  // Global leaderboard: every profile's scores, each row named by the profile that owns it.
+  // ponytail: reads every profile per request; cache if it gets slow (profiles keep only top rows).
+  if (url.pathname === '/api/scores') {
+    const all = await Promise.all(
+      names().map(async (u) => ((await profile(u)).scores ?? []).map((x) => ({ ...x, name: u }))),
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify(all.flat()));
+  }
   const file = normalize(
     join(ROOT, url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname),
   );
