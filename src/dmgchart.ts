@@ -30,6 +30,11 @@ export function initDmgChart(towers: () => Tower[], canvas: HTMLCanvasElement) {
     panel.hidden = !open;
     $('dmgtab').classList.toggle('on', open);
     if (open) draw();
+    try {
+      localStorage.setItem('gemtd.dmgopen', open ? '1' : '0');
+    } catch {
+      /* per-viewer convenience only */
+    }
   };
   const setPin = (p: boolean) => {
     pinned = p;
@@ -83,6 +88,12 @@ export function initDmgChart(towers: () => Tower[], canvas: HTMLCanvasElement) {
   pin.onclick = () => setPin(!pinned);
   canvas.addEventListener('click', () => !pinned && setOpen(false));
   setPin(pinned);
-  setOpen(pinned);
+  let wasOpen = pinned;
+  try {
+    wasOpen ||= localStorage.getItem('gemtd.dmgopen') === '1';
+  } catch {
+    /* storage blocked */
+  }
+  setOpen(wasOpen);
   setInterval(draw, 500);
 }

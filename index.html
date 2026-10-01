@@ -444,32 +444,66 @@
         gap: 4px;
         align-content: center;
       }
+      /* Tower view: one framed box with a tab strip (Actions | Targeting) and Back on the right. */
+      #panel[data-view='tower'] #actions {
+        padding: 0 5px 5px;
+        border: 1px solid var(--edge);
+        border-radius: 4px;
+        background: #0006;
+        grid-template-rows: auto 1fr;
+        align-self: stretch;
+      }
+      #panel[data-view='tower'] #actions > button {
+        justify-content: center;
+      }
       #tabs {
-        grid-column: 1 / -1;
+        grid-column: 1 / -2;
         display: flex;
-        gap: 4px;
+        border-bottom: 1px solid var(--edge-dim);
       }
-      #tabs button {
+      #actions #tabs button {
         flex: 1;
-        font-size: 11px;
-        padding: 2px;
+        padding: 5px 2px 4px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        background: none;
+        color: var(--muted);
       }
-      #tabs button.on {
-        border-color: #ffd24a;
+      #actions #tabs button.on {
+        border-bottom-color: #ffd24a;
         color: #ffd24a;
+      }
+      #panel[data-view='tower'] #actions > [data-a='deselect'] {
+        grid-row: 1;
+        grid-column: -2 / -1;
+        flex-direction: row;
+        justify-content: center;
+        gap: 3px;
+        margin-top: 3px;
+        padding: 1px 2px;
+      }
+      #panel[data-view='tower'] [data-a='deselect'] i {
+        font-size: 12px;
+      }
+      #panel[data-view='tower'] [data-a='deselect'] kbd {
+        display: none;
       }
       #aim {
         grid-column: 1 / -1;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: 1fr;
+        gap: 3px;
       }
       #aim button {
-        flex: 1 1 45%;
-        font-size: 11px;
-        padding: 3px 4px;
+        min-height: 22px;
+        padding: 2px;
+        font-size: 9px;
+        line-height: 1.1;
+        letter-spacing: 0;
       }
-      #aim button.on {
+      #actions #aim button.on {
         border-color: #ffd24a;
         color: #ffd24a;
       }
@@ -950,6 +984,9 @@
         letter-spacing: 0.5px;
         text-transform: uppercase;
       }
+      button i[data-icon] {
+        display: inline-flex;
+      }
       #dock button i {
         font-style: normal;
         font-size: 17px;
@@ -1247,17 +1284,29 @@
     <canvas id="game"></canvas>
     <header id="hud" class="glass">
       <div id="hudinfo"></div>
-      <button id="menubtn" data-a="menu" title="Menu (B)">☰ Menu <kbd>B</kbd></button>
+      <button id="menubtn" data-a="menu" title="Menu (B)">
+        <i data-icon="menu"></i> Menu <kbd>B</kbd>
+      </button>
     </header>
     <div id="hint"></div>
     <div id="banner" class="glass" hidden></div>
     <nav id="dock" class="glass">
-      <button data-a="guide" title="Maze guide (G)"><i>🗺</i><span>Guide</span></button>
-      <button data-a="path" title="Show path (P)"><i>〰</i><span>Path</span></button>
-      <button data-a="ranges" title="Show ranges (V)"><i>◎</i><span>Ranges</span></button>
-      <button data-a="book" title="Recipe book (H)"><i>📖</i><span>Book</span></button>
-      <button data-a="pause" title="Pause (Space)"><i>⏸</i><span>Pause</span></button>
-      <button data-a="speed" title="Game speed (1-4)"><i>⏩</i><span>×1</span></button>
+      <button data-a="guide" title="Maze guide (G)">
+        <i data-icon="guide"></i><span>Guide</span>
+      </button>
+      <button data-a="path" title="Show path (P)"><i data-icon="path"></i><span>Path</span></button>
+      <button data-a="ranges" title="Show ranges (V)">
+        <i data-icon="ranges"></i><span>Ranges</span>
+      </button>
+      <button data-a="book" title="Recipe book (H)">
+        <i data-icon="book"></i><span>Book</span>
+      </button>
+      <button data-a="pause" title="Pause (Space)">
+        <i data-icon="pause"></i><span>Pause</span>
+      </button>
+      <button data-a="speed" title="Game speed (1-4)">
+        <i data-icon="speed"></i><span>×1</span>
+      </button>
     </nav>
     <div id="panel" class="glass" data-view="hero">
       <div id="status"></div>
@@ -1277,14 +1326,22 @@
           <button class="tower" data-a="tab:aim">Targeting</button>
         </div>
         <div id="aim" class="tower"></div>
-        <button class="tower" data-a="keep"><i>💎</i><span>Keep</span><kbd>K</kbd></button>
-        <button class="tower" data-a="merge2"><i>⬆</i><span>Merge ×2</span><kbd>M</kbd></button>
-        <button class="tower" data-a="merge4"><i>⏫</i><span>Merge ×4</span><kbd>N</kbd></button>
-        <button class="tower" data-a="down"><i>⬇</i><span>Down</span><kbd>D</kbd></button>
-        <button class="builder" data-a="clear"><i>🧹</i><span>Clear</span></button>
-        <button class="builder" data-a="save"><i>💾</i><span>Save</span></button>
+        <button class="tower" data-a="keep">
+          <i data-icon="keep"></i><span>Keep</span><kbd>K</kbd>
+        </button>
+        <button class="tower" data-a="merge2">
+          <i data-icon="merge2"></i><span>Merge ×2</span><kbd>M</kbd>
+        </button>
+        <button class="tower" data-a="merge4">
+          <i data-icon="merge4"></i><span>Merge ×4</span><kbd>N</kbd>
+        </button>
+        <button class="tower" data-a="down">
+          <i data-icon="down"></i><span>Down</span><kbd>D</kbd>
+        </button>
+        <button class="builder" data-a="clear"><i data-icon="clear"></i><span>Clear</span></button>
+        <button class="builder" data-a="save"><i data-icon="save"></i><span>Save</span></button>
         <button class="tower creep" data-a="deselect">
-          <i>✕</i><span>Back</span><kbd>Esc</kbd>
+          <i data-icon="back"></i><span>Back</span><kbd>Esc</kbd>
         </button>
       </div>
     </div>
@@ -1297,7 +1354,7 @@
       <div id="bookbody"></div>
     </aside>
     <pre id="debug" hidden></pre>
-    <button id="dmgtab" class="glass" title="Damage chart">📊</button>
+    <button id="dmgtab" class="glass" title="Damage chart"><i data-icon="chart"></i></button>
     <aside id="dmg" class="glass" hidden>
       <header>
         <button data-kind="magic">Magic</button>

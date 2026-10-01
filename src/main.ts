@@ -5,6 +5,7 @@ import rawBase from '../data/raw/base_towers.json';
 import { PEDAL_TIPS } from './sim/pedals';
 import { skillIcon } from './icons';
 import { BLURB } from './blurbs';
+import { fillIcons, icon } from './hud';
 import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
@@ -141,7 +142,28 @@ const book = initBook({
 });
 let mazeVer = 0; // bumped on every builder edit
 if (!save && !start && !stress) menu.newGame(); // fresh visit: pick a trial first
+fillIcons();
 initDmgChart(() => combat.towers, canvas);
+// Last on/off state of the map toggles, per browser.
+const toggles: Record<string, boolean> = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('gemtd.toggles') ?? '{}');
+  } catch {
+    return {};
+  }
+})();
+const remember = (k: string, v: boolean) => {
+  toggles[k] = v;
+  try {
+    localStorage.setItem('gemtd.toggles', JSON.stringify(toggles));
+  } catch {
+    /* storage blocked: defaults next time */
+  }
+  return v;
+};
+view.showRanges = toggles.ranges ?? view.showRanges;
+view.showPath = toggles.path ?? view.showPath;
+if (toggles.book) book.toggle();
 
 const saveNow = (commands = game.log) =>
   db.set('save', {
@@ -257,8 +279,8 @@ function act(a: string) {
     const all = book.guides();
     return showGuide(all[all.findIndex((g) => g.rows === guide?.rows) + 1] ?? null);
   }
-  if (a === 'ranges') return (view.showRanges = !view.showRanges);
-  if (a === 'book') return book.toggle();
+  if (a === 'ranges') return remember('ranges', (view.showRanges = !view.showRanges));
+  if (a === 'book') return (book.toggle(), remember('book', book.open));
   if (a === 'save') return book.save(mazeRows(maze));
   if (a === 'clear') {
     if (!confirm('Clear every stone?')) return;
@@ -266,7 +288,7 @@ function act(a: string) {
     mazeVer++;
     return view.invalidate();
   }
-  if (a === 'path') return ((view.showPath = !view.showPath), view.invalidate());
+  if (a === 'path') return (remember('path', (view.showPath = !view.showPath)), view.invalidate());
   if (a === 'deselect')
     return ((sel = selCreep = picking = null), (removing = false), (multi = new Set()));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
@@ -785,7 +807,7 @@ function skillButtons(t?: Tower) {
 }
 /** Ability slot button in the main row: icon, caption, hotkey badge, skill level pips. */
 function slot(
-  icon: string,
+  glyph: string,
   caption: string,
   tip: string,
   a: string,
@@ -797,7 +819,9 @@ function slot(
   b.dataset.a = a;
   b.title = tip;
   b.disabled = !!o.off;
-  b.append(el('i', '', icon), el('small', '', caption));
+  const i = el('i');
+  i.innerHTML = icon(glyph) || glyph; // hero skills still use their emoji
+  b.append(i, el('small', '', caption));
   if (key) b.append(el('kbd', '', key));
   if (o.lvl) b.append(el('u', '', '•'.repeat(o.lvl)));
   return b;
@@ -822,14 +846,14 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
   const ids = Object.keys(game.skills).filter((id) => SKILLS[id]);
   const cost = game.levelCost;
   cards.replaceChildren(
-    slot('✨', `Level ${cost ?? '—'}g`, 'Buy the next builder level', 'level', 'L', {
+    slot('level', `Level ${cost ?? '—'}g`, 'Buy the next builder level', 'level', 'L', {
       off: !!replaying || cost === null || game.gold < cost,
     }),
-    slot('⛏', 'Stone', 'Shatter a stone (while placing gems)', 'stone', 'R', {
+    slot('stone', 'Stone', 'Shatter a stone (while placing gems)', 'stone', 'R', {
       off: !!replaying || game.step !== 'place',
       on: removing,
     }),
-    slot('↶', 'Undo', 'Take back the last gem you placed', 'undo', 'U', { off: !canUndo() }),
+    slot('undo', 'Undo', 'Take back the last gem you placed', 'undo', 'U', { off: !canUndo() }),
     ...ids.map((id) => {
       const s = SKILLS[id],
         lvl = game.skills[id];
@@ -1118,6 +1142,9 @@ function updateHud() {
     label('down', `Down ${DOWNGRADE_COST}g`);
     label('speed', `×${settings.speed}`);
     label('pause', speed ? 'Pause' : 'Resume');
+    const pi = buttons.find((b) => b.dataset.a === 'pause')!.querySelector('i')!;
+    if (pi.dataset.icon !== (speed ? 'pause' : 'play'))
+      [pi.dataset.icon, pi.innerHTML] = [speed ? 'pause' : 'play', icon(speed ? 'pause' : 'play')];
     label('guide', guide?.name ?? 'Guide');
     for (const b of buttons)
       b.classList.toggle(

@@ -21,6 +21,13 @@ test('Almond-6 pass: valid maze and all 6 legs pass the middle', () => {
   expect(m.middlePasses(route!)).toBe(6);
 });
 
+test.each(GUIDES)('$name: valid maze', ({ name, rows }) => {
+  const m = build(rows);
+  const route = m.route();
+  expect(route).not.toBeNull();
+  if (name.startsWith('Almond')) expect(m.middlePasses(route!)).toBe(6);
+});
+
 test('empty map: only the two axis legs cross the middle', () => {
   const m = build([]);
   expect(m.middlePasses(m.route()!)).toBe(2);
