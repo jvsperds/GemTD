@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
     <title>GemTD</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
@@ -28,6 +28,9 @@
         color: var(--text);
         font: 14px var(--serif);
         overflow: hidden;
+        /* Pinch/double-tap must never zoom the page (hiding the HUD); the canvas zooms itself.
+           Ancestors' touch-action intersects, so this covers every toolbar and panel. */
+        touch-action: pan-x pan-y;
       }
       #game {
         display: block;

@@ -164,6 +164,8 @@ function run(cmd: Cmd) {
 }
 sfx.setVolume(settings.volume);
 addEventListener('pointerdown', sfx.unlock);
+// iOS Safari ignores user-scalable=no; its pinch arrives as gesture events.
+addEventListener('gesturestart', (e) => e.preventDefault());
 addEventListener('keydown', sfx.unlock);
 
 canvas.addEventListener('click', (e) => {
