@@ -1,7 +1,7 @@
 /* global self, caches, fetch, URL */
 // Offline cache for the installed (served) build. Network-first so a redeploy shows up on the
 // next load; the cache only answers when offline.
-const CACHE = 'gemtd-v2';
+const CACHE = 'gemtd-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', (e) =>
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))),
@@ -18,8 +18,11 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        // Only cache real pages: a 401 "Login required" must never be served back later.
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+        }
         return res;
       })
       .catch(() => caches.match(e.request)),

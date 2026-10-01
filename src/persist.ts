@@ -93,9 +93,22 @@ function isRemote() {
     : Promise.resolve(false));
 }
 
+// Login lapsed (server restart, browser dropped the Basic credentials): a full reload makes the
+// browser ask again. Once per tab session so a refused login shows the error instead of looping.
+function relogin() {
+  try {
+    if (sessionStorage.getItem('gemtd.relogin')) return;
+    sessionStorage.setItem('gemtd.relogin', '1');
+  } catch {
+    return;
+  }
+  location.reload();
+}
+
 export async function get<K extends keyof Stores>(key: K): Promise<Stores[K]> {
   if (await isRemote()) {
     const r = await fetch(api(key));
+    if (r.status === 401) relogin();
     if (!r.ok) throw new Error(`load ${key}: ${r.status}`);
     return (await r.json()) ?? DEFAULTS[key];
   }
@@ -118,6 +131,7 @@ export async function get<K extends keyof Stores>(key: K): Promise<Stores[K]> {
 export async function set<K extends keyof Stores>(key: K, value: Stores[K]) {
   if (await isRemote()) {
     const r = await fetch(api(key), { method: 'PUT', body: JSON.stringify(value) });
+    if (r.status === 401) relogin();
     if (!r.ok) throw new Error(`save ${key}: ${r.status}`);
     return;
   }
