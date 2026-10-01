@@ -1,6 +1,6 @@
 // Pedals (BUILD.md §2.5): 2-gem utility blocks, built with Combine like special towers and
 // upgraded 3× same → Sparkling → 3× → Blingbling. They never attack: combined pedals go into the
-// hand and are laid on open path cells; a ground creep stepping on one sets off its spell, then it
+// hand and are laid on open path cells; any creep walking or flying over one sets off its spell, then it
 // cools down. Values per tier from data/raw/pedals.json.
 // ponytail: cooldown, Ensnare root and Paralysis bounces are guesses until the Lua values are known.
 import type { SpecialDef } from './towers';
