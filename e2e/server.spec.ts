@@ -142,3 +142,47 @@ test('browser: losing the session sends the player back to the login page', asyn
   await page.goto(BASE + 'logout');
   await expect(page.locator('input[name=password]')).toBeVisible();
 });
+
+test('server: self-registration with a name only, capped by GEMTD_MAX_USERS', async () => {
+  const register = (name: string, password: string) =>
+    fetch(BASE + 'register', {
+      method: 'POST',
+      body: new URLSearchParams({ name, password }),
+      redirect: 'manual',
+    });
+  expect((await register('JDS', 'whatever1')).status).toBe(409); // taken, ignoring case
+  expect((await register('new.guy', 'whatever1')).status).toBe(409); // not a safe file name
+  expect((await register('newbie', '123')).status).toBe(400); // password too short
+  const ok = await register('newbie', 'whatever1');
+  expect(ok.status).toBe(303);
+  const cookie = ok.headers.get('set-cookie')!.split(';')[0];
+  expect(await (await fetch(BASE + 'api/me', { headers: { cookie } })).text()).toBe('newbie');
+  expect(await login('newbie', 'nope')).toBe('');
+  await stop();
+  await start(); // registered users survive a restart
+  expect(await login('newbie', 'whatever1')).toBeTruthy();
+  expect((await kv(cookie)).status).toBe(200);
+  expect((await register('late', 'whatever1')).status).toBe(303); // 4 users, under the default 50
+  await stop();
+  server = spawn(process.execPath, ['server.mjs'], {
+    env: {
+      ...process.env,
+      PORT: String(PORT),
+      DATA_DIR: DATA,
+      GEMTD_USERS: USERS,
+      GEMTD_MAX_USERS: '4',
+    },
+    stdio: 'inherit',
+  });
+  await expect
+    .poll(() =>
+      fetch(BASE).then(
+        () => true,
+        () => false,
+      ),
+    )
+    .toBe(true);
+  expect((await register('extra', 'whatever1')).status).toBe(403); // full
+  await stop();
+  await start();
+});

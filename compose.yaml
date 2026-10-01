@@ -4,7 +4,8 @@ services:
     ports:
       - "5180:80"
     environment:
-      GEMTD_USERS: "jasper:change-me,friend:change-me-too" # name:password, comma separated
+      GEMTD_USERS: "jasper:change-me,friend:change-me-too" # preset name:password pairs (optional)
+      GEMTD_MAX_USERS: "50" # players may register on the login page up to this many users; 0 = off
     volumes:
       - ./profiles:/data # one <name>.json per player: shells, scores, saves, settings
     restart: unless-stopped

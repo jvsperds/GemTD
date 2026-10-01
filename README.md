@@ -33,9 +33,14 @@ Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer t
   `docker compose pull && docker compose up -d`, or Dockge's **Update** button. Pin a release
   instead with its version, e.g. `ghcr.io/jvsperds/gemtd:0.2.0`.
 - **Local checkout:** replace `image:` with `build: .` to build what's on disk.
-- **Players:** set `GEMTD_USERS` in `compose.yaml` to `name:password` pairs. Each player logs
-  in on the login page (stays logged in for a year; `/logout` signs out) and gets their own profile — shells, heroes, scores, saved game —
-  stored as `./profiles/<name>.json`. Add a friend by adding a pair and redeploying.
+- **Players:** friends sign themselves up with **Register** on the login page: just a name and a
+  password, no email. `GEMTD_MAX_USERS` in `compose.yaml` caps the total number of users
+  (default 50; `0` turns sign-ups off). You can also preset accounts in `GEMTD_USERS` as
+  `name:password` pairs. Each player logs in on the login page (stays logged in for a year;
+  `/logout` signs out) and gets their own profile — shells, heroes, scores, saved game — stored
+  as `./profiles/<name>.json`. Registered accounts are kept in `./profiles/.users.json`.
+- **No accounts offline:** the standalone `index.html` / local-first build has no logins or
+  sign-ups; they exist only on the self-hosted server.
 - **Port:** change the left side of `"5180:80"` if 5180 is taken.
 - **Install button:** browsers only offer it over HTTPS, so put it behind a reverse proxy.
 
