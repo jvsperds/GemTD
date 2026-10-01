@@ -2,7 +2,16 @@
 // Build phase: place 5 random gems, then finish with Keep / Merge ^ / Merge ^^ (Downgrade and
 // Remove stone are extra actions). Unkept gems become stones and the wave starts.
 // Combine builds a special tower from recipe ingredients anywhere on the board (BUILD.md §2.4).
-import { codeOf, rng, type Combat, type GemDef, type SpecialDef, type Tower } from './towers';
+import {
+  AIM,
+  AIM_ELITE,
+  codeOf,
+  rng,
+  type Combat,
+  type GemDef,
+  type SpecialDef,
+  type Tower,
+} from './towers';
 import { HEROES, type Perk } from './heroes';
 import { ROCK } from './maze';
 import { DURATION, SKILLS, goldOf, withPassives, type Loadout } from './skills';
@@ -36,6 +45,7 @@ export const LEVEL_EVERY_WAVES = 4.5; // never-buying player reaches level 9 at 
 export type Cmd =
   | ['place' | 'keep' | 'merge2' | 'merge4' | 'down' | 'stone', number, number]
   | ['combine', number, number, string]
+  | ['aim', number, number, number] // set a tower's aim mode (AIM index, + AIM_ELITE)
   | ['pedal', number, number] // lay the oldest pedal in hand on a path cell
   // Target cell (the tower for tower skills; ignored by castle skills), then an optional picked cell.
   | ['skill', number, number, string, number?, number?]
@@ -180,17 +190,19 @@ export class Game {
             : op === 'pedal'
               ? this.layPedal(c, r)
               : cmd[0] === 'skill'
-                ? this.cast(name, c, r, cmd[4], cmd[5])
+                ? this.cast(String(name), c, r, cmd[4], cmd[5])
                 : !!t &&
-                  (op === 'keep'
-                    ? this.keep(t)
-                    : op === 'merge2'
-                      ? this.merge(t, 2)
-                      : op === 'merge4'
-                        ? this.merge(t, 4)
-                        : op === 'down'
-                          ? this.downgrade(t)
-                          : this.combine(t, name));
+                  (op === 'aim'
+                    ? this.setAim(t, Number(name))
+                    : op === 'keep'
+                      ? this.keep(t)
+                      : op === 'merge2'
+                        ? this.merge(t, 2)
+                        : op === 'merge4'
+                          ? this.merge(t, 4)
+                          : op === 'down'
+                            ? this.downgrade(t)
+                            : this.combine(t, String(name)));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
@@ -278,6 +290,14 @@ export class Game {
     t.def = def;
     t.target = null;
     return usesRound ? this.finish(t) : true;
+  }
+
+  setAim(t: Tower, mode: number) {
+    if (t.def.pedal || !(mode % AIM_ELITE in AIM) || mode >= 2 * AIM_ELITE || t.mode === mode)
+      return false;
+    t.mode = mode;
+    t.target = null;
+    return true;
   }
 
   /** Lay the oldest pedal in hand on free path ground; creeps trigger it by stepping on it. */

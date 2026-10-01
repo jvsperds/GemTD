@@ -45,6 +45,7 @@ export interface Tower {
   r: number;
   cooldown: number;
   target: Creep | null;
+  mode: number; // aim mode: index into AIM, plus AIM_ELITE for mutated/boss first
   damageDealt: number; // total; physical = damageDealt - magicDealt
   magicDealt: number;
   kills: number;
@@ -64,6 +65,18 @@ export interface Tower {
   copied?: Fx;
   copiedFrom?: GemDef[];
 }
+
+/** Aim modes, chosen per tower. First to exit (spawn order) is the default. */
+export const AIM = [
+  'Closest',
+  'First to exit',
+  'Lowest HP',
+  'Highest HP',
+  'Lowest HP%',
+  'Highest HP%',
+];
+export const AIM_FIRST = 1;
+export const AIM_ELITE = 8; // flag: mutated (giant) and boss creeps first
 
 /** Recipe code of a tower def: `B3` for gems, the name for special towers. */
 export const codeOf = (d: GemDef) => (d.quality ? d.type + d.quality : d.name);
@@ -315,6 +328,7 @@ export class Combat {
       r,
       cooldown: 0,
       target: null,
+      mode: AIM_FIRST,
       damageDealt: 0,
       magicDealt: 0,
       kills: 0,
@@ -616,6 +630,25 @@ export class Combat {
     );
   }
 
+  /** Best creep in range for tower `t`'s aim mode. Spawn order = furthest along the route. */
+  private aim(t: Tower, creeps: Creep[]) {
+    // ponytail: O(towers×creeps) scan; spatial buckets when the stress scene needs it.
+    const m = t.mode % AIM_ELITE,
+      elite = t.mode >= AIM_ELITE;
+    let best: Creep | null = null,
+      bestRank = 0,
+      bestV = Infinity;
+    creeps.forEach((cr, i) => {
+      if (!this.canHit(t, cr)) return;
+      const rank = elite && (cr.def.boss || cr.def.giant) ? 0 : 1;
+      const f = cr.hp / cr.def.hp;
+      const v = [this.dist(t, cr), i, cr.hp, -cr.hp, f, -f][m];
+      if (!best || rank < bestRank || (rank === bestRank && v < bestV))
+        [best, bestRank, bestV] = [cr, rank, v];
+    });
+    return best;
+  }
+
   /** Invisible creeps can only be targeted inside some tower's True Sight (its attack range). */
   private visible(cr: Creep) {
     if (!hasAbility(cr, 'riki_permanent_invisibility')) return true;
@@ -697,15 +730,8 @@ export class Combat {
       }
       if (t.disarmT > 0) continue;
       if (t.target && !this.canHit(t, t.target)) t.target = null;
-      if (!t.target) {
-        // ponytail: O(towers×creeps) scan; spatial buckets when the stress scene needs it.
-        // First creep in spawn order = furthest along the route.
-        for (const cr of creeps)
-          if (this.canHit(t, cr)) {
-            t.target = cr;
-            break;
-          }
-      }
+      // Default aim keeps its target until it can't hit it; other modes re-aim before every shot.
+      if (!t.target || (t.mode !== AIM_FIRST && t.cooldown <= 0)) t.target = this.aim(t, creeps);
       if (!t.target || t.cooldown > 0) continue;
       t.cooldown += 1 / this.attacksPerSec(t);
       this.attack(t, t.target);
