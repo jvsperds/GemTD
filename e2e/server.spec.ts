@@ -76,6 +76,22 @@ test('server: login, public sw.js, per-user kv, no Basic prompt', async () => {
   expect(await (await kv(admin)).json()).toEqual({ name: 'A' });
   expect(await (await kv(jds)).json()).toBeNull(); // profiles are per player
   expect((await fetch(BASE, { headers: { cookie: jds } })).status).toBe(200);
+
+  // Global leaderboard: both players' rows, named by the owning profile (a forged name is ignored).
+  const put = (cookie: string, rows: object[]) =>
+    fetch(BASE + 'api/kv/scores', {
+      method: 'PUT',
+      body: JSON.stringify(rows),
+      headers: { cookie },
+    });
+  await put(jds, [{ name: 'admin', score: 5 }]);
+  await put(admin, [{ name: 'Player', score: 9 }]);
+  const all = await (await fetch(BASE + 'api/scores', { headers: { cookie: jds } })).json();
+  expect(all.map((x: { name: string; score: number }) => `${x.name}:${x.score}`).sort()).toEqual([
+    'admin:9',
+    'jds:5',
+  ]);
+  expect((await fetch(BASE + 'api/scores')).status).toBe(401);
 });
 
 test('server: session survives a restart, dies when passwords change', async () => {
@@ -92,7 +108,7 @@ test('server: session survives a restart, dies when passwords change', async () 
 
 const settingsOnDisk = () => {
   try {
-    return JSON.parse(readFileSync(join(DATA, 'jds.json'), 'utf8')).settings?.name;
+    return JSON.parse(readFileSync(join(DATA, 'jds.json'), 'utf8')).settings?.volume;
   } catch {
     return undefined; // not written yet
   }
@@ -123,11 +139,10 @@ test('browser: log in, play under service worker, saves land with no 401', async
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   if (await page.locator('#newdlg[open]').count()) await page.locator('#cancelnew').click();
-  await page.keyboard.press('b'); // menu → settings → rename saves the profile
+  await page.keyboard.press('b'); // menu → settings → volume change saves the profile
   await page.click('button[data-tab=settings]');
-  await page.fill('#player', 'Jasper');
-  await page.press('#player', 'Tab'); // blur fires change in every browser
-  await expect.poll(settingsOnDisk).toBe('Jasper');
+  await page.locator('#volume').fill('0.2');
+  await expect.poll(settingsOnDisk).toBe(0.2);
   expect(hits).toEqual([]);
   expect(errors).toEqual([]);
 });

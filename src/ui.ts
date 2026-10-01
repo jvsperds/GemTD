@@ -1,4 +1,4 @@
-// Menu overlay: leaderboards (3 boards + difficulty filter), settings, export/import, new game.
+// Menu overlay: leaderboards (3 boards + difficulty filter; global on the server), settings, new game.
 import * as db from './persist';
 import type { Game, LogEntry } from './sim/game';
 import { dailySeed } from './sim/setup';
@@ -48,7 +48,6 @@ export function initMenu(
   const which = $<HTMLSelectElement>('board');
   const diff = $<HTMLSelectElement>('difficulty');
   const rows = $<HTMLTableSectionElement>('rows');
-  const name = $<HTMLInputElement>('player');
   const speed = $<HTMLSelectElement>('speed');
   const volume = $<HTMLInputElement>('volume');
   const cards = [...document.querySelectorAll<HTMLButtonElement>('#diffcards button')];
@@ -56,7 +55,6 @@ export function initMenu(
   const over = $<HTMLElement>('gameover');
   const dlg = $<HTMLDialogElement>('newdlg');
   $('build').textContent = __BUILD__ + (import.meta.env.DEV ? ' (dev)' : '');
-  name.value = settings.name;
   speed.value = String(settings.speed);
   volume.value = String(settings.volume);
   const markDiff = () =>
@@ -71,7 +69,7 @@ export function initMenu(
   $<HTMLOptionElement>('dailyopt').value = 'daily:' + today();
 
   async function draw() {
-    const all = await db.get('scores');
+    const all = await db.allScores();
     const list = db.board(all, which.value as db.Board, diff.value);
     rows.replaceChildren(
       ...list.map((x, i) => {
@@ -209,10 +207,6 @@ export function initMenu(
   const saveSettings = () => db.set('settings', settings);
 
   which.onchange = diff.onchange = draw;
-  name.onchange = () => {
-    settings.name = name.value.trim().slice(0, 24) || 'Player';
-    saveSettings();
-  };
   speed.onchange = () => {
     settings.speed = +speed.value;
     setSpeed(settings.speed);
@@ -244,35 +238,6 @@ export function initMenu(
     confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });
   $('daily').onclick = () =>
     confirmLeave() && startNext({ seed: dailySeed(), difficulty: 'normal', daily: today() });
-  $('export').onclick = async () => {
-    const blob = new Blob([JSON.stringify(await db.get('scores'), null, 1)], {
-      type: 'application/json',
-    });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'gemtd-scores.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-  $('clearScores').onclick = async () => {
-    if (!confirm('Delete all saved scores? Export them first to keep a copy.')) return;
-    await db.set('scores', []);
-    draw();
-  };
-  const file = $<HTMLInputElement>('importfile');
-  $('import').onclick = () => file.click();
-  file.onchange = async () => {
-    const f = file.files?.[0];
-    if (!f) return;
-    try {
-      await db.set('scores', db.mergeScores(await db.get('scores'), JSON.parse(await f.text())));
-      draw();
-    } catch (e) {
-      alert(`Import failed: ${(e as Error).message}`);
-    }
-    file.value = '';
-  };
-
   /** The new-game dialog: difficulty, loadout, then Begin. */
   const newGame = () => {
     if (!confirmLeave()) return;
