@@ -15,9 +15,10 @@ import {
   UNITS_PER_CELL,
   UNTOUCHABLE,
   type Creep,
+  type DebuffStack,
   type WaveSim,
 } from './waves';
-import { PEDAL, pedalOf, SPELL, type Spell } from './pedals';
+import { PEDAL, pedalOf, SPELL, TIERS, type Spell } from './pedals';
 
 export { rng };
 
@@ -449,7 +450,7 @@ export class Combat {
   private deal(t: Tower | null, cr: Creep, dmg: number, magic = false) {
     if (!cr.alive) return;
     if (t) cr.lastHit = t;
-    if (cr.terrorT > 0) dmg *= 1 + cr.terror;
+    dmg *= 1 + cr.terror;
     this.sim.damage(cr, dmg);
     if (t) {
       t.damageDealt += dmg;
@@ -481,15 +482,15 @@ export class Combat {
     const poison = magicImmune(cr) ? 0 : f.poison * this.damageMult(t);
     if (f.armor || f.slow || poison) {
       cr.stacks.set(this.stackKey(t), {
+        ...NO_DEBUFF,
         slow: f.slow,
         armor: f.armor,
         poison,
         t: DEBUFF_TIME,
         by: t,
+        name: t.def.name,
       });
-      cr.slow = sumStacks(cr, 'slow');
-      cr.armorRed = sumStacks(cr, 'armor');
-      cr.poison = sumStacks(cr, 'poison');
+      resum(cr);
     }
     if (f.stun && this.rand() < f.stun) cr.stunT = Math.max(cr.stunT, STUN_TIME);
     if (f.frost)
@@ -534,9 +535,13 @@ export class Combat {
   private pedal(t: Tower, cr: Creep, spell: Spell, k: number) {
     const ok = (o: Creep, pierce = false) => pierce || !magicImmune(o);
     const stun = (o: Creep, s: number) => (o.stunT = Math.max(o.stunT, s));
-    const slow = (o: Creep, pct: number, time: number) => {
-      o.slowPct = Math.max(o.slowPct, pct);
-      o.slowPctT = Math.max(o.slowPctT, time);
+    // Timed debuffs stack per pedal level (Gale 1 + Gale 2), or per pedal on easy; a repeat refreshes.
+    const name = `${TIERS[k]}${spell[0].toUpperCase()}${spell.slice(1)}`;
+    const debuff = (o: Creep, time: number, fx: Partial<DebuffStack>) => {
+      const key = this.stackCopies ? t : `${spell}${k}`;
+      const old = o.stacks.get(key);
+      o.stacks.set(key, { ...NO_DEBUFF, ...fx, t: Math.max(old?.t ?? 0, time), by: t, name });
+      resum(o);
     };
     switch (spell) {
       case 'ensnare':
@@ -544,7 +549,8 @@ export class Combat {
         break;
       case 'gale': {
         const s = SPELL.gale;
-        for (const o of this.near(cr, s.radius)) if (ok(o)) slow(o, s.slowPct[k], s.time[k]);
+        for (const o of this.near(cr, s.radius))
+          if (ok(o)) debuff(o, s.time[k], { pct: s.slowPct[k] });
         break;
       }
       case 'torrent': {
@@ -552,7 +558,7 @@ export class Combat {
         for (const o of this.near(cr, s.radius))
           if (ok(o)) {
             stun(o, s.stun[k]);
-            slow(o, s.slowPct[k], s.stun[k] + s.slowTime[k]);
+            debuff(o, s.stun[k] + s.slowTime[k], { pct: s.slowPct[k] });
           }
         break;
       }
@@ -563,17 +569,7 @@ export class Combat {
         break;
       case 'acid': {
         const s = SPELL.acid;
-        for (const o of this.near(cr, s.radius)) {
-          const old = o.stacks.get('acid');
-          o.stacks.set('acid', {
-            slow: 0,
-            armor: Math.max(old?.armor ?? 0, s.armor[k]),
-            poison: 0,
-            t: Math.max(old?.t ?? 0, s.time[k]),
-            by: t,
-          });
-          o.armorRed = sumStacks(o, 'armor');
-        }
+        for (const o of this.near(cr, s.radius)) debuff(o, s.time[k], { armor: s.armor[k] });
         break;
       }
       case 'paralysis': {
@@ -582,17 +578,14 @@ export class Combat {
         for (const o of hit.slice(0, s.bounces[k])) if (ok(o, k > 0)) stun(o, s.stun);
         break;
       }
-      case 'terrorize':
-        cr.terror = Math.max(cr.terrorT > 0 ? cr.terror : 0, SPELL.terrorize.amp[k]);
-        cr.terrorT = SPELL.terrorize.time[k];
-        slow(cr, SPELL.terrorize.slowPct, SPELL.terrorize.time[k]);
+      case 'terrorize': {
+        const s = SPELL.terrorize;
+        debuff(cr, s.time[k], { terror: s.amp[k], pct: s.slowPct });
         break;
+      }
       case 'decrepify': {
         const s = SPELL.decrepify;
-        if (!ok(cr)) break;
-        slow(cr, s.slowPct[k], s.time[k]);
-        cr.mrRed = Math.max(cr.mrT > 0 ? cr.mrRed : 0, s.mr[k]);
-        cr.mrT = s.time[k];
+        if (ok(cr)) debuff(cr, s.time[k], { pct: s.slowPct[k], mr: s.mr[k] });
         break;
       }
     }
@@ -678,9 +671,7 @@ export class Combat {
         if (d.poison) this.magic(d.by, cr, d.poison * TICK);
         if ((d.t -= TICK) <= 0) cr.stacks.delete(id);
       }
-      cr.slow = sumStacks(cr, 'slow');
-      cr.armorRed = sumStacks(cr, 'armor');
-      cr.poison = sumStacks(cr, 'poison');
+      resum(cr);
     }
     for (const t of this.towers) {
       t.cooldown = Math.max(0, t.cooldown - TICK);
@@ -729,8 +720,19 @@ export class Combat {
   }
 }
 
-function sumStacks(cr: Creep, k: 'slow' | 'armor' | 'poison') {
-  let v = 0;
-  for (const d of cr.stacks.values()) v += d[k];
-  return v;
+const NO_DEBUFF = { slow: 0, armor: 0, poison: 0, pct: 0, terror: 0, mr: 0 };
+
+/** Recompute a creep's debuff totals from its stacks; % slows combine multiplicatively. */
+function resum(cr: Creep) {
+  let keep = 1;
+  cr.slow = cr.armorRed = cr.poison = cr.terror = cr.mrRed = 0;
+  for (const d of cr.stacks.values()) {
+    cr.slow += d.slow;
+    cr.armorRed += d.armor;
+    cr.poison += d.poison;
+    cr.terror += d.terror;
+    cr.mrRed += d.mr;
+    keep *= 1 - d.pct;
+  }
+  cr.stackPct = 1 - keep;
 }

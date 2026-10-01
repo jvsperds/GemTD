@@ -83,10 +83,9 @@ export interface Creep {
   stunT: number;
   noHealT: number;
   ampT: number; // takes +100% physical damage (Gaze)
+  stackPct: number; // combined % slow from stacks (pedals)
   terror: number; // Terrorize pedal: +fraction damage taken
-  terrorT: number;
   mrRed: number; // Decrepify pedal: magic resist reduction
-  mrT: number;
   // Recomputed every tick from tower auras.
   auraArmor: number;
   auraSlowPct: number;
@@ -107,8 +106,12 @@ export interface DebuffStack {
   slow: number;
   armor: number;
   poison: number;
+  pct: number; // % slow
+  terror: number;
+  mr: number;
   t: number;
   by: Tower;
+  name: string; // for the creep's debuff cards
 }
 
 export function newCreep(def: WaveEntry, x: number, y: number): Creep {
@@ -132,10 +135,9 @@ export function newCreep(def: WaveEntry, x: number, y: number): Creep {
     stunT: 0,
     noHealT: 0,
     ampT: 0,
+    stackPct: 0,
     terror: 0,
-    terrorT: 0,
     mrRed: 0,
-    mrT: 0,
     auraArmor: 0,
     auraSlowPct: 0,
     auraSlow: 0,
@@ -266,7 +268,7 @@ export class WaveSim {
       creep.kraken = 0;
       creep.stacks.clear();
       creep.slow = creep.slowPct = creep.armorRed = creep.poison = creep.stunT = creep.ampT = 0;
-      creep.terror = creep.mrRed = 0;
+      creep.terror = creep.mrRed = creep.stackPct = 0;
     }
     if (creep.hp <= 0 && creep.alive) {
       creep.alive = false;
@@ -322,24 +324,15 @@ export class WaveSim {
     }
   }
 
-  /** Move speed after rush, % slows (strongest) and flat slows, floored at MIN_SPEED. */
+  /** Move speed after rush, % slows (multiplicative) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
-    const pct = Math.max(cr.slowPct, cr.auraSlowPct);
+    const pct = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct) * (1 - cr.stackPct);
     const v = cr.def.speed * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) - cr.slow - cr.auraSlow;
     return Math.max(v, MIN_SPEED);
   }
 
   private timers(cr: Creep) {
-    for (const k of [
-      'slowPctT',
-      'stunT',
-      'noHealT',
-      'ampT',
-      'rushT',
-      'reactiveT',
-      'terrorT',
-      'mrT',
-    ] as const)
+    for (const k of ['slowPctT', 'stunT', 'noHealT', 'ampT', 'rushT', 'reactiveT'] as const)
       if (cr[k] > 0) cr[k] -= TICK;
     if (cr.slowPctT <= 0) cr.slowPct = 0;
     if (cr.reactiveT <= 0) cr.reactive = 0;

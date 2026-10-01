@@ -600,8 +600,27 @@ const CREEP_ABILITY: Record<string, [string, string]> = {
 /** Debuffs and buffs currently on a creep, in the same shape as tower statuses. */
 function creepStatuses(cr: Creep): [string, string, string, boolean][] {
   const out: [string, string, string, boolean][] = [];
-  const slow = Math.max(cr.slowPct, cr.auraSlowPct);
-  const flat = cr.slow + cr.auraSlow;
+  // One card per debuff stack (gem type, pedal level, or tower on easy), like tower buff cards.
+  for (const d of cr.stacks.values()) {
+    const fx = [
+      d.pct && `-${pct(d.pct)} move speed`,
+      d.slow && `-${d.slow} move speed`,
+      d.armor && `-${d.armor} armor`,
+      d.poison && `${+d.poison.toFixed(1)} magic damage per second`,
+      d.terror && `+${pct(d.terror)} damage taken`,
+      d.mr && `-${d.mr}% magic resist`,
+    ].filter(Boolean);
+    const icon = d.by.def.pedal
+      ? d.by.def.abilities[0]
+      : d.poison
+        ? 'status_poison'
+        : d.armor
+          ? 'status_armor'
+          : 'status_slow';
+    out.push([icon, '', `${d.name}\n${fx.join('\n')}\n${Math.ceil(d.t)}s left`, true]);
+  }
+  const slow = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct);
+  const flat = cr.auraSlow;
   if (slow || flat)
     out.push([
       'status_slow',
@@ -609,10 +628,7 @@ function creepStatuses(cr: Creep): [string, string, string, boolean][] {
       `Slowed\n${[slow && `-${pct(slow)}`, flat && `-${flat}`].filter(Boolean).join(' ')} move speed`,
       true,
     ]);
-  if (cr.poison)
-    out.push(['status_poison', '', `Poisoned\n${cr.poison} magic damage per second`, true]);
-  if (cr.armorRed || cr.auraArmor)
-    out.push(['status_armor', '', `Armor reduced\n-${cr.armorRed + cr.auraArmor} armor`, true]);
+  if (cr.auraArmor) out.push(['status_armor', '', `Armor aura\n-${cr.auraArmor} armor`, true]);
   if (cr.stunT > 0) out.push(['status_stun', '', `Stunned\n${cr.stunT.toFixed(1)}s`, true]);
   if (cr.ampT > 0) out.push(['status_amp', '', 'Gazed\nTakes +100% physical damage', true]);
   if (cr.noHealT > 0) out.push(['status_poison', '', 'Wounded\nCannot regenerate', true]);

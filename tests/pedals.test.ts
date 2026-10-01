@@ -95,3 +95,24 @@ test("Chain Frost: a pedal trigger next to Northern Saber's Eye bounces a frost 
     expect(cr.slowPct).toBeGreaterThan(0);
   }
 });
+
+test('distinct pedal levels stack (copies too on easy)', () => {
+  const slowAfter = (easy: boolean, pedals: string[]) => {
+    const { combat } = newGame(1, easy ? 'easy' : 'normal');
+    const cr = newCreep(base, 10.5, 10.5);
+    combat.sim.creeps.push(cr);
+    pedals.forEach((p, i) => combat.placePedal(p, 10, 10 + i));
+    for (let i = 0; i < pedals.length; i++) {
+      [cr.x, cr.y] = [10.5, 10.5 + i];
+      combat.tick();
+    }
+    return cr.stackPct;
+  };
+  const [g1, g2] = SPELL.gale.slowPct;
+  expect(slowAfter(false, ['Gale Pedal'])).toBeCloseTo(g1);
+  expect(slowAfter(false, ['Gale Pedal', 'Sparkling Gale Pedal'])).toBeCloseTo(
+    1 - (1 - g1) * (1 - g2),
+  );
+  expect(slowAfter(false, ['Gale Pedal', 'Gale Pedal'])).toBeCloseTo(g1);
+  expect(slowAfter(true, ['Gale Pedal', 'Gale Pedal'])).toBeCloseTo(1 - (1 - g1) ** 2);
+});
