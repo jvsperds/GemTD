@@ -93,16 +93,10 @@ function isRemote() {
     : Promise.resolve(false));
 }
 
-// Login lapsed (server restart, browser dropped the Basic credentials): a full reload makes the
-// browser ask again. Once per tab session so a refused login shows the error instead of looping.
-function relogin() {
-  try {
-    if (sessionStorage.getItem('gemtd.relogin')) return;
-    sessionStorage.setItem('gemtd.relogin', '1');
-  } catch {
-    return;
-  }
+// Logged out (cookie gone or passwords changed): reload, and the server answers with its login page.
+function relogin(): never {
   location.reload();
+  throw new Error('logged out');
 }
 
 export async function get<K extends keyof Stores>(key: K): Promise<Stores[K]> {

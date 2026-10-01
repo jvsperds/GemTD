@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-const smoke = /offline|loop|scores/;
+const smoke = /offline|loop|scores|server/;
 // Smoke across Chromium / Firefox / Edge; perf budgets run last, alone, so nothing competes for CPU.
 export default defineConfig({
   testDir: 'e2e',

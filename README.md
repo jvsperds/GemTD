@@ -34,7 +34,7 @@ Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer t
   instead with its version, e.g. `ghcr.io/jvsperds/gemtd:0.2.0`.
 - **Local checkout:** replace `image:` with `build: .` to build what's on disk.
 - **Players:** set `GEMTD_USERS` in `compose.yaml` to `name:password` pairs. Each player logs
-  in (browser login prompt) and gets their own profile — shells, heroes, scores, saved game —
+  in on the login page (stays logged in for a year; `/logout` signs out) and gets their own profile — shells, heroes, scores, saved game —
   stored as `./profiles/<name>.json`. Add a friend by adding a pair and redeploying.
 - **Port:** change the left side of `"5180:80"` if 5180 is taken.
 - **Install button:** browsers only offer it over HTTPS, so put it behind a reverse proxy.
