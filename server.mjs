@@ -55,7 +55,9 @@ const locks = new Map(); // per-user write chain so concurrent sets don't clobbe
 
 createServer(async (req, res) => {
   const user = who(req.headers.authorization);
-  if (!user) {
+  // sw.js is public: the browser's background update check sends no credentials, and a 401 there
+  // pins an outdated service worker forever.
+  if (!user && req.url !== '/sw.js') {
     res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="GemTD"' });
     return res.end('Login required');
   }
