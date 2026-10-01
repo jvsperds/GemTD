@@ -1329,13 +1329,13 @@ export class Renderer {
       const debuff =
         cr.stunT > 0
           ? 'ensnare'
-          : cr.terrorT > 0
+          : cr.terror > 0
             ? 'terrorize'
-            : cr.mrT > 0
+            : cr.mrRed > 0
               ? 'decrepify'
               : cr.armorRed > 0
                 ? 'acid'
-                : cr.slowPctT > 0
+                : cr.slowPctT > 0 || cr.stackPct > 0
                   ? 'gale'
                   : '';
       if (debuff) {
