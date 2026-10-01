@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-10-01
+
+- **Self-hosting:** login page with signed cookie replaces Basic auth; self-registration capped by
+  `GEMTD_MAX_USERS` (default 50, `0` disables); per-player profiles (shells, heroes, scores, save).
+  Prebuilt image published to GHCR; `compose.yaml` pulls it.
+- **Leaderboards:** global top 10 named by user id. Score export/import/clear and the name field
+  are gone.
+- **Towers:** per-tower aim modes with boss-first override and Ctrl multi-select; combine while a
+  wave runs; Actions/Targeting panel tabs, recipe portrait cards, SVG HUD icons, remembered toggles.
+- **Pedals:** trigger on flying creeps; debuffs stack per level (per pedal on easy), one card per
+  creep debuff.
+- **Controls:** double-click places gems (swaps stones), left-drag pans; mobile pinch/double-tap
+  no longer zooms the page. Imported maze guides.
+- **Performance:** phones cap DPR at 1.5 and skip live glows; touch pan no longer rebuilds the map.
+- Menu shows version and commit. Service worker is network-first and served without login, so
+  redeploys reach browsers; a lapsed login recovers instead of crashing.
+
 ## 0.2.0 — 2026-09-29
 
 - **Endless:** waves run back to back with a wave banner; shells uncapped; new-game dialog.
