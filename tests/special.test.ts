@@ -6,7 +6,14 @@ import towerData from '../data/towers.json';
 import waves from '../data/waves.json';
 import { Game, type LevelDef } from '../src/sim/game';
 import { Maze, type MapData } from '../src/sim/maze';
-import { allDefs, Combat, parseFx, type GemDef, type SpecialDef } from '../src/sim/towers';
+import {
+  AIM_ELITE,
+  allDefs,
+  Combat,
+  parseFx,
+  type GemDef,
+  type SpecialDef,
+} from '../src/sim/towers';
 import {
   armorOf,
   EVASION,
@@ -237,4 +244,27 @@ test('Natural Zumurud copies skills of the two strongest towers in its 3x3', () 
   expect(f.targets).toBe(9);
   expect(f.cleave).not.toBeNull();
   expect(f.slow).toBe(120); // diamond's slow3, not B1's (weaker tower dropped)
+});
+
+test('aim modes pick the matching creep; boss-first overrides; aim is a logged command', () => {
+  const { sim, combat, game } = setup();
+  const t = combat.place('B1', 10, 10)!;
+  sim.phase = 'wave';
+  const first = creep(sim, 11.9, 10.5, { hp: 100 });
+  const near = creep(sim, 10.5, 11.5, { hp: 1000 });
+  const boss = creep(sim, 12.5, 10.5, { hp: 50, boss: true });
+  const target = (mode: number) => {
+    expect(game.run(['aim', 10, 10, mode])).toBe(true);
+    [t.cooldown, first.hp, near.hp, boss.hp] = [0, 90, 900, 50]; // fixed HP (undoes earlier shots)
+    combat.tick();
+    return t.target;
+  };
+  expect(target(0)).toBe(near); // closest
+  expect(target(1)).toBe(first); // first to exit (spawn order)
+  expect(target(2)).toBe(boss); // lowest HP
+  expect(target(3)).toBe(near); // highest HP (900)
+  expect(target(5)).toBe(boss); // highest HP% (boss untouched, 100%)
+  expect(target(3 + AIM_ELITE)).toBe(boss); // boss first beats highest HP
+  expect(game.run(['aim', 10, 10, 3 + AIM_ELITE])).toBe(false); // unchanged mode is not logged
+  expect(game.log.at(-1)![1]).toEqual(['aim', 10, 10, 3 + AIM_ELITE]);
 });

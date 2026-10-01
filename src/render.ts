@@ -825,6 +825,7 @@ export class Renderer {
   flash = -1; // refused cell index
   flashUntil = 0;
   selected = -1; // selected cell index
+  multi: number[] = []; // cells of extra Ctrl-selected towers
   creep: Creep | null = null; // selected creep
   hints: number[] = []; // cells of towers that can combine now
   pending: number[] = []; // this round's gems, one of which must be picked to finish it
@@ -1275,11 +1276,11 @@ export class Renderer {
       ctx.stroke();
     }
 
-    if (this.selected >= 0) {
-      ctx.strokeStyle = '#ffd24a';
-      ctx.lineWidth = 2 * this.dpr;
-      const sc = this.selected % this.maze.w,
-        sr = (this.selected / this.maze.w) | 0;
+    ctx.lineWidth = 2 * this.dpr;
+    for (const cell of this.selected >= 0 ? [this.selected, ...this.multi] : []) {
+      ctx.strokeStyle = cell === this.selected ? '#ffd24a' : '#ffd24a88';
+      const sc = cell % this.maze.w,
+        sr = (cell / this.maze.w) | 0;
       ctx.strokeRect(X(sc), Y(sr - BLOCK_H), s, s * (1 + BLOCK_H));
     }
 

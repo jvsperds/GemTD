@@ -10,7 +10,7 @@ import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { newGame, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
-import { AURA, type Tower } from './sim/towers';
+import { AIM, AIM_ELITE, AURA, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
   BLINK_CHANCE,
@@ -169,8 +169,37 @@ addEventListener('gesturestart', (e) => e.preventDefault());
 addEventListener('keydown', sfx.unlock);
 
 let lastClick = [-1, -1, 0]; // cell and time of the last board click
+// Extra towers selected with Ctrl+click or Ctrl+drag, so one aim mode can be set on all of them.
+let multi = new Set<Tower>();
+let boxFrom: [number, number] | null = null; // Ctrl+drag start cell
+canvas.addEventListener('pointerdown', (e) => {
+  boxFrom =
+    (e.ctrlKey || e.metaKey) && e.button === 0 ? view.screenToCell(e.clientX, e.clientY) : null;
+});
+canvas.addEventListener('pointerup', (e) => {
+  if (!boxFrom) return;
+  const [c, r] = view.screenToCell(e.clientX, e.clientY);
+  const [c0, r0] = boxFrom;
+  if (c === c0 && r === r0) return; // a plain Ctrl+click: the click handler toggles one tower
+  for (const t of combat.towers)
+    if (!t.def.pedal && (t.c - c) * (t.c - c0) <= 0 && (t.r - r) * (t.r - r0) <= 0) multi.add(t);
+  if (!sel) sel = [...multi][0] ?? null;
+  multi.delete(sel!);
+  view.invalidate();
+});
 canvas.addEventListener('click', (e) => {
   if (replaying) return;
+  if (boxFrom) {
+    const [c, r] = view.screenToCell(e.clientX, e.clientY);
+    const dragged = c !== boxFrom[0] || r !== boxFrom[1];
+    boxFrom = null;
+    const t = combat.towerAt(c, r);
+    if (dragged || !t || t.def.pedal) return;
+    if (!sel) sel = t;
+    else if (t !== sel && !multi.delete(t)) multi.add(t);
+    return view.invalidate();
+  }
+  multi = new Set();
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
   if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
   if (builder) {
@@ -237,7 +266,8 @@ function act(a: string) {
     return view.invalidate();
   }
   if (a === 'path') return ((view.showPath = !view.showPath), view.invalidate());
-  if (a === 'deselect') return ((sel = selCreep = picking = null), (removing = false));
+  if (a === 'deselect')
+    return ((sel = selCreep = picking = null), (removing = false), (multi = new Set()));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
   if (a === 'speed') {
     speed = settings.speed = { 1: 2, 2: 4, 4: 10, 10: 20 }[settings.speed] ?? 1;
@@ -255,7 +285,11 @@ function act(a: string) {
   else if (a === 'undo' && canUndo())
     void saveNow(game.log.slice(0, -1)).then(() => location.reload());
   else if (a === 'level') run(['level']);
-  else if (sel) {
+  else if (sel && a.startsWith('aim:')) {
+    // Set the aim on the selected tower and every Ctrl-selected one.
+    const mode = a === 'aim:elite' ? sel.mode ^ AIM_ELITE : +a.slice(4) + (sel.mode & AIM_ELITE);
+    for (const t of [sel, ...multi]) if (combat.towers.includes(t)) run(['aim', t.c, t.r, mode]);
+  } else if (sel) {
     const { c, r } = sel;
     const ok = a.startsWith('combine:')
       ? run(['combine', c, r, a.slice(8)])
@@ -311,7 +345,7 @@ const spread = () => {
   return Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
 };
 canvas.addEventListener('pointerdown', (e) => {
-  if (e.pointerType !== 'touch' && e.button !== 0) return;
+  if (e.pointerType !== 'touch' && (e.button !== 0 || e.ctrlKey || e.metaKey)) return; // Ctrl+drag box-selects
   canvas.setPointerCapture(e.pointerId);
   touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 1) dragged = false;
@@ -894,6 +928,28 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
     }),
     ...skillButtons(t),
   );
+  if (t.def.pedal) return;
+  const aim = (a: string, label: string, on: boolean, tip: string) => {
+    const b = el('button', on ? 'on' : '', label);
+    [b.dataset.a, b.title] = [a, tip];
+    return b;
+  };
+  combos.append(
+    ...AIM.map((name, i) =>
+      aim(
+        `aim:${i}`,
+        name,
+        t.mode % AIM_ELITE === i,
+        `Aim: ${name}${multi.size ? ` (${multi.size + 1} towers)` : ''}`,
+      ),
+    ),
+    aim(
+      'aim:elite',
+      'Boss first',
+      t.mode >= AIM_ELITE,
+      'Mutated (giant) and boss creeps are targeted first',
+    ),
+  );
 }
 
 let lastHud = '',
@@ -981,6 +1037,8 @@ function updateHud() {
     game.pedals.length +
     sim.phase +
     live?.def.name +
+    live?.mode +
+    multi.size +
     (live ? maze.idx(live.c, live.r) : '') + // same-type towers differ only by cell
     live?.kills +
     share +
@@ -1021,6 +1079,7 @@ function updateHud() {
         ? combat.towers.filter((t) => game.recipesFor(t).length).map((t) => maze.idx(t.c, t.r))
         : [];
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
+    view.multi = [...multi].filter((t) => combat.towers.includes(t)).map((t) => maze.idx(t.c, t.r));
     // Glow the round's gems until one is kept, merged or combined.
     view.pending = step === 'choose' ? game.placed.map((t) => maze.idx(t.c, t.r)) : [];
     const en: Record<string, boolean> = {
