@@ -114,6 +114,14 @@ const showGuide = (g: Guide | null) => {
   view.guide = g?.rows ?? null;
   view.invalidate();
 };
+// Ability names/tooltips from the wiki extract, keyed by ability id.
+const ABILITY = new Map(
+  [...rawBase, ...rawAdvanced].flatMap((t) =>
+    // eNNNN entries are cosmetic effects with no name or tooltip.
+    t.abilities.filter((a) => a.Name).map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
+  ),
+);
+for (const [id, a] of PEDAL_TIPS) ABILITY.set(id, a);
 const book = initBook({
   towers: () => combat.towers,
   selected: () => sel,
@@ -527,14 +535,6 @@ function flashEl(id: string, cls: string) {
 }
 const label = (a: string, t: string) =>
   (buttons.find((b) => b.dataset.a === a)!.querySelector('span')!.textContent = t);
-// Ability names/tooltips from the wiki extract, keyed by ability id.
-const ABILITY = new Map(
-  [...rawBase, ...rawAdvanced].flatMap((t) =>
-    // eNNNN entries are cosmetic effects with no name or tooltip.
-    t.abilities.filter((a) => a.Name).map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
-  ),
-);
-for (const [id, a] of PEDAL_TIPS) ABILITY.set(id, a);
 const panel = document.querySelector<HTMLElement>('#panel')!;
 const portraitEl = document.querySelector<HTMLElement>('#portrait')!;
 const nameEl = document.querySelector<HTMLElement>('#name')!;
