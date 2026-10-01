@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no"
+    />
     <title>GemTD</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
@@ -441,7 +444,56 @@
         gap: 4px;
         align-content: center;
       }
-      #actions button {
+      #tabs {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 4px;
+      }
+      #tabs button {
+        flex: 1;
+        font-size: 11px;
+        padding: 2px;
+      }
+      #tabs button.on {
+        border-color: #ffd24a;
+        color: #ffd24a;
+      }
+      #aim {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      #aim button {
+        flex: 1 1 45%;
+        font-size: 11px;
+        padding: 3px 4px;
+      }
+      #aim button.on {
+        border-color: #ffd24a;
+        color: #ffd24a;
+      }
+      #panel:not([data-view='tower'][data-tab='aim']) #aim,
+      #panel[data-view='tower'][data-tab='aim'] #actions > button:not([data-a='deselect']) {
+        display: none;
+      }
+      #combos button.recipe {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 64px;
+        padding: 3px;
+      }
+      #combos button.recipe img {
+        width: 40px;
+        height: 40px;
+      }
+      #combos button.recipe small {
+        font-size: 10px;
+        line-height: 1.1;
+        text-align: center;
+      }
+      #actions > button {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1220,6 +1272,11 @@
         <div id="combos"></div>
       </div>
       <div id="actions">
+        <div id="tabs" class="tower">
+          <button class="tower on" data-a="tab:actions">Actions</button>
+          <button class="tower" data-a="tab:aim">Targeting</button>
+        </div>
+        <div id="aim" class="tower"></div>
         <button class="tower" data-a="keep"><i>💎</i><span>Keep</span><kbd>K</kbd></button>
         <button class="tower" data-a="merge2"><i>⬆</i><span>Merge ×2</span><kbd>M</kbd></button>
         <button class="tower" data-a="merge4"><i>⏫</i><span>Merge ×4</span><kbd>N</kbd></button>

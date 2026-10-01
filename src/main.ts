@@ -4,6 +4,7 @@ import rawAdvanced from '../data/raw/advanced_towers.json';
 import rawBase from '../data/raw/base_towers.json';
 import { PEDAL_TIPS } from './sim/pedals';
 import { skillIcon } from './icons';
+import { BLURB } from './blurbs';
 import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
@@ -285,7 +286,10 @@ function act(a: string) {
   else if (a === 'undo' && canUndo())
     void saveNow(game.log.slice(0, -1)).then(() => location.reload());
   else if (a === 'level') run(['level']);
-  else if (sel && a.startsWith('aim:')) {
+  else if (a.startsWith('tab:')) {
+    panel.dataset.tab = a.slice(4);
+    for (const b of tabBtns) b.classList.toggle('on', b.dataset.a === a);
+  } else if (sel && a.startsWith('aim:')) {
     // Set the aim on the selected tower and every Ctrl-selected one.
     const mode = a === 'aim:elite' ? sel.mode ^ AIM_ELITE : +a.slice(4) + (sel.mode & AIM_ELITE);
     for (const t of [sel, ...multi]) if (combat.towers.includes(t)) run(['aim', t.c, t.r, mode]);
@@ -316,9 +320,11 @@ const buttons = [
 ];
 for (const b of buttons) b.addEventListener('click', () => act(b.dataset.a!));
 const combos = document.querySelector<HTMLElement>('#combos')!;
+const aimEl = document.querySelector<HTMLElement>('#aim')!;
+const tabBtns = buttons.filter((b) => b.dataset.a?.startsWith('tab:'));
 // The HUD rebuilds these buttons every tick during a wave, so a mouse click (down and up on the
 // same element) rarely lands: act on pointerdown, and on click only for keyboard activation.
-for (const box of [combos, document.querySelector<HTMLElement>('#cards')!]) {
+for (const box of [combos, aimEl, document.querySelector<HTMLElement>('#cards')!]) {
   const fire = (e: Event) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-a]');
     if (b && !b.disabled) act(b.dataset.a!);
@@ -919,20 +925,31 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
   combos.className = '';
   combos.replaceChildren(
     ...recipes.map((x) => {
-      const b = el('button', '', `✦ ${x.name}`);
+      // Card with the result's portrait so players learn towers by sight, not just by name.
+      const r = game.combat.gems[x.name];
+      const b = el('button', 'recipe');
+      const im = document.createElement('img');
+      im.src = towerIcon(r);
+      im.alt = '';
+      b.append(im, el('small', '', x.name));
       b.dataset.a = 'combine:' + x.name;
-      b.title = x.parts.map((p) => p.def.name).join(' + ');
+      const blurb = BLURB[x.name] ?? ABILITY.get(r.abilities[0])?.tip ?? '';
+      b.title = `${x.name}
+${blurb}
+
+Combine: ${x.parts.map((p) => p.def.name).join(' + ')}`;
       return b;
     }),
     ...skillButtons(t),
   );
+  aimEl.replaceChildren();
   if (t.def.pedal) return;
   const aim = (a: string, label: string, on: boolean, tip: string) => {
     const b = el('button', on ? 'on' : '', label);
     [b.dataset.a, b.title] = [a, tip];
     return b;
   };
-  combos.append(
+  aimEl.append(
     ...AIM.map((name, i) =>
       aim(
         `aim:${i}`,
@@ -1097,7 +1114,7 @@ function updateHud() {
       speed: true,
       menu: true,
     };
-    for (const b of buttons) b.disabled = !en[b.dataset.a!];
+    for (const b of buttons) b.disabled = !en[b.dataset.a!] && !tabBtns.includes(b);
     label('down', `Down ${DOWNGRADE_COST}g`);
     label('speed', `×${settings.speed}`);
     label('pause', speed ? 'Pause' : 'Resume');
