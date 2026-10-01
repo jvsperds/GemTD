@@ -91,6 +91,16 @@ test('upgrade chain and the 5-gem alternative recipe; old towers combine without
   expect(game.recipesFor(p[2]).map((r) => r.name)).toContain('Wings Stone');
 });
 
+test('towers can be combined while a wave is running', () => {
+  const { combat, game, sim } = setup();
+  const s = combat.place('B1', 10, 10)!;
+  s.def = DEFS.Silver;
+  combat.place('Q2', 12, 10);
+  combat.place('R3', 14, 10);
+  sim.phase = 'wave';
+  expect(game.combine(s, 'Silver Knight')).toBe(true);
+});
+
 test('invisible creeps need a True Sight tower in range', () => {
   const { sim, combat } = setup();
   combat.place('D1', 10, 10);

@@ -233,7 +233,7 @@ export class Game {
   /** Special towers whose recipe includes `t` and whose other ingredients are on the board. */
   recipesFor(t: Tower) {
     const out: { name: string; parts: Tower[] }[] = [];
-    if (this.sim.phase !== 'build') return out;
+    if (this.over) return out; // towers can be combined mid-wave too
     for (const def of Object.values(this.combat.gems)) {
       const recipes = (def as GemDef & Partial<SpecialDef>).recipes ?? [];
       for (const rec of recipes) {

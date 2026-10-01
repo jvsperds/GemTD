@@ -257,10 +257,8 @@ function act(a: string) {
   else if (a === 'level') run(['level']);
   else if (sel) {
     const { c, r } = sel;
-    const ok = a.startsWith('combine:')
-      ? run(['combine', c, r, a.slice(8)])
-      : run([a as 'keep' | 'merge2' | 'merge4' | 'down', c, r]);
-    if (ok && sim.phase === 'wave') sel = null;
+    if (a.startsWith('combine:')) run(['combine', c, r, a.slice(8)]);
+    else run([a as 'keep' | 'merge2' | 'merge4' | 'down', c, r]);
   }
 }
 const keys: Record<string, string> = {
@@ -1016,10 +1014,9 @@ function updateHud() {
     );
     book.draw();
     // Highlight every tower that can combine into something right now.
-    view.hints =
-      sim.phase === 'build'
-        ? combat.towers.filter((t) => game.recipesFor(t).length).map((t) => maze.idx(t.c, t.r))
-        : [];
+    view.hints = combat.towers
+      .filter((t) => game.recipesFor(t).length)
+      .map((t) => maze.idx(t.c, t.r));
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
     // Glow the round's gems until one is kept, merged or combined.
     view.pending = step === 'choose' ? game.placed.map((t) => maze.idx(t.c, t.r)) : [];
