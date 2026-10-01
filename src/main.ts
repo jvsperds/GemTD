@@ -166,6 +166,7 @@ sfx.setVolume(settings.volume);
 addEventListener('pointerdown', sfx.unlock);
 addEventListener('keydown', sfx.unlock);
 
+let lastClick = [-1, -1, 0]; // cell and time of the last board click
 canvas.addEventListener('click', (e) => {
   if (replaying) return;
   const [c, r] = view.screenToCell(e.clientX, e.clientY);
@@ -193,6 +194,10 @@ canvas.addEventListener('click', (e) => {
     }
     return view.invalidate();
   }
+  // Gems need a double click (or double tap) on the same cell, so a stray click can't misplace one.
+  const now = performance.now(),
+    dbl = lastClick[0] === c && lastClick[1] === r && now - lastClick[2] < 400;
+  lastClick = dbl ? [-1, -1, 0] : [c, r, now];
   const cr = removing ? null : view.creepAt(e.clientX, e.clientY);
   selCreep = cr;
   if (cr) return void (sel = null);
@@ -203,8 +208,8 @@ canvas.addEventListener('click', (e) => {
       ? (sel = hit)
       : game.pedals.length
         ? run(['pedal', c, r])
-        : game.step === 'place'
-          ? run(['place', c, r])
+        : game.step === 'place' && dbl
+          ? run(['place', c, r]) || (run(['stone', c, r]) && run(['place', c, r])) // stone: swap in a gem
           : ((sel = null), true); // clicking empty ground returns to the hero view
   removing = false;
   if (!ok) {
@@ -295,7 +300,7 @@ canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('pointermove', (e) => {
   if (e.buttons & 6) view.pan(e.movementX, e.movementY); // right or middle drag
 });
-// Touch: one-finger drag pans, two-finger pinch zooms. A drag swallows the click it ends with.
+// Touch or left mouse: one-finger drag pans, two-finger pinch zooms. A drag swallows the click it ends with.
 const touches = new Map<number, [number, number]>();
 let dragged = false;
 let pinch = [0, 1]; // [finger distance, zoom] when the second finger landed
@@ -304,7 +309,8 @@ const spread = () => {
   return Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
 };
 canvas.addEventListener('pointerdown', (e) => {
-  if (e.pointerType !== 'touch') return;
+  if (e.pointerType !== 'touch' && e.button !== 0) return;
+  canvas.setPointerCapture(e.pointerId);
   touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 1) dragged = false;
   if (touches.size === 2) pinch = [spread(), view.zoom];

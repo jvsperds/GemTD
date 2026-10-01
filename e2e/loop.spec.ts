@@ -13,7 +13,7 @@ test('place 5 gems, keep one, wave starts', async ({ page }) => {
   // Fit-to-window centres the map; click cells 10..14 on row 16.
   const ox = (box.width - cell * 37) / 2;
   const oy = (box.height - cell * 37) / 2;
-  for (let c = 10; c < 15; c++) await page.mouse.click(ox + (c + 0.5) * cell, oy + 16.5 * cell);
+  for (let c = 10; c < 15; c++) await page.mouse.dblclick(ox + (c + 0.5) * cell, oy + 16.5 * cell);
   await expect(page.locator('#hint')).toContainText('select it');
   await page.mouse.click(ox + 10.5 * cell, oy + 16.5 * cell);
   await page.keyboard.press('k');
