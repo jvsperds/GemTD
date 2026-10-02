@@ -41,6 +41,10 @@
         height: 100%;
         touch-action: none;
       }
+      #game:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: -3px;
+      }
       .glass {
         background: var(--glass);
         border: 1px solid var(--edge-dim);
@@ -1216,9 +1220,10 @@
       }
       @media (max-width: 760px) {
         #dock button {
-          width: 40px;
+          width: 48px;
+          min-height: 48px;
+          font-size: 9px;
         }
-        #dock button span,
         #menubtn kbd {
           display: none;
         }
@@ -1271,24 +1276,34 @@
           flex: 1 1 200px;
         }
         #actions {
-          grid-template-columns: repeat(7, 44px);
+          grid-template-columns: repeat(4, minmax(48px, 1fr));
         }
-        #actions button span,
+        #actions button {
+          min-height: 48px;
+        }
         #actions kbd {
           display: none;
+        }
+        #actions button span {
+          display: block;
+          font-size: 8px;
         }
       }
     </style>
   </head>
   <body>
-    <canvas id="game"></canvas>
+    <canvas
+      id="game"
+      tabindex="0"
+      aria-label="Game board. Use arrow keys to move the board cursor. Press Enter to act on its cell."
+    ></canvas>
     <header id="hud" class="glass">
       <div id="hudinfo"></div>
       <button id="menubtn" data-a="menu" title="Menu (B)">
         <i data-icon="menu"></i> Menu <kbd>B</kbd>
       </button>
     </header>
-    <div id="hint"></div>
+    <div id="hint" role="status" aria-live="polite"></div>
     <div id="banner" class="glass" hidden></div>
     <nav id="dock" class="glass">
       <button data-a="guide" title="Maze guide (G)">
@@ -1386,7 +1401,7 @@
         <button id="newgame" class="on">⚔ Begin</button>
       </p>
     </dialog>
-    <div id="menu" class="glass" hidden>
+    <div id="menu" class="glass" role="dialog" aria-modal="true" aria-label="Game menu" tabindex="-1" hidden>
       <h2>✦ GEM TD ✦</h2>
       <div id="gameover" hidden></div>
       <div class="tabs">

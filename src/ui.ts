@@ -54,6 +54,7 @@ export function initMenu(
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tabs [data-tab]')];
   const over = $<HTMLElement>('gameover');
   const dlg = $<HTMLDialogElement>('newdlg');
+  let lastFocus: HTMLElement | null = null;
   $('build').textContent = __BUILD__ + (import.meta.env.DEV ? ' (dev)' : '');
   speed.value = String(settings.speed);
   volume.value = String(settings.volume);
@@ -224,7 +225,11 @@ export function initMenu(
       saveSettings();
     };
   const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
-  $('close').onclick = () => (menu.hidden = true);
+  const hide = () => {
+    menu.hidden = true;
+    lastFocus?.focus();
+  };
+  $('close').onclick = hide;
   $('changeloadout').onclick = () => {
     dlg.close();
     show();
@@ -241,7 +246,7 @@ export function initMenu(
   /** The new-game dialog: difficulty, loadout, then Begin. */
   const newGame = () => {
     if (!confirmLeave()) return;
-    menu.hidden = true;
+    hide();
     markDiff();
     drawShop();
     dlg.showModal();
@@ -271,6 +276,7 @@ export function initMenu(
       towers: { name: string; share: number; kills: number; mvp: number }[];
     };
   }) => {
+    lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     menu.hidden = false;
     over.hidden = !result;
     drawShop();
@@ -288,6 +294,23 @@ export function initMenu(
       tab('scores');
     }
     draw();
+    requestAnimationFrame(() => menu.querySelector<HTMLElement>('button, select, input')?.focus());
   };
-  return { show, newGame, toggle: () => (menu.hidden ? show() : (menu.hidden = true)) };
+  menu.onkeydown = (e) => {
+    if (e.key !== 'Tab') return;
+    const controls = [
+      ...menu.querySelectorAll<HTMLElement>('button, select, input:not([type="file"])'),
+    ].filter((el) => !el.hasAttribute('disabled') && !el.closest('[hidden]'));
+    const first = controls[0],
+      last = controls.at(-1);
+    if (!first || !last) return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+  return { show, newGame, toggle: () => (menu.hidden ? show() : hide()) };
 }

@@ -200,6 +200,13 @@ addEventListener('gesturestart', (e) => e.preventDefault());
 addEventListener('keydown', sfx.unlock);
 
 let lastClick = [-1, -1, 0]; // cell and time of the last board click
+let boardCursor = -1;
+const setBoardCursor = (c: number, r: number) => {
+  boardCursor = maze.idx(c, r);
+  view.cursor = boardCursor;
+  hintEl.textContent = `Board cursor: column ${c + 1}, row ${r + 1}. Press Enter to act.`;
+  view.invalidate();
+};
 // Extra towers selected with Ctrl+click or Ctrl+drag, so one aim mode can be set on all of them.
 let multi = new Set<Tower>();
 let boxFrom: [number, number] | null = null; // Ctrl+drag start cell
@@ -218,21 +225,10 @@ canvas.addEventListener('pointerup', (e) => {
   multi.delete(sel!);
   view.invalidate();
 });
-canvas.addEventListener('click', (e) => {
-  if (replaying) return;
-  if (boxFrom) {
-    const [c, r] = view.screenToCell(e.clientX, e.clientY);
-    const dragged = c !== boxFrom[0] || r !== boxFrom[1];
-    boxFrom = null;
-    const t = combat.towerAt(c, r);
-    if (dragged || !t || t.def.pedal) return;
-    if (!sel) sel = t;
-    else if (t !== sel && !multi.delete(t)) multi.add(t);
-    return view.invalidate();
-  }
+const selectCell = (c: number, r: number, dbl: boolean, x?: number, y?: number) => {
+  if (replaying || c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
+  setBoardCursor(c, r);
   multi = new Set();
-  const [c, r] = view.screenToCell(e.clientX, e.clientY);
-  if (c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
   if (builder) {
     const ok = maze.removeRock(c, r) || maze.placeRock(c, r);
     if (ok) mazeVer++;
@@ -257,10 +253,7 @@ canvas.addEventListener('click', (e) => {
     return view.invalidate();
   }
   // Gems need a double click (or double tap) on the same cell, so a stray click can't misplace one.
-  const now = performance.now(),
-    dbl = lastClick[0] === c && lastClick[1] === r && now - lastClick[2] < 400;
-  lastClick = dbl ? [-1, -1, 0] : [c, r, now];
-  const cr = removing ? null : view.creepAt(e.clientX, e.clientY);
+  const cr = removing || x == null || y == null ? null : view.creepAt(x, y);
   selCreep = cr;
   if (cr) return void (sel = null);
   const hit = combat.towerAt(c, r);
@@ -279,6 +272,23 @@ canvas.addEventListener('click', (e) => {
     sfx.play('refuse');
   }
   view.invalidate();
+};
+canvas.addEventListener('click', (e) => {
+  if (boxFrom) {
+    const [c, r] = view.screenToCell(e.clientX, e.clientY);
+    const dragged = c !== boxFrom[0] || r !== boxFrom[1];
+    boxFrom = null;
+    const t = combat.towerAt(c, r);
+    if (dragged || !t || t.def.pedal) return;
+    if (!sel) sel = t;
+    else if (t !== sel && !multi.delete(t)) multi.add(t);
+    return view.invalidate();
+  }
+  const [c, r] = view.screenToCell(e.clientX, e.clientY);
+  const now = performance.now();
+  const dbl = lastClick[0] === c && lastClick[1] === r && now - lastClick[2] < 400;
+  lastClick = dbl ? [-1, -1, 0] : [c, r, now];
+  selectCell(c, r, dbl, e.clientX, e.clientY);
 });
 function act(a: string) {
   if (a === 'menu') return menu.toggle();
@@ -404,6 +414,29 @@ canvas.addEventListener('pointermove', (e) => {
 for (const t of ['pointerup', 'pointercancel'] as const)
   canvas.addEventListener(t, (e) => touches.delete(e.pointerId));
 canvas.addEventListener('click', (e) => dragged && e.stopImmediatePropagation(), { capture: true });
+canvas.addEventListener('focus', () => {
+  if (boardCursor < 0) setBoardCursor((maze.w / 2) | 0, (maze.h / 2) | 0);
+});
+canvas.addEventListener('keydown', (e) => {
+  const [c, r] = [boardCursor % maze.w, (boardCursor / maze.w) | 0];
+  const move: Record<string, [number, number]> = {
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+  };
+  if (move[e.key]) {
+    e.preventDefault();
+    const [dc, dr] = move[e.key];
+    setBoardCursor(
+      Math.max(0, Math.min(maze.w - 1, c + dc)),
+      Math.max(0, Math.min(maze.h - 1, r + dr)),
+    );
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    selectCell(c, r, true);
+  }
+});
 addEventListener('resize', () => view.resize());
 addEventListener('keydown', (e) => {
   if (e.key === 'F3') {

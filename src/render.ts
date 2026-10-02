@@ -824,6 +824,7 @@ export class Renderer {
   panY = 0;
   flash = -1; // refused cell index
   flashUntil = 0;
+  cursor = -1; // keyboard board cursor
   selected = -1; // selected cell index
   multi: number[] = []; // cells of extra Ctrl-selected towers
   creep: Creep | null = null; // selected creep
@@ -1218,6 +1219,17 @@ export class Renderer {
     if (this.flash >= 0 && now < this.flashUntil) {
       ctx.fillStyle = 'rgba(220,50,50,0.6)';
       ctx.fillRect(X(this.flash % this.maze.w), Y((this.flash / this.maze.w) | 0), s, s);
+    }
+
+    if (this.cursor >= 0) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2 * this.dpr;
+      ctx.strokeRect(
+        X(this.cursor % this.maze.w) + this.dpr,
+        Y((this.cursor / this.maze.w) | 0) + this.dpr,
+        s - 2 * this.dpr,
+        s - 2 * this.dpr,
+      );
     }
 
     // Burn auras (Volcano, Asteriated Ruby...): a pulsing heat ring while an enemy is inside.
