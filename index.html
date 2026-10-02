@@ -191,24 +191,84 @@
       #newdlg {
         width: min(560px, calc(100vw - 32px));
         box-sizing: border-box;
-        padding: 16px 20px;
+        padding: 0;
         color: var(--text);
         border-color: var(--edge);
+        overflow: hidden;
+        background:
+          radial-gradient(ellipse at 50% 0%, #3a2f1c66, #0000 60%),
+          linear-gradient(180deg, #16171af7, #0b0c0ef9);
       }
       #newdlg::backdrop {
         background: #000a;
       }
-      #newdlg h2 {
-        margin: 0 0 10px;
-        text-align: center;
-        font-weight: normal;
-        letter-spacing: 4px;
-        color: var(--accent);
+      .dialog-head {
+        padding: 22px 24px 14px;
+        border-bottom: 1px solid var(--edge-dim);
+        background: linear-gradient(180deg, #2a2418, #0000);
       }
-      #newdlg .begin {
+      .dialog-head h2 {
+        margin: 2px 0 4px;
+        font-weight: normal;
+        letter-spacing: 5px;
+        color: var(--gold);
+        text-shadow: 0 2px 2px #000;
+      }
+      .dialog-head p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .eyebrow,
+      .dialog-section h3,
+      .loadout-summary > div > span {
+        display: block;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: normal;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .dialog-section {
+        padding: 16px 24px 0;
+      }
+      .dialog-section h3 {
+        margin: 0 0 8px;
+      }
+      .loadout-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 16px 24px;
+        padding: 12px;
+        border: 1px solid var(--edge-dim);
+        border-radius: 6px;
+        background: #0005;
+      }
+      .loadout-summary b,
+      .loadout-summary small {
+        display: block;
+      }
+      .loadout-summary small {
+        margin-top: 2px;
+        color: var(--muted);
+      }
+      .dialog-actions {
         display: flex;
         justify-content: flex-end;
+        align-items: center;
         gap: 8px;
+        padding: 14px 24px;
+        border-top: 1px solid var(--edge-dim);
+        background: #0004;
+      }
+      .dialog-actions .primary {
+        min-width: 112px;
+        border-color: var(--gold);
+        color: var(--gold);
+        box-shadow:
+          inset 0 0 12px #f0c86033,
+          0 0 12px #f0c86022;
       }
       @keyframes banner {
         0% {
@@ -1380,28 +1440,49 @@
       </header>
       <div id="dmglist"></div>
     </aside>
-    <dialog id="newdlg" class="glass">
-      <h2>✦ NEW GAME ✦</h2>
-      <p>Choose your trial:</p>
-      <div class="cards" id="diffcards">
-        <button data-diff="easy">🟢 Easy<small>For apprentices</small></button>
-        <button data-diff="normal">🔵 Normal<small>The true path</small></button>
-        <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
-      </div>
-      <p>
-        Hero &amp; skills: <b id="loadout">—</b>
+    <dialog id="newdlg" class="glass" aria-labelledby="newgametitle">
+      <header class="dialog-head">
+        <span class="eyebrow">Start a run</span>
+        <h2 id="newgametitle">NEW GAME</h2>
+        <p>Choose a difficulty, then set the kind of run.</p>
+      </header>
+      <section class="dialog-section">
+        <h3>Difficulty</h3>
+        <div class="cards" id="diffcards">
+          <button data-diff="easy">🟢 Easy<small>For apprentices</small></button>
+          <button data-diff="normal">🔵 Normal<small>The true path</small></button>
+          <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
+        </div>
+      </section>
+      <section class="dialog-section">
+        <h3>Run type</h3>
+        <div class="cards">
+          <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
+          <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
+        </div>
+      </section>
+      <section class="loadout-summary">
+        <div>
+          <span>Selected loadout</span>
+          <b id="loadout">—</b>
+          <small>Applies when the run begins.</small>
+        </div>
         <button id="changeloadout">Change</button>
-      </p>
-      <p class="cards">
-        <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
-        <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
-      </p>
-      <p class="begin">
+      </section>
+      <footer class="dialog-actions">
         <button id="cancelnew">Cancel</button>
-        <button id="newgame" class="on">⚔ Begin</button>
-      </p>
+        <button id="newgame" class="primary">⚔ Begin</button>
+      </footer>
     </dialog>
-    <div id="menu" class="glass" role="dialog" aria-modal="true" aria-label="Game menu" tabindex="-1" hidden>
+    <div
+      id="menu"
+      class="glass"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Game menu"
+      tabindex="-1"
+      hidden
+    >
       <h2>✦ GEM TD ✦</h2>
       <div id="gameover" hidden></div>
       <div class="tabs">
