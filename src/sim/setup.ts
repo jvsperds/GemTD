@@ -56,7 +56,7 @@ export function newGame(seed: number, difficulty: Difficulty = 'normal') {
   );
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
   g.combat.stackCopies = difficulty === 'easy';
-  if (difficulty === 'easy') g.recipeLuck = 0.03;
+  if (difficulty === 'easy') [g.recipeLuck, g.endlessBuild] = [0.03, true];
   return g;
 }
 

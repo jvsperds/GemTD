@@ -321,3 +321,10 @@ test('undo (replay without the last place) re-rolls the same gem', async () => {
   b.run(['place', 5, 5]);
   expect(b.combat.towers[0].def.name).toBe(gem);
 });
+
+test('skip starts the wave without keeping a gem', () => {
+  const g = setup();
+  expect(g.run(['skip'])).toBe(true);
+  expect(g.sim.phase).toBe('wave');
+  expect(g.run(['skip'])).toBe(false); // only in a build round
+});
