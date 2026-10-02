@@ -191,22 +191,22 @@ export class Game {
             ? this.buyLevel()
             : op === 'skip'
               ? this.skip()
-            : op === 'pedal'
-              ? this.layPedal(c, r)
-              : cmd[0] === 'skill'
-                ? this.cast(String(name), c, r, cmd[4], cmd[5])
-                : !!t &&
-                  (op === 'aim'
-                    ? this.setAim(t, Number(name))
-                    : op === 'keep'
-                      ? this.keep(t)
-                      : op === 'merge2'
-                        ? this.merge(t, 2)
-                        : op === 'merge4'
-                          ? this.merge(t, 4)
-                          : op === 'down'
-                            ? this.downgrade(t)
-                            : this.combine(t, String(name)));
+              : op === 'pedal'
+                ? this.layPedal(c, r)
+                : cmd[0] === 'skill'
+                  ? this.cast(String(name), c, r, cmd[4], cmd[5])
+                  : !!t &&
+                    (op === 'aim'
+                      ? this.setAim(t, Number(name))
+                      : op === 'keep'
+                        ? this.keep(t)
+                        : op === 'merge2'
+                          ? this.merge(t, 2)
+                          : op === 'merge4'
+                            ? this.merge(t, 4)
+                            : op === 'down'
+                              ? this.downgrade(t)
+                              : this.combine(t, String(name)));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
