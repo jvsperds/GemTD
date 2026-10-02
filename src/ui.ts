@@ -282,15 +282,15 @@ export function initMenu(
     drawShop();
     if (result) {
       over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
-        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}<button>⚔ Play again</button>
-        <button>💾 Save maze to library</button>`;
-      const [again, keep] = over.querySelectorAll('button');
-      again.onclick = newGame;
-      keep.onclick = async () => {
+        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}
+        <div class="dialog-actions"><button>💾 Save maze to library</button><button class="primary">⚔ Play again</button></div>`;
+      const [save, again] = over.querySelectorAll('button');
+      save.onclick = async () => {
         if (!(await saveMaze())) return;
-        keep.disabled = true;
-        keep.textContent = '✓ Saved';
+        save.disabled = true;
+        save.textContent = '✓ Saved';
       };
+      again.onclick = newGame;
       tab('scores');
     }
     draw();
