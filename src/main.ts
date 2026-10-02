@@ -316,6 +316,7 @@ function act(a: string) {
   else if (a === 'undo' && canUndo())
     void saveNow(game.log.slice(0, -1)).then(() => location.reload());
   else if (a === 'level') run(['level']);
+  else if (a === 'skip') run(['skip']);
   else if (a.startsWith('tab:')) {
     panel.dataset.tab = a.slice(4);
     for (const b of tabBtns) b.classList.toggle('on', b.dataset.a === a);
@@ -336,6 +337,7 @@ const keys: Record<string, string> = {
   d: 'down',
   r: 'stone',
   l: 'level',
+  s: 'skip',
   u: 'undo',
   g: 'guide',
   p: 'path',
@@ -853,6 +855,9 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
       off: !!replaying || game.step !== 'place',
       on: removing,
     }),
+    slot('play', 'Skip', 'Skip this turn: start the wave without keeping a gem', 'skip', 'S', {
+      off: !!replaying || sim.phase !== 'build',
+    }),
     slot('undo', 'Undo', 'Take back the last gem you placed', 'undo', 'U', { off: !canUndo() }),
     ...ids.map((id) => {
       const s = SKILLS[id],
@@ -1126,6 +1131,7 @@ function updateHud() {
       merge4: !!sel && game.canMerge(sel, 4),
       down: !!sel && game.canDowngrade(sel),
       stone: step === 'place',
+      skip: sim.phase === 'build',
       level: game.levelCost !== null && game.gold >= game.levelCost,
       guide: true,
       path: true,

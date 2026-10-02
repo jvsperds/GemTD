@@ -49,7 +49,8 @@ export type Cmd =
   | ['pedal', number, number] // lay the oldest pedal in hand on a path cell
   // Target cell (the tower for tower skills; ignored by castle skills), then an optional picked cell.
   | ['skill', number, number, string, number?, number?]
-  | ['level'];
+  | ['level']
+  | ['skip']; // start the wave without keeping a gem (this round's gems become stones)
 /** Logged command with the wave tick it was issued at (commands may land mid-wave). */
 export type LogEntry = [at: number, cmd: Cmd];
 
@@ -76,6 +77,7 @@ export class Game {
   log: LogEntry[] = [];
   skills: Loadout = {}; // hero skills brought to this game; saved with it so replays match
   pray: { gem?: string; quality?: number; chance: number } | null = null; // for the next gem
+  endlessBuild = false; // easy: endless waves keep their build rounds
   recipeLuck = 0; // easy: per-level chance a gem completes a recipe (see place)
   pedals: string[] = []; // combined pedals waiting to be laid on the path
   hero = ''; // hero id; '' = no hero (tests, old saves)
@@ -187,22 +189,24 @@ export class Game {
           ? this.removeStone(c, r)
           : op === 'level'
             ? this.buyLevel()
-            : op === 'pedal'
-              ? this.layPedal(c, r)
-              : cmd[0] === 'skill'
-                ? this.cast(String(name), c, r, cmd[4], cmd[5])
-                : !!t &&
-                  (op === 'aim'
-                    ? this.setAim(t, Number(name))
-                    : op === 'keep'
-                      ? this.keep(t)
-                      : op === 'merge2'
-                        ? this.merge(t, 2)
-                        : op === 'merge4'
-                          ? this.merge(t, 4)
-                          : op === 'down'
-                            ? this.downgrade(t)
-                            : this.combine(t, String(name)));
+            : op === 'skip'
+              ? this.skip()
+              : op === 'pedal'
+                ? this.layPedal(c, r)
+                : cmd[0] === 'skill'
+                  ? this.cast(String(name), c, r, cmd[4], cmd[5])
+                  : !!t &&
+                    (op === 'aim'
+                      ? this.setAim(t, Number(name))
+                      : op === 'keep'
+                        ? this.keep(t)
+                        : op === 'merge2'
+                          ? this.merge(t, 2)
+                          : op === 'merge4'
+                            ? this.merge(t, 4)
+                            : op === 'down'
+                              ? this.downgrade(t)
+                              : this.combine(t, String(name)));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
@@ -236,7 +240,7 @@ export class Game {
     }
     if (mvp) mvp.mvp++;
     // Endless: past the last wave there are no build rounds; the next wave follows at once.
-    if (this.sim.phase === 'build' && this.sim.wave >= this.sim.lastWave) {
+    if (!this.endlessBuild && this.sim.phase === 'build' && this.sim.wave >= this.sim.lastWave) {
       this.dmg0 = new Map(this.combat.towers.map((o) => [o, o.damageDealt]));
       this.sim.startWave();
     }
@@ -543,8 +547,13 @@ export class Game {
     return true;
   }
 
+  /** Skip the turn: no gem is kept, the round's gems become stones, the wave starts. */
+  skip() {
+    return this.sim.phase === 'build' && this.finish(null);
+  }
+
   /** Keep `t`; the round's other gems become stones; start the wave. */
-  private finish(t: Tower) {
+  private finish(t: Tower | null) {
     const stones = new Set(this.placed.filter((o) => o !== t));
     this.combat.towers = this.combat.towers.filter((o) => !stones.has(o));
     this.placed = [];
