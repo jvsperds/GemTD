@@ -11,3 +11,13 @@ test('dist/index.html boots from file:// with network blocked', async ({ page, c
   await expect(page.locator('canvas#game')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('board has a keyboard cursor and live status', async ({ page }) => {
+  await page.goto(pathToFileURL(resolve('dist/index.html')).href);
+  await page.locator('#cancelnew').click();
+  const board = page.locator('canvas#game');
+  await board.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#hint')).toContainText('Board cursor:');
+  await expect(board).toHaveAttribute('tabindex', '0');
+});
