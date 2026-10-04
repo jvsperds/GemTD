@@ -348,7 +348,6 @@ Still open (sensible defaults until playtests):
 - Dota 2 Wiki, Gem TD (saved: `docs/wikipages/dota2/`): build-phase actions, MVP, skills, waves, quests
 - Gem Tower Defense Wiki, Upgrading chances (saved): quality odds table
 - Maze Builder screenshot (map layout)
-- cecrit GemTD remake: https://cecrit.itch.io/gemtd
 - Saved wiki pages: `docs/wikipages/*.html` (extracted by `tools/extract_wiki.py`)
 - Fan data site (auto-extracted Dota 2 Gem TD data): https://clementbera.github.io/Website/index.html
 - gem-td.com (Dota 2 Gem TD community site: wiki, leaderboard): https://gem-td.com/
