@@ -1016,10 +1016,19 @@ export class Renderer {
     g.translate(0, top);
     g.fillStyle = '#111'; // grid lines: the 1px gaps between cells
     g.fillRect(0, 0, maze.w * s, maze.h * s);
+    const mc = maze.w >> 1,
+      mr = maze.h >> 1; // 37×37 map: column/row 18
     for (let r = 0; r < maze.h; r++)
       for (let c = 0; c < maze.w; c++) {
         g.fillStyle = maze.noBuild[maze.idx(c, r)] ? '#2a2a2a' : '#3b4a3b';
         g.fillRect(c * s, r * s, s - 1, s - 1);
+        const onX = c === mc,
+          onY = r === mr;
+        if (onX || onY) {
+          // Visual-only marks: grey on the main axes, a lighter grey on the exact middle.
+          g.fillStyle = onX && onY ? 'rgba(200,200,200,0.35)' : 'rgba(150,150,150,0.18)';
+          g.fillRect(c * s, r * s, s - 1, s - 1);
+        }
         const k = this.guide?.[r]?.[c] ?? '.';
         if (k && k !== '.' && maze.cells[maze.idx(c, r)] !== WALL) {
           g.fillStyle = GUIDE_COLOR;
