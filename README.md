@@ -2,7 +2,7 @@
 
 A single-player, fully offline browser remake of the Dota 2 custom game **Gem TD**: place random
 gems, keep one, maze the rest as stones, combine into special towers, survive 50 waves.
-No server, no network calls, no runtime dependencies. Design notes: [docs/BUILD.md](docs/BUILD.md).
+No server, no network calls, no runtime dependencies.
 
 ## Play
 
