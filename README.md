@@ -50,10 +50,11 @@ Each round:
 
 1. **Place 5 gems** by clicking empty tiles. Type is random; quality follows your level's odds
    (shown in the top bar). Placements that would block the creeps' route are refused.
-2. **Pick one gem to keep** (click it), then finish the round with one of:
+2. **Pick one gem to keep** (click it; older towers grey out until you do), then finish the
+   round with one of:
    - **Keep (K)**: the other four become stones.
    - **Merge ^ (M)** / **Merge ^^ (N)**: 2 or 4 identical gems → keep one at +1 / +2 quality.
-   - **Combine**: when a recipe is complete the gems get a cyan outline; select one and press
+   - **Combine**: when a recipe is complete the gems glow with a pale aura; select one and press
      **Combine → …** to build a special tower (ingredients become stones). Combining towers from
      earlier rounds doesn't use up your turn.
    - Extras: **Downgrade (D)** rerolls a gem to lower quality for 200 gold; **Remove stone (R)**.

@@ -841,6 +841,7 @@ export class Renderer {
   private staticLayer = document.createElement('canvas');
   private blockLayer = document.createElement('canvas'); // stones/towers, drawn over the pedals
   private staticDirty = true;
+  private dimKey = ''; // pending cells the block layer was last dimmed for
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
   private sprites = new Map<string, HTMLCanvasElement>();
   private terrainPat: [number, CanvasPattern] | null = null;
@@ -1071,20 +1072,24 @@ export class Renderer {
     g.translate(0, top);
     // Blocks in row order so nearer rows overlap the ones behind.
     const towers = new Map(this.combat.towers.map((t) => [maze.idx(t.c, t.r), t]));
+    // While a round's gems wait to be picked, older towers are greyed so the new ones stand out.
+    const dim = this.pending.length ? new Set(this.pending) : null;
     for (let r = 0; r < maze.h; r++)
       for (let c = 0; c < maze.w; c++) {
         const i = maze.idx(c, r),
           cell = maze.cells[i];
         if (cell !== WALL && cell !== ROCK) continue;
         const t = towers.get(i);
-        if (t)
+        if (t) {
           // The tower's base sits on its cell; plain stones stand taller.
+          g.filter = dim && !dim.has(i) ? 'grayscale(0.85) brightness(0.65)' : 'none';
           g.drawImage(
             this.tower(towerKey(t.def), t.def.type, t.def.quality),
             c * s,
             (r - TOWER_H - TALL) * s,
           );
-        else
+          g.filter = 'none';
+        } else
           g.drawImage(this.block(cell === WALL ? '#1c1c24' : '#8a8a8a'), c * s, (r - BLOCK_H) * s);
       }
     // Quality numbers last, so a tower in front never hides the one behind's number.
@@ -1177,6 +1182,8 @@ export class Renderer {
 
   /** alpha = fraction of the way from the previous tick to the current one; dt = frame seconds. */
   render(alpha: number, dt: number, now: number) {
+    const dimKey = this.pending.join();
+    if (dimKey !== this.dimKey) [this.dimKey, this.staticDirty] = [dimKey, true];
     if (this.staticDirty) this.drawStatic();
     const { ctx, cell: s, panX, panY } = this;
     const X = (x: number) => (panX + x * s) | 0;
@@ -1261,15 +1268,21 @@ export class Renderer {
           ctx.stroke();
         }
 
-    ctx.strokeStyle = '#6ff';
-    ctx.lineWidth = this.dpr;
-    for (const h of this.hints)
-      ctx.strokeRect(
-        X(h % this.maze.w) + 2,
-        Y(((h / this.maze.w) | 0) - TOWER_H) + 2,
-        s - 4,
-        s - 4,
-      );
+    // Combinable towers: a soft pulsing aura over the tower body.
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const aura = 0.35 + 0.2 * Math.sin(now / 300);
+    for (const h of this.hints) {
+      const cx = X((h % this.maze.w) + 0.5),
+        cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
+        rad = s * 0.85;
+      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      gr.addColorStop(0, `rgba(170,255,240,${aura})`);
+      gr.addColorStop(1, 'rgba(170,255,240,0)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+    }
+    ctx.restore();
     if (this.pending.length) {
       ctx.save();
       ctx.strokeStyle = `rgba(255,240,150,${0.55 + 0.35 * Math.sin(now / 200)})`;
