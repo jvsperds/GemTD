@@ -50,6 +50,11 @@ export const ENDLESS = { hp: 1.15, armor: 1 };
 // Giant: after `streak` waves in a row with no castle damage, a wave may swap one creep for a
 // 10x-HP copy. ponytail: streak/chance are guesses until playtests.
 export const GIANT = { streak: 3, chance: 0.3, hp: 10 };
+// Endless bosses (issue #84): one more boss per `every` endless waves and per `streak` clean waves
+// (up to `max`), and leak damage = BOSS_LEAK_DAMAGE × HP% left × (1 + endless waves / `ramp`),
+// capped at `cap`, so long runs end instead of looping forever.
+// ponytail: rates are guesses until long playtests.
+export const ENDLESS_BOSS = { every: 20, streak: 3, max: 10, ramp: 10, cap: 100 };
 
 /** Seeded PRNG (mulberry32) so the sim is deterministic. */
 export function rng(seed: number) {
@@ -180,6 +185,8 @@ export class WaveSim {
   rand: () => number;
   hpMult = 1; // difficulty
   streak = 0; // waves in a row that ended with no castle damage
+  endless = 0; // waves past the last one, for the current wave
+  bosses = 1; // bosses in the current boss wave
   private hurt = false; // castle took damage this wave
   current: WaveEntry | null = null; // this wave's creep, for the banner
   private queue: WaveEntry[] = [];
@@ -230,6 +237,7 @@ export class WaveSim {
     this.wave++;
     const last = this.lastWave,
       extra = Math.max(0, this.wave - last);
+    this.endless = extra;
     const base = extra ? last - 9 + ((extra - 1) % 10) : this.wave;
     const mult = this.hpMult * ENDLESS.hp ** extra;
     const defs = this.waves
@@ -238,9 +246,13 @@ export class WaveSim {
         mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra },
       );
     this.current = defs[0];
-    const n = defs.some((d) => d.boss) ? 1 : CREEPS_PER_WAVE;
+    const b = ENDLESS_BOSS;
+    this.bosses = extra
+      ? Math.min(b.max, 1 + Math.floor(extra / b.every) + Math.floor(this.streak / b.streak))
+      : 1;
+    const n = defs.some((d) => d.boss) ? this.bosses : CREEPS_PER_WAVE;
     this.queue = Array.from({ length: n }, (_, k) => defs[k % defs.length]);
-    if (n > 1 && this.streak >= GIANT.streak && this.rand() < GIANT.chance) {
+    if (n > 1 && !defs[0].boss && this.streak >= GIANT.streak && this.rand() < GIANT.chance) {
       const k = Math.floor(this.rand() * n);
       const d = this.queue[k];
       this.queue[k] = { ...d, giant: true, hp: d.hp * GIANT.hp };
@@ -324,6 +336,13 @@ export class WaveSim {
     }
   }
 
+  /** Castle damage of a leaking boss: scaled by its HP left and how deep into endless the run is. */
+  bossLeak(cr: Creep) {
+    const b = ENDLESS_BOSS;
+    const full = BOSS_LEAK_DAMAGE * (1 + this.endless / b.ramp);
+    return Math.min(b.cap, Math.ceil(full * Math.max(0, cr.hp / cr.def.hp)));
+  }
+
   /** Move speed after rush, % slows (multiplicative) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
     const pct = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct) * (1 - cr.stackPct);
@@ -362,7 +381,7 @@ export class WaveSim {
     if (atGoal) {
       if (cr.seg === wp.length - 1) {
         cr.alive = false;
-        let dmg = cr.def.boss ? BOSS_LEAK_DAMAGE - this.bossBite : LEAK_DAMAGE;
+        let dmg = cr.def.boss ? this.bossLeak(cr) - this.bossBite : LEAK_DAMAGE;
         if (this.guard.t > 0) dmg = Math.max(0, dmg - this.guard.v);
         if (this.evade.t > 0 && this.rand() * 100 < this.evade.v) dmg = 0;
         this.castleHp -= dmg;

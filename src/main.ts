@@ -546,7 +546,11 @@ function showBanner() {
   bannerWave = sim.wave;
   const d = sim.current;
   if (!d) return;
-  const tags = [d.boss && 'Boss', d.flying && 'Flying', sim.wave > sim.lastWave && 'Endless']
+  const tags = [
+    d.boss && (sim.bosses > 1 ? `${sim.bosses} Bosses` : 'Boss'),
+    d.flying && 'Flying',
+    sim.wave > sim.lastWave && 'Endless',
+  ]
     .filter(Boolean)
     .join(' · ');
   banner.innerHTML = `<img alt="" src="${creepIcon(d.name)}"><div><b>WAVE ${sim.wave}</b><span></span></div>`;

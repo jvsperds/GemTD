@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { short } from '../src/dmgchart';
 import { ENDGAME } from '../src/sim/endgame';
+import { ENDLESS_BOSS } from '../src/sim/waves';
 import { newGame } from '../src/sim/setup';
 import { newCreep, type WaveEntry } from '../src/sim/waves';
 
@@ -50,4 +51,21 @@ test('Ancient gems come only from two Great gems; end-game towers sunder and har
   sim.creeps.push(prey);
   for (let i = 0; i < 100 && prey.alive; i++) combat.tick();
   expect(king.souls).toBe(1000 * ENDGAME.souls);
+});
+
+test('endless boss waves add bosses with depth and streak; leaks scale with HP left, capped', () => {
+  const { sim } = newGame(1);
+  const boss = { ...base, boss: true, hp: 100 };
+  const leak = (hp: number) => sim.bossLeak({ ...newCreep(boss, 0, 0), hp });
+  sim.endless = 0;
+  expect([leak(100), leak(50), leak(1)]).toEqual([10, 5, 1]);
+  sim.endless = 150;
+  expect([leak(100), leak(30)]).toEqual([ENDLESS_BOSS.cap, 48]);
+
+  // Wave 80 = 30 endless waves past 50 → base wave 50 (a boss wave) repeats at 60, 70, 80.
+  sim.wave = 79;
+  sim.streak = 6;
+  sim.startWave();
+  expect(sim.current?.boss).toBe(true);
+  expect(sim.bosses).toBe(1 + 1 + 2);
 });
