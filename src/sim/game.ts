@@ -257,7 +257,7 @@ export class Game {
         if (!parts) continue;
         // This round's gems can only be combined once all 5 are down.
         if (this.step === 'place' && parts.some((p) => this.placed.includes(p))) continue;
-        out.push({ name: def.name, parts });
+        out.push({ name: codeOf(def), parts }); // the defs key: Ancient gems go by code (D7)
         break;
       }
     }
@@ -361,7 +361,7 @@ export class Game {
           left.set(c, n - 1);
           return n <= 0;
         });
-        if (miss.length === 1 && /^[A-Z]\d$/.test(miss[0])) out.add(miss[0]);
+        if (miss.length === 1 && /^[A-Z][1-6]$/.test(miss[0])) out.add(miss[0]); // Q7 is combined only
       }
     return [...out].sort();
   }

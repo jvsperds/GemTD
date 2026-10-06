@@ -3,6 +3,7 @@ import * as db from './persist';
 import rawAdvanced from '../data/raw/advanced_towers.json';
 import rawBase from '../data/raw/base_towers.json';
 import { PEDAL_TIPS } from './sim/pedals';
+import { ENDGAME_TIPS } from './sim/endgame';
 import { skillIcon } from './icons';
 import { BLURB } from './blurbs';
 import { fillIcons, icon } from './hud';
@@ -34,7 +35,7 @@ import {
   type WaveEntry,
 } from './sim/waves';
 import { initBook, mazeRows, measure, type Guide } from './book';
-import { initDmgChart } from './dmgchart';
+import { initDmgChart, short } from './dmgchart';
 import { initMenu } from './ui';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
@@ -121,7 +122,7 @@ const ABILITY = new Map(
     t.abilities.filter((a) => a.Name).map((a) => [a.id, { name: a.Name, tip: a.Tooltip }] as const),
   ),
 );
-for (const [id, a] of PEDAL_TIPS) ABILITY.set(id, a);
+for (const [id, a] of [...PEDAL_TIPS, ...ENDGAME_TIPS]) ABILITY.set(id, a);
 const book = initBook({
   towers: () => combat.towers,
   selected: () => sel,
@@ -326,6 +327,7 @@ function act(a: string) {
   else if (a === 'undo' && canUndo())
     void saveNow(game.log.slice(0, -1)).then(() => location.reload());
   else if (a === 'level') run(['level']);
+  else if (a === 'skip' && autoSkip) autoSkip = false;
   else if (a === 'skip') run(['skip']);
   else if (a.startsWith('tab:')) {
     panel.dataset.tab = a.slice(4);
@@ -366,6 +368,17 @@ const aimEl = document.querySelector<HTMLElement>('#aim')!;
 const tabBtns = buttons.filter((b) => b.dataset.a?.startsWith('tab:'));
 // The HUD rebuilds these buttons every tick during a wave, so a mouse click (down and up on the
 // same element) rarely lands: act on pointerdown, and on click only for keyboard activation.
+// Auto-skip (long endless runs): hold Skip to skip every turn; any later Skip press turns it off.
+// Registered before the act-on-pointerdown handler below, so the untoggling press can't re-arm it.
+let autoSkip = false,
+  holdT = 0;
+document.querySelector<HTMLElement>('#cards')!.addEventListener('pointerdown', (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-a="skip"]');
+  if (e.button === 0 && b && !b.disabled && !autoSkip)
+    holdT = window.setTimeout(() => (autoSkip = true), 600);
+});
+for (const ev of ['pointerup', 'pointercancel'] as const)
+  addEventListener(ev, () => clearTimeout(holdT));
 for (const box of [combos, aimEl, document.querySelector<HTMLElement>('#cards')!]) {
   const fire = (e: Event) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-a]');
@@ -757,7 +770,7 @@ function drawCreep(cr: Creep) {
   nameEl.textContent = (d.giant ? 'Giant ' : '') + d.name + (d.boss ? ' (boss)' : '');
   const armor = armorOf(cr);
   setAttrs([
-    ['❤ HP', `${Math.ceil(cr.hp)} / ${Math.ceil(d.hp)}`],
+    ['❤ HP', `${short(Math.ceil(cr.hp))} / ${short(Math.ceil(d.hp))}`],
     ['🛡 Armor', armor === d.armor ? String(d.armor) : `${+armor.toFixed(1)} (${d.armor})`],
     ['✧ Magic res', `${d.magicResist - cr.auraMr}%`],
     ['➤ Speed', `${Math.round(sim.speed(cr))}`],
@@ -778,7 +791,7 @@ function drawCreep(cr: Creep) {
   );
   const f = Math.max(0, cr.hp / d.hp) * 100;
   barFill.style.width = `${f}%`;
-  barText.textContent = `${Math.ceil(cr.hp)} / ${Math.ceil(d.hp)} HP`;
+  barText.textContent = `${short(Math.ceil(cr.hp))} / ${short(Math.ceil(d.hp))} HP`;
   combos.className = '';
   combos.replaceChildren();
 }
@@ -888,9 +901,16 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
       off: !!replaying || game.step !== 'place',
       on: removing,
     }),
-    slot('play', 'Skip', 'Skip this turn: start the wave without keeping a gem', 'skip', 'S', {
-      off: !!replaying || sim.phase !== 'build',
-    }),
+    slot(
+      'play',
+      autoSkip ? 'Auto' : 'Skip',
+      autoSkip
+        ? 'Auto-skip on: every turn is skipped. Click to stop'
+        : 'Skip this turn: start the wave without keeping a gem. Hold to auto-skip every turn',
+      'skip',
+      'S',
+      { off: !!replaying || (sim.phase !== 'build' && !autoSkip), on: autoSkip },
+    ),
     slot('undo', 'Undo', 'Take back the last gem you placed', 'undo', 'U', { off: !canUndo() }),
     ...ids.map((id) => {
       const s = SKILLS[id],
@@ -957,6 +977,7 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
   nameEl.textContent = d.name;
   const dmg = el('span', '', String(d.damage));
   if (d.bonusDamage) dmg.append(el('span', 'up', ` +${d.bonusDamage}`));
+  if (t.souls) dmg.append(el('span', 'up', ` +${short(t.souls)} souls`));
   setAttrs([
     ['⚔ Dmg', dmg],
     ['⏱ Rate', `${d.attackRate}s`],
@@ -993,10 +1014,10 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
       const im = document.createElement('img');
       im.src = towerIcon(r);
       im.alt = '';
-      b.append(im, el('small', '', x.name));
+      b.append(im, el('small', '', r.name));
       b.dataset.a = 'combine:' + x.name;
-      const blurb = BLURB[x.name] ?? ABILITY.get(r.abilities[0])?.tip ?? '';
-      b.title = `${x.name}
+      const blurb = BLURB[r.name] ?? ABILITY.get(r.abilities[0])?.tip ?? '';
+      b.title = `${r.name}
 ${blurb}
 
 Combine: ${x.parts.map((p) => p.def.name).join(' + ')}`;
@@ -1100,6 +1121,7 @@ function updateHud() {
     s +
     hint +
     speed +
+    autoSkip +
     removing +
     view.guide +
     view.showPath +
@@ -1118,6 +1140,7 @@ function updateHud() {
     multi.size +
     (live ? maze.idx(live.c, live.r) : '') + // same-type towers differ only by cell
     live?.kills +
+    live?.souls +
     share +
     (live ? statuses(live).map((x) => x[0] + x[1]) : '') +
     (creep
@@ -1218,6 +1241,7 @@ requestAnimationFrame(function frame(now) {
     nextCmdAt = now + 250 / Math.max(1, speed);
   }
   if (builder) acc = 0; // nothing runs in the builder
+  if (autoSkip && !replaying && sim.phase === 'build') run(['skip']);
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
     // Replay: mid-wave commands (level buys) land on the tick they were issued.

@@ -119,6 +119,11 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   'black-opal': ['orb', '#1a1a2a', '#8a4ae0', 'y'],
   ehome: ['plant', '#f0e6c8', '#e04a8a', 'b'],
   'wings-stone': ['bird', '#e0c060', '#f0f0f0', 'y'],
+  'regent-diamond': ['pillar', '#f0f4ff', '#ff3a6a', 'b'],
+  'kyparium-core': ['mech', '#2a2a3a', '#4fe0d8', 'b'],
+  'the-blood-king': ['house', '#5a1010', '#e03a3a', 'b'],
+  'cullinan-heart': ['orb', '#fff4c0', '#3a6bff', 'b'],
+  'star-of-eden': ['beast', '#1a5a3a', '#2fbf5a', 'b'],
 };
 // Pedals: hexagonal rune stones in the spell's colour, rimmed by tier (base, Sparkling, Blingbling).
 const SPELL_COLOR: Record<string, string> = {
