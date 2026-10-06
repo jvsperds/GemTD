@@ -65,10 +65,10 @@ level up early. The top-damage tower each wave earns an MVP stack (+10% damage).
 gain +10% damage per 10 kills.
 
 Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `L` buy level ·
-`Space` pause · `1` `2` `3` speed ×1/×2/×4 · `B` scores & settings · `F3` debug overlay ·
+`Space` pause · `1` `2` `3` speed ×1/×2/×4 · `Esc` deselect, or scores & settings · `F3` debug overlay ·
 mouse wheel zoom · right-drag pan.
 
-The menu (`B`) has leaderboards (top score, highest wave, fastest full clear; filter by
+The menu (`Esc`) has leaderboards (top score, highest wave, fastest full clear; filter by
 difficulty or today's daily), new game with Easy/Normal/Hard, the local **Daily challenge**
 (same seed for the whole day), **Watch** replays of finished games, name, speed and volume.
 Closing the tab mid-game is fine: the game resumes on the next load.

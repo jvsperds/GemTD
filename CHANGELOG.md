@@ -9,6 +9,9 @@
   (up to 10); a leaking boss deals 10 × its HP left × (1 + endless waves / 10), capped at 100.
 - **Auto-skip:** hold Skip to skip every turn; press it again to stop.
 - Damage chart and creep HP use k/M/B/T/Qa… suffixes, so long-run numbers stay readable.
+- **Board look:** the field sits in a raised wall of grey stone with a gold trim, corner studs and
+  torch pillars; deeper emerald tiles, boxed waypoint markers and a GEM TD logo in the header.
+- **Esc** clears the selection, or opens and closes the menu when nothing is selected (was `B`).
 
 ## 0.3.0 — 2026-10-01
 

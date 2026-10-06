@@ -33,6 +33,12 @@ const TOWER_H = 0.2; // front-face height of a tower's own (lower) base, in cell
 export const MAX_PARTICLES = 800;
 const HUD_H = 44;
 const PANEL_H = 150; // bottom panel
+const FRAME = 2; // stone border around the board, in cells
+/** Cheap deterministic 0..1 noise for cosmetic per-cell variation. */
+const hash2 = (c: number, r: number) => {
+  const n = Math.sin(c * 127.1 + r * 311.7) * 43758.5;
+  return n - Math.floor(n);
+};
 
 /** In-place insertion sort by ground y: near O(n) because order barely changes between frames. */
 export function sortByY<T extends { y: number }>(a: T[]) {
@@ -920,12 +926,13 @@ export class Renderer {
   setZoom(zoom: number, sx: number, sy: number, recentre = false) {
     const d = this.dpr;
     [sx, sy] = [sx * d, sy * d];
-    const base = (Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) * d) / this.maze.w;
+    const base =
+      (Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) * d) / (this.maze.w + 2 * FRAME);
     const cell = Math.max(4, Math.floor(base * Math.min(4, Math.max(1, zoom))));
     this.zoom = cell / base;
     if (recentre) {
       this.panX = Math.floor((this.canvas.width - cell * this.maze.w) / 2);
-      this.panY = HUD_H * d;
+      this.panY = Math.round(HUD_H * d + FRAME * cell);
     } else {
       this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
       this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
@@ -1016,6 +1023,116 @@ export class Renderer {
     });
   }
 
+  /** Torch pillars on the frame, in board cells: two per side, clear of the middle gates. */
+  private torches(): [number, number][] {
+    const { w, h } = this.maze,
+      e = -FRAME / 2,
+      qx = Math.round(w / 4),
+      qy = Math.round(h / 4);
+    return [
+      ...[qx + 0.5, w - qx - 0.5].flatMap((x): [number, number][] => [
+        [x, e],
+        [x, h - e],
+      ]),
+      ...[qy + 0.5, h - qy - 0.5].flatMap((y): [number, number][] => [
+        [e, y],
+        [w - e, y],
+      ]),
+    ];
+  }
+
+  /** Raised wall of the same grey cubes as the outer ground, a soft shadow fading into the
+   * ground around it, a gold inner trim, and taller torch/corner pillars. Baked once per zoom;
+   * `m` is the margin for the shadow and the cubes' lift. */
+  private frame() {
+    const { maze, cell: s } = this;
+    const F = FRAME,
+      o = F * s,
+      m = Math.ceil(s * 1.5),
+      W = maze.w * s + 2 * o,
+      H = maze.h * s + 2 * o;
+    return this.sprite('frame', W + 2 * m, H + 2 * m, (g) => {
+      g.translate(m, m);
+      // Soft shadow: the wall sits on the ground instead of being cut out of it.
+      g.save();
+      g.shadowColor = 'rgba(0,0,0,0.7)';
+      g.shadowBlur = s * 1.2;
+      g.shadowOffsetY = s * 0.3;
+      g.fillStyle = '#1a1714';
+      g.fillRect(0, 0, W, H);
+      g.restore();
+      // One cube: lit top, darker front face, thin highlight, like the terrain tile.
+      const cube = (x: number, y: number, w: number, d: number, lift: number, base: string) => {
+        g.fillStyle = shade(base, 0.55);
+        g.fillRect(x, y - lift + d, w, lift);
+        g.fillStyle = base;
+        g.fillRect(x, y - lift, w, d);
+        g.fillStyle = shade(base, 1.2);
+        g.fillRect(x, y - lift, w, Math.max(1, s / 12));
+        g.fillStyle = 'rgba(0,0,0,0.25)';
+        g.fillRect(x + w - 1, y - lift, 1, d);
+      };
+      // Wall cubes back to front, outer ring a step lower than the inner one.
+      const n = Math.round(F);
+      for (let r = -n; r < maze.h + n; r++)
+        for (let c = -n; c < maze.w + n; c++) {
+          const ring = Math.min(c + n, r + n, maze.w + n - 1 - c, maze.h + n - 1 - r);
+          if (ring >= n) continue; // the board
+          const v = hash2(c + 99, r + 99);
+          const lift = (0.5 + 0.2 * (ring / Math.max(1, n - 1)) + v * 0.08) * s;
+          cube(o + c * s, o + r * s, s, s, lift, mix('#3a352f', '#575149', v));
+        }
+      // Gold trim where the wall meets the field.
+      const t = Math.max(2, s * 0.14);
+      g.strokeStyle = '#9c7c45';
+      g.lineWidth = t;
+      g.strokeRect(o - t / 2, o - t / 2, maze.w * s + t, maze.h * s + t);
+      g.strokeStyle = 'rgba(240,200,96,0.7)';
+      g.lineWidth = 1;
+      g.strokeRect(o - t + 0.5, o - t + 0.5, maze.w * s + 2 * t - 1, maze.h * s + 2 * t - 1);
+      // Pillars: taller cubes; torches get a bowl, corners a gold stud.
+      const p = s * 1.4;
+      const pillar = (cx: number, cy: number, torch: boolean) => {
+        const x = o + cx * s - p / 2,
+          y = o + cy * s - p / 2,
+          lift = s * 1.05,
+          px = x + p / 2,
+          py = y - lift + p / 2;
+        cube(x, y, p, p, lift, '#605a51');
+        g.beginPath();
+        if (torch) {
+          g.fillStyle = '#1a1612';
+          g.strokeStyle = '#8a7148';
+          g.lineWidth = Math.max(1, s / 12);
+          g.arc(px, py, p * 0.26, 0, 7);
+          g.fill();
+          g.stroke();
+        } else {
+          const d = p * 0.2;
+          g.fillStyle = '#e2c47c';
+          g.moveTo(px, py - d);
+          g.lineTo(px + d, py);
+          g.lineTo(px, py + d);
+          g.lineTo(px - d, py);
+          g.fill();
+        }
+      };
+      const e = -F / 2;
+      for (const [cx, cy] of [
+        [e, e],
+        [maze.w - e, e],
+      ])
+        pillar(cx, cy, false);
+      // Top-to-bottom so lower pillars overlap the wall behind them.
+      for (const [cx, cy] of this.torches().sort((a, b) => a[1] - b[1])) pillar(cx, cy, true);
+      for (const [cx, cy] of [
+        [e, maze.h - e],
+        [maze.w - e, maze.h - e],
+      ])
+        pillar(cx, cy, false);
+    });
+  }
+
   private drawStatic() {
     const { maze, cell: s } = this;
     const top = Math.ceil(s * (BLOCK_H + TALL));
@@ -1024,14 +1141,19 @@ export class Renderer {
     L.height = maze.h * s + top;
     let g = L.getContext('2d')!;
     g.translate(0, top);
-    g.fillStyle = '#111'; // grid lines: the 1px gaps between cells
+    g.fillStyle = '#0a1510'; // grid lines: the 1px gaps between cells
     g.fillRect(0, 0, maze.w * s, maze.h * s);
     const mc = maze.w >> 1,
       mr = maze.h >> 1; // 37×37 map: column/row 18
     for (let r = 0; r < maze.h; r++)
       for (let c = 0; c < maze.w; c++) {
-        g.fillStyle = maze.noBuild[maze.idx(c, r)] ? '#2a2a2a' : '#3b4a3b';
+        const v = hash2(c, r);
+        g.fillStyle = maze.noBuild[maze.idx(c, r)]
+          ? mix('#26292a', '#2e3131', v)
+          : mix('#1f4231', '#27503b', v);
         g.fillRect(c * s, r * s, s - 1, s - 1);
+        g.fillStyle = 'rgba(255,255,255,0.05)'; // lit top edge, so cells read as tiles
+        g.fillRect(c * s, r * s, s - 1, Math.max(1, s / 14));
         const onX = c === mc,
           onY = r === mr;
         if (onX || onY) {
@@ -1045,6 +1167,14 @@ export class Renderer {
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
       }
+    // Vignette: the field darkens toward the wall, as if lit from the middle.
+    const W = maze.w * s,
+      H = maze.h * s;
+    const vg = g.createRadialGradient(W / 2, H / 2, W * 0.3, W / 2, H / 2, W * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.45)');
+    g.fillStyle = vg;
+    g.fillRect(0, 0, W, H);
     const route = maze.route();
     if (route && this.showPath) {
       g.strokeStyle = 'rgba(255,210,74,0.3)';
@@ -1057,17 +1187,23 @@ export class Renderer {
       );
       g.stroke();
     }
-    g.fillStyle = '#fff';
-    g.font = `${Math.max(10, s * 0.6)}px sans-serif`;
+    // Waypoint plaques: dark tile, gold rim, serif letter.
+    g.font = `${Math.max(10, s * 0.62)}px 'Palatino Linotype', Palatino, Georgia, serif`;
     g.textAlign = 'center';
     g.textBaseline = 'middle';
-    maze.waypoints.forEach(([c, r], k) =>
+    g.lineWidth = Math.max(1, s / 16);
+    maze.waypoints.forEach(([c, r], k) => {
+      g.fillStyle = '#0d0f12';
+      g.fillRect(c * s, r * s, s - 1, s - 1);
+      g.strokeStyle = '#8a7148';
+      g.strokeRect(c * s + 0.5, r * s + 0.5, s - 2, s - 2);
+      g.fillStyle = '#f0e6cc';
       g.fillText(
         k === 0 ? 'S' : k === maze.waypoints.length - 1 ? 'E' : String(k),
         (c + 0.5) * s,
-        (r + 0.5) * s,
-      ),
-    );
+        (r + 0.55) * s,
+      );
+    });
     // Blocks go on their own layer so pedals (drawn per frame) sit under a tower's top.
     const B = this.blockLayer;
     B.width = L.width;
@@ -1196,7 +1332,32 @@ export class Renderer {
     tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
     ctx.fillStyle = tp;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    const fm = Math.ceil(s * 1.5) + FRAME * s;
+    ctx.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
     ctx.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
+
+    // Torches: a flickering flame on each pillar and warm light spilling onto the field.
+    this.torches().forEach(([tx, ty], i) => {
+      const f = 0.95 + 0.05 * Math.sin(now / 260 + i * 1.7) * Math.sin(now / 170 + i),
+        cx = X(tx),
+        cy = Y(ty) - s * 1.05,
+        r = s * 3.2;
+      const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gl.addColorStop(0, 'rgba(255,170,70,0.32)');
+      gl.addColorStop(1, 'rgba(255,140,40,0)');
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = gl;
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#ff8a2a';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - s * 0.18 * f, s * 0.17, s * 0.3 * f, 0, 0, 7);
+      ctx.fill();
+      ctx.fillStyle = '#ffe08a';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - s * 0.1 * f, s * 0.08, s * 0.16 * f, 0, 0, 7);
+      ctx.fill();
+    });
 
     // Pedals lie flat on the path: glowing while armed, dim with a refill arc while cooling down,
     // and a shock ring in the spell's colour when a creep sets one off.

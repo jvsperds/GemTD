@@ -988,7 +988,7 @@
       /* Top bar: centred info, menu on the right */
       #hud {
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: auto 1fr auto;
         padding: 0 0 0 12px;
         min-height: 38px;
         border-width: 0 0 1px;
@@ -1007,6 +1007,21 @@
       }
       #gold {
         color: var(--gold);
+      }
+      #logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 20px;
+        letter-spacing: 3px;
+        color: var(--gold);
+        text-shadow: 0 1px 2px #000;
+        white-space: nowrap;
+      }
+      #logo svg {
+        width: 22px;
+        height: 22px;
+        filter: drop-shadow(0 0 4px #f0c86066);
       }
       #menubtn {
         height: 100%;
@@ -1284,7 +1299,8 @@
           min-height: 48px;
           font-size: 9px;
         }
-        #menubtn kbd {
+        #menubtn kbd,
+        #logo span {
           display: none;
         }
         #book {
@@ -1358,9 +1374,18 @@
       aria-label="Game board. Use arrow keys to move the board cursor. Press Enter to act on its cell."
     ></canvas>
     <header id="hud" class="glass">
+      <div id="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12,1 23,12 12,23 1,12" fill="#b8913f" />
+          <polygon points="12,1 12,12 1,12" fill="#f6d77e" />
+          <polygon points="12,1 23,12 12,12" fill="#e2b85a" />
+          <polygon points="1,12 12,12 12,23" fill="#8a6a2c" />
+        </svg>
+        <span>GEM TD</span>
+      </div>
       <div id="hudinfo"></div>
-      <button id="menubtn" data-a="menu" title="Menu (B)">
-        <i data-icon="menu"></i> Menu <kbd>B</kbd>
+      <button id="menubtn" data-a="menu" title="Menu (Esc)">
+        <i data-icon="menu"></i> Menu <kbd>Esc</kbd>
       </button>
     </header>
     <div id="hint" role="status" aria-live="polite"></div>
@@ -1491,7 +1516,7 @@
         <button data-tab="hero">Hero</button>
         <button data-tab="settings">Settings</button>
         <span style="flex: 1"></span>
-        <button id="close">✕ <kbd>B</kbd></button>
+        <button id="close">✕ <kbd>Esc</kbd></button>
       </div>
       <section data-pane="scores">
         <p>
