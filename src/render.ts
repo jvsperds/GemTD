@@ -1292,9 +1292,13 @@ export class Renderer {
       for (const p of this.pending) {
         const pc = p % this.maze.w,
           pr = (p / this.maze.w) | 0;
-        ctx.beginPath();
-        ctx.ellipse(X(pc + 0.5), Y(pr + 0.55), s * 0.55, s * 0.4, 0, 0, 7);
-        ctx.stroke();
+        // Trace the square base: its top face plus front face.
+        ctx.strokeRect(
+          X(pc) + this.dpr,
+          Y(pr - TOWER_H) + this.dpr,
+          s - 2 * this.dpr,
+          s * (1 + TOWER_H) - 2 * this.dpr,
+        );
       }
       ctx.restore();
     }
