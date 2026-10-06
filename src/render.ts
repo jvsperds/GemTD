@@ -475,6 +475,10 @@ function gemBody(g: CanvasRenderingContext2D, gem: string, c: string, m: number,
   face([tab[0], tab[1], [tab[1][0] * 0.4, tab[1][1] * 0.4]], 'rgba(255,255,255,0.35)');
 }
 
+const HEAD_Y = 0.48; // head centre below the tower sprite's top, in cells
+/** Head radius in cells: gems grow with quality, special towers are biggest. */
+const headSize = (quality: number) => (quality ? 0.24 + 0.035 * quality : 0.46);
+
 /** Standing tower into an s × s(1 + TOWER_H + TALL) canvas: gem-cut stone, plinth, shaft, head. */
 function drawTower(
   g: CanvasRenderingContext2D,
@@ -504,7 +508,7 @@ function drawTower(
   tri([q, q, s - q, q, s - q, s - q, q, s - q], st);
   const cx = s / 2,
     foot = T + s * 0.62,
-    head = s * (quality ? 0.24 + 0.035 * quality : 0.46);
+    head = s * headSize(quality);
   // Soft contact shadow, then a two-step drum plinth in the accent colour.
   g.fillStyle = 'rgba(0,0,0,0.35)';
   g.beginPath();
@@ -529,7 +533,7 @@ function drawTower(
   drum(s * 0.36, foot, s * 0.1, shade(a, 0.8));
   drum(s * 0.26, foot - s * 0.1, s * 0.08, a);
   // Shaft up to the head: a rounded column, lit from the left.
-  const top = s * 0.48;
+  const top = s * HEAD_Y;
   drum(s * 0.12, foot - s * 0.18, foot - s * 0.18 - top, shade(c, 0.85));
   // Head on its own canvas so the rounding wash only touches the head's pixels.
   const hd = bake(head * 2 + 2, head * 2 + 2, (h) => {
@@ -841,6 +845,7 @@ export class Renderer {
   private staticLayer = document.createElement('canvas');
   private blockLayer = document.createElement('canvas'); // stones/towers, drawn over the pedals
   private staticDirty = true;
+  private dimKey = ''; // pending cells the block layer was last dimmed for
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
   private sprites = new Map<string, HTMLCanvasElement>();
   private terrainPat: [number, CanvasPattern] | null = null;
@@ -1071,20 +1076,24 @@ export class Renderer {
     g.translate(0, top);
     // Blocks in row order so nearer rows overlap the ones behind.
     const towers = new Map(this.combat.towers.map((t) => [maze.idx(t.c, t.r), t]));
+    // While a round's gems wait to be picked, older towers are greyed so the new ones stand out.
+    const dim = this.pending.length ? new Set(this.pending) : null;
     for (let r = 0; r < maze.h; r++)
       for (let c = 0; c < maze.w; c++) {
         const i = maze.idx(c, r),
           cell = maze.cells[i];
         if (cell !== WALL && cell !== ROCK) continue;
         const t = towers.get(i);
-        if (t)
+        if (t) {
           // The tower's base sits on its cell; plain stones stand taller.
+          g.filter = dim && !dim.has(i) ? 'grayscale(0.85) brightness(0.65)' : 'none';
           g.drawImage(
             this.tower(towerKey(t.def), t.def.type, t.def.quality),
             c * s,
             (r - TOWER_H - TALL) * s,
           );
-        else
+          g.filter = 'none';
+        } else
           g.drawImage(this.block(cell === WALL ? '#1c1c24' : '#8a8a8a'), c * s, (r - BLOCK_H) * s);
       }
     // Quality numbers last, so a tower in front never hides the one behind's number.
@@ -1177,6 +1186,8 @@ export class Renderer {
 
   /** alpha = fraction of the way from the previous tick to the current one; dt = frame seconds. */
   render(alpha: number, dt: number, now: number) {
+    const dimKey = this.pending.join();
+    if (dimKey !== this.dimKey) [this.dimKey, this.staticDirty] = [dimKey, true];
     if (this.staticDirty) this.drawStatic();
     const { ctx, cell: s, panX, panY } = this;
     const X = (x: number) => (panX + x * s) | 0;
@@ -1261,15 +1272,21 @@ export class Renderer {
           ctx.stroke();
         }
 
-    ctx.strokeStyle = '#6ff';
-    ctx.lineWidth = this.dpr;
-    for (const h of this.hints)
-      ctx.strokeRect(
-        X(h % this.maze.w) + 2,
-        Y(((h / this.maze.w) | 0) - TOWER_H) + 2,
-        s - 4,
-        s - 4,
-      );
+    // Combinable towers: a soft pulsing aura over the tower body.
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const aura = 0.35 + 0.2 * Math.sin(now / 300);
+    for (const h of this.hints) {
+      const cx = X((h % this.maze.w) + 0.5),
+        cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
+        rad = s * 0.85;
+      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      gr.addColorStop(0, `rgba(170,255,240,${aura})`);
+      gr.addColorStop(1, 'rgba(170,255,240,0)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+    }
+    ctx.restore();
     if (this.pending.length) {
       ctx.save();
       ctx.strokeStyle = `rgba(255,240,150,${0.55 + 0.35 * Math.sin(now / 200)})`;
@@ -1279,11 +1296,66 @@ export class Renderer {
       for (const p of this.pending) {
         const pc = p % this.maze.w,
           pr = (p / this.maze.w) | 0;
+        // Trace the square base: its top face plus front face.
+        ctx.strokeRect(
+          X(pc) + this.dpr,
+          Y(pr - TOWER_H) + this.dpr,
+          s - 2 * this.dpr,
+          s * (1 + TOWER_H) - 2 * this.dpr,
+        );
+        // The back edge crosses the gem standing on the base: redraw that strip so it passes behind.
+        const t = this.combat.towerAt(pc, pr);
+        if (!t) continue;
+        const ey = Y(pr - TOWER_H);
+        ctx.save();
+        ctx.shadowBlur = 0;
         ctx.beginPath();
-        ctx.ellipse(X(pc + 0.5), Y(pr + 0.55), s * 0.55, s * 0.4, 0, 0, 7);
-        ctx.stroke();
+        ctx.rect(X(pc) + 3 * this.dpr, ey - s / 4, s - 6 * this.dpr, s / 2); // spare the side edges
+        ctx.clip();
+        ctx.drawImage(
+          this.tower(towerKey(t.def), t.def.type, t.def.quality),
+          X(pc),
+          Y(pr - TOWER_H - TALL),
+        );
+        ctx.restore();
       }
       ctx.restore();
+    }
+    // Crown floating over the tower with the most MVP awards (ties: more damage dealt).
+    let king: Tower | null = null;
+    for (const t of this.combat.towers)
+      if (
+        t.mvp &&
+        (!king || t.mvp > king.mvp || (t.mvp === king.mvp && t.damageDealt > king.damageDealt))
+      )
+        king = t;
+    if (king) {
+      const w = s * 0.5;
+      const crown = this.sprite(`crown${w}`, w, w * 0.7, (g) => {
+        const h = w * 0.7;
+        g.fillStyle = '#ffd24a';
+        g.strokeStyle = '#6b4a00';
+        g.lineWidth = Math.max(1, w / 16);
+        g.beginPath();
+        g.moveTo(w * 0.08, h * 0.92);
+        g.lineTo(w * 0.04, h * 0.25);
+        g.lineTo(w * 0.3, h * 0.55);
+        g.lineTo(w * 0.5, h * 0.08);
+        g.lineTo(w * 0.7, h * 0.55);
+        g.lineTo(w * 0.96, h * 0.25);
+        g.lineTo(w * 0.92, h * 0.92);
+        g.closePath();
+        g.fill();
+        g.stroke();
+        g.fillStyle = '#e8364a';
+        g.beginPath();
+        g.arc(w * 0.5, h * 0.68, w * 0.07, 0, 7);
+        g.fill();
+      });
+      // Sits just above the head, whose size depends on the tower.
+      const head = king.r - TOWER_H - TALL + HEAD_Y - headSize(king.def.quality);
+      const bob = 0.05 * Math.sin(now / 400);
+      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(head + bob - 0.05) - crown.height);
     }
     // Attack ranges: all towers when Ranges is on, the selected one always.
     const selT =
