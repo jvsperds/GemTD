@@ -475,6 +475,10 @@ function gemBody(g: CanvasRenderingContext2D, gem: string, c: string, m: number,
   face([tab[0], tab[1], [tab[1][0] * 0.4, tab[1][1] * 0.4]], 'rgba(255,255,255,0.35)');
 }
 
+const HEAD_Y = 0.48; // head centre below the tower sprite's top, in cells
+/** Head radius in cells: gems grow with quality, special towers are biggest. */
+const headSize = (quality: number) => (quality ? 0.24 + 0.035 * quality : 0.46);
+
 /** Standing tower into an s × s(1 + TOWER_H + TALL) canvas: gem-cut stone, plinth, shaft, head. */
 function drawTower(
   g: CanvasRenderingContext2D,
@@ -504,7 +508,7 @@ function drawTower(
   tri([q, q, s - q, q, s - q, s - q, q, s - q], st);
   const cx = s / 2,
     foot = T + s * 0.62,
-    head = s * (quality ? 0.24 + 0.035 * quality : 0.46);
+    head = s * headSize(quality);
   // Soft contact shadow, then a two-step drum plinth in the accent colour.
   g.fillStyle = 'rgba(0,0,0,0.35)';
   g.beginPath();
@@ -529,7 +533,7 @@ function drawTower(
   drum(s * 0.36, foot, s * 0.1, shade(a, 0.8));
   drum(s * 0.26, foot - s * 0.1, s * 0.08, a);
   // Shaft up to the head: a rounded column, lit from the left.
-  const top = s * 0.48;
+  const top = s * HEAD_Y;
   drum(s * 0.12, foot - s * 0.18, foot - s * 0.18 - top, shade(c, 0.85));
   // Head on its own canvas so the rounding wash only touches the head's pixels.
   const hd = bake(head * 2 + 2, head * 2 + 2, (h) => {
@@ -1348,8 +1352,10 @@ export class Renderer {
         g.arc(w * 0.5, h * 0.68, w * 0.07, 0, 7);
         g.fill();
       });
-      const bob = 0.06 * Math.sin(now / 400);
-      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(king.r - TOWER_H - TALL - 0.2 + bob));
+      // Sits just above the head, whose size depends on the tower.
+      const head = king.r - TOWER_H - TALL + HEAD_Y - headSize(king.def.quality);
+      const bob = 0.05 * Math.sin(now / 400);
+      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(head + bob - 0.05) - crown.height);
     }
     // Attack ranges: all towers when Ranges is on, the selected one always.
     const selT =
