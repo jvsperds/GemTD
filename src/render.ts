@@ -1317,6 +1317,40 @@ export class Renderer {
       }
       ctx.restore();
     }
+    // Crown floating over the tower with the most MVP awards (ties: more damage dealt).
+    let king: Tower | null = null;
+    for (const t of this.combat.towers)
+      if (
+        t.mvp &&
+        (!king || t.mvp > king.mvp || (t.mvp === king.mvp && t.damageDealt > king.damageDealt))
+      )
+        king = t;
+    if (king) {
+      const w = s * 0.5;
+      const crown = this.sprite(`crown${w}`, w, w * 0.7, (g) => {
+        const h = w * 0.7;
+        g.fillStyle = '#ffd24a';
+        g.strokeStyle = '#6b4a00';
+        g.lineWidth = Math.max(1, w / 16);
+        g.beginPath();
+        g.moveTo(w * 0.08, h * 0.92);
+        g.lineTo(w * 0.04, h * 0.25);
+        g.lineTo(w * 0.3, h * 0.55);
+        g.lineTo(w * 0.5, h * 0.08);
+        g.lineTo(w * 0.7, h * 0.55);
+        g.lineTo(w * 0.96, h * 0.25);
+        g.lineTo(w * 0.92, h * 0.92);
+        g.closePath();
+        g.fill();
+        g.stroke();
+        g.fillStyle = '#e8364a';
+        g.beginPath();
+        g.arc(w * 0.5, h * 0.68, w * 0.07, 0, 7);
+        g.fill();
+      });
+      const bob = 0.06 * Math.sin(now / 400);
+      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(king.r - TOWER_H - TALL - 0.2 + bob));
+    }
     // Attack ranges: all towers when Ranges is on, the selected one always.
     const selT =
       this.selected >= 0
