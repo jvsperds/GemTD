@@ -18,6 +18,7 @@ import {
   type DebuffStack,
   type WaveSim,
 } from './waves';
+import { ENDGAME } from './endgame';
 import { PEDAL, pedalOf, SPELL, TIERS, type Spell } from './pedals';
 
 export { rng };
@@ -50,6 +51,7 @@ export interface Tower {
   magicDealt: number;
   kills: number;
   mvp: number;
+  souls: number; // Soul Harvest: attack damage gained from kills
   disarmT: number;
   // Melancholy: a positive self-skill (not a disarm, so calm can't dispel it); attacks deal no damage while > 0.
   melancholyT: number;
@@ -166,6 +168,8 @@ export interface Fx {
   greedAura: number; // range, 5% ×10 gold
   enemy: EnemyAura[];
   pedal: [Spell, number] | null; // spell and tier
+  maxHp: number; // fraction of target max HP per hit, pure
+  souls: number; // fraction of a killed creep's max HP gained as attack damage
 }
 
 const lvl = (id: string) => +(id.match(/(\d)$/)?.[1] ?? 1);
@@ -197,6 +201,8 @@ export function parseFx(d: GemDef): Fx {
     greedAura: 0,
     enemy: [],
     pedal: null,
+    maxHp: 0,
+    souls: 0,
   };
   for (const id of d.abilities) {
     const n = lvl(id);
@@ -214,7 +220,12 @@ export function parseFx(d: GemDef): Fx {
     else if (id === 'tower_fenliejian_xianyan') f.targets = 5;
     else if (id === 'tower_fenliejian_you')
       // Codex: U-238 irradiates 9, U-235 10, Depleted-Kyparium 15.
-      f.targets = d.name === 'Uranium-238' ? 9 : d.name === 'Depleted-Kyparium' ? 15 : 10;
+      f.targets =
+        d.name === 'Uranium-238'
+          ? 9
+          : d.name === 'Depleted-Kyparium' || d.name === 'Kyparium Core'
+            ? 15
+            : 10;
     else if (id === 'tower_chain_frost') f.chainFrost = true;
     else if (id === 'tower_ranjin') f.magicPct = 1;
     else if (id === 'tower_10jiyun') f.stun = 0.1;
@@ -225,6 +236,8 @@ export function parseFx(d: GemDef): Fx {
     else if (id === 'tower_5shihua') f.gaze = true;
     else if (id === 'tower_aojiao') f.melancholy = true;
     else if (id === 'tower_true_sight') f.trueSight = true;
+    else if (id === 'endgame_maxhp') f.maxHp = ENDGAME.maxHp;
+    else if (id === 'endgame_souls') f.souls = ENDGAME.souls;
     else if (id === 'tower_speed2') f.as = 500;
     else if (id === 'tower_speed1') f.as = 200;
     else if (id === 'tower_speed_aura_guichu') f.asAura = [200, 200];
@@ -333,6 +346,7 @@ export class Combat {
       magicDealt: 0,
       kills: 0,
       mvp: 0,
+      souls: 0,
       disarmT: 0,
       melancholyT: 0,
       haste: { v: 0, t: 0 },
@@ -469,7 +483,10 @@ export class Combat {
     if (t) {
       t.damageDealt += dmg;
       if (magic) t.magicDealt += dmg;
-      if (!cr.alive) t.kills++;
+      if (!cr.alive) {
+        t.kills++;
+        t.souls += cr.def.hp * this.tfx(t).souls;
+      }
     }
   }
 
@@ -485,7 +502,7 @@ export class Combat {
       cr.shield--;
       return;
     }
-    let dmg = (d.damage + d.bonusDamage) * this.damageMult(t);
+    let dmg = (d.damage + d.bonusDamage + t.souls) * this.damageMult(t);
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
     if (t.crit.t > 0 && this.rand() < SKILL_CRIT_CHANCE) dmg *= t.crit.v;
     const p = this.heroProc; // checked only when owned, so older replays draw the same numbers
@@ -515,6 +532,7 @@ export class Combat {
     if (f.gaze && this.rand() < GAZE.chance)
       for (const o of this.near(cr, GAZE.range)) o.stunT = o.ampT = GAZE.time;
     this.hit(t, cr, dmg);
+    if (f.maxHp) this.deal(t, cr, cr.def.hp * f.maxHp * (cr.def.boss ? ENDGAME.bossMaxHp : 1));
     if (t.bonds.t > 0) {
       // Fatal Bonds hero skill: pure damage to the enemy farthest from the tower.
       let far: Creep | null = null;

@@ -4,16 +4,18 @@ import map from '../../data/map.json';
 import quality from '../../data/quality_levels.json';
 import towerData from '../../data/towers.json';
 import waves from '../../data/waves.json';
+import { ancientGems, ENDGAME_TOWERS } from './endgame';
 import { Game, type LevelDef } from './game';
 import { PEDALS } from './pedals';
 import { Maze, type MapData } from './maze';
 import { allDefs, Combat, type GemDef, type SpecialDef } from './towers';
 import { WaveSim, type WaveEntry } from './waves';
 
-export const DEFS = allDefs(gems as Record<string, GemDef>, {
-  ...(towerData as unknown as Record<string, SpecialDef>),
-  ...PEDALS,
-});
+const GEMS = gems as Record<string, GemDef>;
+export const DEFS = allDefs(
+  { ...GEMS, ...ancientGems(GEMS) },
+  { ...(towerData as unknown as Record<string, SpecialDef>), ...ENDGAME_TOWERS, ...PEDALS },
+);
 
 // ponytail: difficulty only scales creep HP (BUILD.md §3.7: endless scaling is HP/armor too).
 export const DIFFICULTY = {

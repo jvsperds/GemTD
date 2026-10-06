@@ -6,12 +6,18 @@ import type { Tower } from './sim/towers';
 type Kind = 'magic' | 'physical' | 'total';
 const amount = (t: Tower, k: Kind) =>
   k === 'magic' ? t.magicDealt : k === 'physical' ? t.damageDealt - t.magicDealt : t.damageDealt;
-const short = (n: number) =>
-  n >= 1e6
-    ? `${(n / 1e6).toFixed(1)}M`
-    : n >= 1e3
-      ? `${(n / 1e3).toFixed(1)}k`
-      : String(Math.round(n));
+const SUFFIX = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+/** Compact number for long endless runs: 1234 → 1.2k, 7.4e11 → 739.6B, past Dc → 1.2e36. */
+export function short(n: number) {
+  const k = n < 1e3 ? 0 : Math.floor(Math.log10(n) / 3);
+  if (k >= SUFFIX.length) return n.toExponential(1).replace('+', '');
+  if (!k) return String(Math.round(n));
+  // Rounding can carry into the next unit (999.96k → 1000.0k): step up instead.
+  const v = n / 1e3 ** k;
+  return v >= 999.95 && k + 1 < SUFFIX.length
+    ? `1.0${SUFFIX[k + 1]}`
+    : `${v.toFixed(1)}${SUFFIX[k]}`;
+}
 
 export function initDmgChart(towers: () => Tower[], canvas: HTMLCanvasElement) {
   const $ = (id: string) => document.getElementById(id)!;
@@ -72,7 +78,7 @@ export function initDmgChart(towers: () => Tower[], canvas: HTMLCanvasElement) {
         bar.style.width = `${(n / top) * 100}%`;
         bar.style.background = colour;
         row.append(bar, icon, name, val);
-        row.title = `${t.def.name}: ${Math.round(n)} ${kind} damage`;
+        row.title = `${t.def.name}: ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${kind} damage`;
         return row;
       }),
     );

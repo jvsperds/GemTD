@@ -114,7 +114,7 @@ export function initBook(opts: {
       const row = el('div', 'recipe');
       row.title = opts.tip?.(d as SpecialDef) ?? '';
       const im = document.createElement('img');
-      im.src = towerIcon({ ...d, type: 'S', quality: 0 });
+      im.src = towerIcon(d);
       im.alt = '';
       row.append(im);
       const text = el('div');

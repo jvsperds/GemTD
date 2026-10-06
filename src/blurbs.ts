@@ -47,4 +47,9 @@ export const BLURB: Record<string, string> = {
   'Black Opal': 'Big hitter with critical strikes.',
   Ehome: 'Huge attack speed aura for nearby towers.',
   'Wings Stone': 'Full-damage splash over a wide area.',
+  'Regent Diamond': 'Critical splash that also cuts 2% of max HP per hit.',
+  'Kyparium Core': 'Irradiates 15 enemies, each hit cutting 2% of max HP.',
+  'The Blood King': 'Forked lightning and burns; grows stronger with every kill.',
+  'Cullinan Heart': 'Colossal crits whose damage grows with every kill.',
+  'Star of Eden': 'Freezing poison that cuts max HP and grows with kills.',
 };

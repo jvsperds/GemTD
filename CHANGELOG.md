@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **End-game towers:** Ancient (Q7) gems combine from two Great gems of one type; five new towers
+  (top special + Ancient gem) add Sunder (2% max HP per hit, half on bosses) or Soul Harvest
+  (kills add 1% of the creep's max HP to attack damage) for long endless runs.
+- **Endless bosses:** boss waves past wave 50 add a boss per 20 endless waves and per 3 clean waves
+  (up to 10); a leaking boss deals 10 × its HP left × (1 + endless waves / 10), capped at 100.
+- **Auto-skip:** hold Skip to skip every turn; press it again to stop.
+- Damage chart and creep HP use k/M/B/T/Qa… suffixes, so long-run numbers stay readable.
+
 ## 0.3.0 — 2026-10-01
 
 - **Self-hosting:** login page with signed cookie replaces Basic auth; self-registration capped by
