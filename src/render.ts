@@ -1299,6 +1299,21 @@ export class Renderer {
           s - 2 * this.dpr,
           s * (1 + TOWER_H) - 2 * this.dpr,
         );
+        // The back edge crosses the gem standing on the base: redraw that strip so it passes behind.
+        const t = this.combat.towerAt(pc, pr);
+        if (!t) continue;
+        const ey = Y(pr - TOWER_H);
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.rect(X(pc) + 3 * this.dpr, ey - s / 4, s - 6 * this.dpr, s / 2); // spare the side edges
+        ctx.clip();
+        ctx.drawImage(
+          this.tower(towerKey(t.def), t.def.type, t.def.quality),
+          X(pc),
+          Y(pr - TOWER_H - TALL),
+        );
+        ctx.restore();
       }
       ctx.restore();
     }
