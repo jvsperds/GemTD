@@ -44,7 +44,7 @@ test('finished game is on the leaderboard after reload with network blocked', as
   await page.reload();
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
   await page.locator('#cancelnew').click(); // dismiss the new-game dialog
-  await page.keyboard.press('b');
+  await page.keyboard.press('Escape');
   await expect(page.locator('#rows tr')).toHaveCount(1);
   await expect(page.locator('#rows')).toContainText('Player');
   await expect(page.locator('#hud')).toContainText('Wave 0/');

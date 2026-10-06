@@ -308,6 +308,13 @@ function act(a: string) {
     return view.invalidate();
   }
   if (a === 'path') return (remember('path', (view.showPath = !view.showPath)), view.invalidate());
+  if (a === 'escape') {
+    // Esc backs out of a selection first; with nothing selected it opens/closes the menu.
+    if (document.querySelector('dialog[open]')) return; // the dialog closes itself
+    const menuOpen = !document.querySelector<HTMLElement>('#menu')!.hidden;
+    if (menuOpen || !(sel || selCreep || picking || removing || multi.size)) return menu.toggle();
+    a = 'deselect';
+  }
   if (a === 'deselect')
     return ((sel = selCreep = picking = null), (removing = false), (multi = new Set()));
   if (a === 'pause') return (speed = speed ? 0 : settings.speed || 1);
@@ -355,8 +362,7 @@ const keys: Record<string, string> = {
   p: 'path',
   v: 'ranges',
   h: 'book',
-  Escape: 'deselect',
-  b: 'menu',
+  Escape: 'escape',
   ' ': 'pause',
 };
 const buttons = [

@@ -139,7 +139,7 @@ test('browser: log in, play under service worker, saves land with no 401', async
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   if (await page.locator('#newdlg[open]').count()) await page.locator('#cancelnew').click();
-  await page.keyboard.press('b'); // menu → settings → volume change saves the profile
+  await page.keyboard.press('Escape'); // menu → settings → volume change saves the profile
   await page.click('button[data-tab=settings]');
   await page.locator('#volume').fill('0.2');
   await expect.poll(settingsOnDisk).toBe(0.2);
