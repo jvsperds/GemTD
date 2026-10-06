@@ -851,6 +851,10 @@ export class Renderer {
   private staticLayer = document.createElement('canvas');
   private blockLayer = document.createElement('canvas'); // stones/towers, drawn over the pedals
   private staticDirty = true;
+  /** Terrain, wall, board and torch glow composited at the current pan; rebuilt on pan/zoom/edits
+   * so a frame blits it once instead of repainting them (software raster can't keep up). */
+  private bg = document.createElement('canvas');
+  private bgKey = '';
   private dimKey = ''; // pending cells the block layer was last dimmed for
   // ponytail: one canvas per sprite, not a packed sheet; pack if drawImage switching shows in profiles.
   private sprites = new Map<string, HTMLCanvasElement>();
@@ -911,12 +915,16 @@ export class Renderer {
    * phones render at native resolution; public inputs (clicks, pans) stay in CSS pixels. */
   dpr = 1;
 
-  /** Per-frame shadowBlur is costly on mobile GPUs, so touch devices skip live glows. */
-  glow = matchMedia('(pointer: coarse)').matches ? 0 : 1;
+  /** Low graphics (default on touch devices, where per-frame shadowBlur is costly): no live glows,
+   * no particles, combine hints as plain rings, and 1 device pixel per CSS pixel. */
+  low = matchMedia('(pointer: coarse)').matches;
+  get glow() {
+    return this.low ? 0 : 1;
+  }
 
   /** Fit the map to the window and recentre. */
   resize() {
-    this.dpr = Math.min(devicePixelRatio || 1, 1.5); // phones report 3: 4x the pixels for little visible gain
+    this.dpr = Math.min(devicePixelRatio || 1, this.low ? 1 : 1.5); // phones report 3: 4x the pixels for little visible gain
     this.canvas.width = Math.round(innerWidth * this.dpr);
     this.canvas.height = Math.round(innerHeight * this.dpr);
     this.setZoom(this.zoom, innerWidth / 2, innerHeight / 2, true);
@@ -1247,10 +1255,11 @@ export class Renderer {
         g.fillText(String(t.def.quality), x, y);
       }
     this.staticDirty = false;
+    this.staticVer++;
   }
 
   private emit(x: number, y: number, vx: number, vy: number, life: number, colour: number) {
-    if (this.particles >= MAX_PARTICLES) return;
+    if (this.low || this.particles >= MAX_PARTICLES) return;
     const p = this.px,
       o = this.particles++ * 6;
     p[o] = x;
@@ -1320,6 +1329,35 @@ export class Renderer {
         this.emit(t.c + 0.2 + Math.random() * 0.6, t.r - TALL, 0, -0.8, 0.8, 5);
   }
 
+  private staticVer = 0;
+  private drawBg() {
+    const { cell: s, panX, panY } = this,
+      B = this.bg;
+    if (B.width !== this.canvas.width || B.height !== this.canvas.height)
+      [B.width, B.height] = [this.canvas.width, this.canvas.height];
+    const g = B.getContext('2d', { alpha: false })!;
+    const tp = this.terrain();
+    tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
+    g.fillStyle = tp;
+    g.fillRect(0, 0, B.width, B.height);
+    const fm = Math.ceil(s * 1.5) + FRAME * s;
+    g.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
+    g.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
+    // Torches: warm light spilling onto the field.
+    g.globalCompositeOperation = 'lighter';
+    for (const [tx, ty] of this.torches()) {
+      const cx = (panX + tx * s) | 0,
+        cy = ((panY + ty * s) | 0) - s * 1.05,
+        r = s * 3.2;
+      const gl = g.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gl.addColorStop(0, 'rgba(255,170,70,0.32)');
+      gl.addColorStop(1, 'rgba(255,140,40,0)');
+      g.fillStyle = gl;
+      g.fillRect(cx - r, cy - r, r * 2, r * 2);
+    }
+    g.globalCompositeOperation = 'source-over';
+  }
+
   /** alpha = fraction of the way from the previous tick to the current one; dt = frame seconds. */
   render(alpha: number, dt: number, now: number) {
     const dimKey = this.pending.join();
@@ -1328,36 +1366,31 @@ export class Renderer {
     const { ctx, cell: s, panX, panY } = this;
     const X = (x: number) => (panX + x * s) | 0;
     const Y = (y: number) => (panY + y * s) | 0;
-    const tp = this.terrain();
-    tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
-    ctx.fillStyle = tp;
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    const fm = Math.ceil(s * 1.5) + FRAME * s;
-    ctx.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
-    ctx.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
-
-    // Torches: a flickering flame on each pillar and warm light spilling onto the field.
-    this.torches().forEach(([tx, ty], i) => {
-      const f = 0.95 + 0.05 * Math.sin(now / 260 + i * 1.7) * Math.sin(now / 170 + i),
-        cx = X(tx),
-        cy = Y(ty) - s * 1.05,
-        r = s * 3.2;
-      const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      gl.addColorStop(0, 'rgba(255,170,70,0.32)');
-      gl.addColorStop(1, 'rgba(255,140,40,0)');
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = gl;
-      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = '#ff8a2a';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy - s * 0.18 * f, s * 0.17, s * 0.3 * f, 0, 0, 7);
-      ctx.fill();
-      ctx.fillStyle = '#ffe08a';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy - s * 0.1 * f, s * 0.08, s * 0.16 * f, 0, 0, 7);
-      ctx.fill();
+    const bgKey = `${panX | 0},${panY | 0},${s},${this.canvas.width},${this.canvas.height},${this.staticVer}`;
+    if (bgKey !== this.bgKey) {
+      this.bgKey = bgKey;
+      this.drawBg();
+    }
+    ctx.drawImage(this.bg, 0, 0);
+    // Torch flames flicker per frame; their light is baked into the background.
+    ctx.fillStyle = '#ff8a2a';
+    const flames = this.torches().map(([tx, ty], i) => {
+      const f = 0.95 + 0.05 * Math.sin(now / 260 + i * 1.7) * Math.sin(now / 170 + i);
+      return [X(tx), Y(ty) - s * 1.05, f] as const;
     });
+    ctx.beginPath();
+    for (const [cx, cy, f] of flames) {
+      ctx.moveTo(cx + s * 0.17, cy - s * 0.18 * f);
+      ctx.ellipse(cx, cy - s * 0.18 * f, s * 0.17, s * 0.3 * f, 0, 0, 7);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#ffe08a';
+    ctx.beginPath();
+    for (const [cx, cy, f] of flames) {
+      ctx.moveTo(cx + s * 0.08, cy - s * 0.1 * f);
+      ctx.ellipse(cx, cy - s * 0.1 * f, s * 0.08, s * 0.16 * f, 0, 0, 7);
+    }
+    ctx.fill();
 
     // Pedals lie flat on the path: glowing while armed, dim with a refill arc while cooling down,
     // and a shock ring in the spell's colour when a creep sets one off.
@@ -1441,6 +1474,14 @@ export class Renderer {
       const cx = X((h % this.maze.w) + 0.5),
         cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
         rad = s * 0.85;
+      if (this.low) {
+        ctx.strokeStyle = `rgba(170,255,240,${aura + 0.3})`;
+        ctx.lineWidth = Math.max(2, s / 10);
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad * 0.6, 0, 7);
+        ctx.stroke();
+        continue;
+      }
       const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
       gr.addColorStop(0, `rgba(170,255,240,${aura})`);
       gr.addColorStop(1, 'rgba(170,255,240,0)');

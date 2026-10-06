@@ -172,6 +172,11 @@ const remember = (k: string, v: boolean) => {
 };
 view.showRanges = toggles.ranges ?? view.showRanges;
 view.showPath = toggles.path ?? view.showPath;
+// Low graphics: per browser, since it's about this device.
+const lowgfx = document.querySelector<HTMLInputElement>('#lowgfx')!;
+lowgfx.checked = view.low = toggles.lowgfx ?? view.low;
+view.resize();
+lowgfx.onchange = () => (remember('lowgfx', (view.low = lowgfx.checked)), view.resize());
 if (toggles.book) book.toggle();
 
 const saveNow = (commands = game.log) =>

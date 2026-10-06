@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Performance:** the ground, wall, board and torch light are composited once per pan/zoom/edit
+  instead of every frame (stress scene without a GPU: 29 → ~55 fps). **Low graphics** (Menu,
+  default on touch devices) also drops glows, particles and the 1.5× pixel density.
 - **End-game towers:** Ancient (Q7) gems combine from two Great gems of one type; five new towers
   (top special + Ancient gem) add Sunder (2% max HP per hit, half on bosses) or Soul Harvest
   (kills add 1% of the creep's max HP to attack damage) for long endless runs.
