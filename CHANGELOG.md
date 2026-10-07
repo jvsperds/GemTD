@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 — 2026-10-06
+## 0.4.0 — 2026-10-07
 
 - **Performance:** the ground, wall, board and torch light are composited once per pan/zoom/edit
   instead of every frame (stress scene without a GPU: 29 → ~55 fps). **Low graphics** (Menu,
