@@ -31,7 +31,7 @@ Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer t
 
 - **Version:** `:latest` tracks `main` (rebuilt on every push); update with
   `docker compose pull && docker compose up -d`, or Dockge's **Update** button. Pin a release
-  instead with its version, e.g. `ghcr.io/jvsperds/gemtd:0.3.0`.
+  instead with its version, e.g. `ghcr.io/jvsperds/gemtd:0.4.0`.
 - **Local checkout:** replace `image:` with `build: .` to build what's on disk.
 - **Players:** friends sign themselves up with **Register** on the login page: just a name and a
   password, no email. `GEMTD_MAX_USERS` in `compose.yaml` caps the total number of users

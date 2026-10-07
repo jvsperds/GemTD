@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-10-07
 
 - **Performance:** the ground, wall, board and torch light are composited once per pan/zoom/edit
   instead of every frame (stress scene without a GPU: 29 → ~55 fps). **Low graphics** (Menu,
@@ -15,6 +15,12 @@
 - **Board look:** the field sits in a raised wall of grey stone with a gold trim, corner studs and
   torch pillars; deeper emerald tiles, boxed waypoint markers and a GEM TD logo in the header.
 - **Esc** clears the selection, or opens and closes the menu when nothing is selected (was `B`).
+- **Choosing gems:** older towers grey out while the round's gems wait to be picked; combinable
+  towers pulse with a soft aura; pending gems trace a square base. The MVP tower wears a crown.
+- **Skip turn (S)** on all modes; easy endless keeps its build rounds.
+- **Accessibility:** keyboard board cursor (arrows + Enter), live status hint, focus-trapped menu.
+- Restyled new-game and loadout dialogs; the middle row, column and centre cell are shaded.
+- Fixed a startup crash on new and resumed games.
 
 ## 0.3.0 — 2026-10-01
 
