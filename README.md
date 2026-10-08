@@ -1,8 +1,9 @@
 # GemTD
 
 A single-player, fully offline browser remake of the Dota 2 custom game **Gem TD**: place random
-gems, keep one, maze the rest as stones, combine into special towers, survive 50 waves.
-No server, no network calls, no runtime dependencies.
+gems, keep one, maze the rest as stones, combine into special towers, survive 50 waves, then keep going in endless mode.
+The standalone file needs no server and makes no network calls; the optional self-hosted server
+adds logins, per-player profiles and global leaderboards.
 
 ## Play
 
@@ -11,8 +12,7 @@ No server, no network calls, no runtime dependencies.
 2. Double-click it to open it in Chrome, Edge or Firefox. That one file is the whole game: it
    runs from disk with the network off, and you don't need npm, Node or a server.
 3. Keep the file in one place. Scores, settings and your saved game are stored by the browser
-   for that file location, so moving or renaming it starts fresh. To carry scores over, use
-   **Scores & settings → Export scores** first and **Import scores** after.
+   for that file location, so moving or renaming it starts fresh.
 
 To install it as an app with offline caching, self-host it (below) and use the browser's
 "Install" button.
@@ -48,7 +48,7 @@ Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer t
 
 Each round:
 
-1. **Place 5 gems** by clicking empty tiles. Type is random; quality follows your level's odds
+1. **Place 5 gems** by double-clicking (or double-tapping) empty tiles. Type is random; quality follows your level's odds
    (shown in the top bar). Placements that would block the creeps' route are refused.
 2. **Pick one gem to keep** (click it; older towers grey out until you do), then finish the
    round with one of:
@@ -57,21 +57,40 @@ Each round:
    - **Combine**: when a recipe is complete the gems glow with a pale aura; select one and press
      **Combine → …** to build a special tower (ingredients become stones). Combining towers from
      earlier rounds doesn't use up your turn.
-   - Extras: **Downgrade (D)** rerolls a gem to lower quality for 200 gold; **Remove stone (R)**.
+   - Extras: **Downgrade (D)** rerolls a gem to lower quality for 200 gold; **Remove stone (R)**;
+     **Undo (U)** takes back this round's last placement; **Skip turn (S)** (hold Skip to
+     auto-skip every turn, press it again to stop).
 3. The wave starts. Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; leaks damage the castle.
 
 Kills give gold and XP. XP raises your level (better gem odds); **Buy level (L)** spends gold to
-level up early. The top-damage tower each wave earns an MVP stack (+10% damage). Special towers
-gain +10% damage per 10 kills.
+level up early. The top-damage tower each wave earns an MVP stack (+10% damage) and wears a crown.
+Special towers gain +10% damage per 10 kills. Pedals are 2-gem utility blocks built with Combine
+and laid on open path cells, where they cast a spell on creeps that cross them. Select towers (Ctrl+click or Ctrl+drag for several) to set
+their aim mode on the **Targeting** tab.
 
-Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `L` buy level ·
-`Space` pause · `1` `2` `3` speed ×1/×2/×4 · `Esc` deselect, or scores & settings · `F3` debug overlay ·
-mouse wheel zoom · right-drag pan.
+After wave 50 the game goes endless: creeps get tougher and boss waves bring more bosses. Two Great
+gems of one type combine into an Ancient gem, which upgrades a top special tower into an end-game
+tower. Easy mode keeps its build rounds in endless.
+
+Each game pays **shells**. Spend them in the menu's **Hero** tab on heroes, skills and passives,
+and choose what to bring before a run. **Quests** (menu → Quests) pay bonus shells the first time
+you meet them.
+
+The new-game dialog sets difficulty (Easy/Normal/Hard), the **map** (Classic or Crossroads),
+**mutators** (Swift, Tough, No merges and Cunning bosses that blink, shield, rush or split), the
+local **Daily challenge** (same seed for the whole day) and the **Maze builder**. Your first game
+shows teaching hints for three waves.
+
+Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `S` skip
+turn · `L` buy level · `Space` pause · `1`–`5` speed ×1/×2/×4/×10/×20 · `G` cycle maze guides ·
+`P` path · `V` ranges · `H` recipe book · `Esc` deselect, or open the menu · `F3` debug overlay ·
+arrows + `Enter` board cursor · mouse wheel or pinch zoom · drag to pan.
 
 The menu (`Esc`) has leaderboards (top score, highest wave, fastest full clear; filter by
-difficulty or today's daily), new game with Easy/Normal/Hard, the local **Daily challenge**
-(same seed for the whole day), **Watch** replays of finished games, name, speed and volume.
-Closing the tab mid-game is fine: the game resumes on the next load.
+difficulty, today's daily, or **Mutators & maps**, where runs with mutators or a non-Classic map
+rank separately), **Watch** replays of finished games, and settings for speed, volume, procedural
+**music** and **Low graphics** (default on touch devices). Self-hosted, the boards are the global
+top 10 across all players. Closing the tab mid-game is fine: the game resumes on the next load.
 
 Score = waves cleared × (1000 + difficulty bonus) + castle HP × 50 − seconds played.
 

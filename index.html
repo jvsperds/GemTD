@@ -872,6 +872,20 @@
         font-size: 12px;
         opacity: 0.85;
       }
+      #mutators {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        justify-content: center;
+      }
+      #questlist {
+        list-style: none;
+        padding: 0;
+        line-height: 1.8;
+      }
+      #questlist .done {
+        color: var(--accent);
+      }
       table.recap td {
         padding: 1px 6px;
         text-align: right;
@@ -1486,6 +1500,11 @@
           <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
         </div>
       </section>
+      <section class="dialog-section">
+        <h3>Map &amp; mutators</h3>
+        <p><label>Map <select id="mapsel"></select></label></p>
+        <p id="mutators" title="Optional rule changes, shown on the score"></p>
+      </section>
       <section class="loadout-summary">
         <div>
           <span>Selected loadout</span>
@@ -1514,10 +1533,14 @@
         <button data-tab="scores" class="on">Scores</button>
         <button id="opennew">New game</button>
         <button data-tab="hero">Hero</button>
+        <button data-tab="quests">Quests</button>
         <button data-tab="settings">Settings</button>
         <span style="flex: 1"></span>
         <button id="close">✕ <kbd>Esc</kbd></button>
       </div>
+      <section data-pane="quests" hidden>
+        <ul id="questlist"></ul>
+      </section>
       <section data-pane="scores">
         <p>
           <label
@@ -1536,6 +1559,7 @@
               <option value="normal">Normal</option>
               <option value="hard">Hard</option>
               <option id="dailyopt">Today's daily</option>
+              <option value="modded">Mutators &amp; maps</option>
             </select></label
           >
         </p>
@@ -1582,6 +1606,7 @@
             </select></label
           >
           <label>Volume <input id="volume" type="range" min="0" max="1" step="0.05" /></label>
+          <label>Music <input id="music" type="range" min="0" max="1" step="0.05" /></label>
           <label><input id="lowgfx" type="checkbox" /> Low graphics</label>
         </p>
         <p class="keys">

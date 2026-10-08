@@ -98,6 +98,8 @@ export class Game {
     return Math.round(goldOf(id, this.skills[id]) * (1 - (this.perk.skillGold ?? 0)));
   }
   onCommand: (() => void) | null = null;
+  goldMult = 1; // Tough mutator
+  noMerge = false; // No merges mutator
   /** XP needed to reach level L is xpFor[L - 1]. */
   readonly xpFor: number[];
   private rand: () => number;
@@ -136,7 +138,7 @@ export class Game {
         (greedy ? GREED.mult : 1) *
         (cr.def.boss ? 1 + (this.perk.bossGold ?? 0) : 1) *
         (this.perk.midas && this.rand() < this.perk.midas ? 3 : 1);
-      this.gold += Math.round(gold * (1 + (this.perk.killGold ?? 0)));
+      this.gold += Math.round(gold * this.goldMult * (1 + (this.perk.killGold ?? 0)));
       this.xp += cr.def.hp * XP_PER_HP * (1 + (this.perk.xp ?? 0));
       this.kills++;
       while (this.level < this.levels.length && this.xp >= this.xpFor[this.level]) this.level++;
@@ -375,6 +377,7 @@ export class Game {
       this.step === 'choose' &&
       this.placed.includes(t) &&
       this.same(t) >= n &&
+      !this.noMerge &&
       t.def.quality < MAX_QUALITY
     );
   }
