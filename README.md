@@ -94,6 +94,17 @@ npm run data       # rebuild data/*.json from data/raw (Python)
 `npm run e2e` needs Playwright's Chromium and Firefox (`npx playwright install chromium firefox`)
 and an installed Microsoft Edge.
 
+## Branches and releases
+
+- **`dev`** is work in progress. Feature branches merge into `dev` through pull requests; CI runs
+  on every `dev` push and pull request.
+- **`main`** is the current `:latest` Docker image. Promote `dev` to `main` with a pull request
+  when the batch is ready for `:latest` users; every `main` push rebuilds `:latest`.
+- **Version tags** mark fixed releases. To release, bump `version` in `package.json` and add the
+  `CHANGELOG.md` entry, tag the chosen `main` commit (`git tag v0.5.0 && git push origin v0.5.0`),
+  then publish the GitHub release with `dist/index.html` attached as `gemtd-<version>.html`. The
+  tag builds the versioned image (e.g. `ghcr.io/jvsperds/gemtd:0.5.0`).
+
 ## Fan project
 
 This is an unofficial, non-commercial **fan-made** tribute to Gem TD. It is not affiliated with, endorsed by, or
