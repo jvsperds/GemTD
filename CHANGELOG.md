@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **Quests:** 11 one-off goals checked at game over, paid in shells; menu → Quests.
+- **Mutators:** Swift, Tough, No merges and Cunning bosses (blink, shield, rush or split), chosen
+  in the new-game dialog and shown with the score.
+- **Maps & tutorial:** Crossroads map with a picker in the new-game dialog; hints for the first
+  three waves of your first game.
+- **Music:** procedural arpeggio and drone that follows building, waves and bosses; Music slider.
+- **Leaderboards:** runs with mutators or a non-Classic map rank on their own **Mutators & maps**
+  board instead of against standard runs.
+- `docs/` is no longer tracked.
+
 ## 0.4.0 — 2026-10-07
 
 - **Performance:** the ground, wall, board and torch light are composited once per pan/zoom/edit
