@@ -13,6 +13,8 @@ export interface ScoreRow {
   timeSec: number;
   difficulty: string;
   daily?: string; // local date of a daily-challenge run
+  mutators?: string[];
+  map?: string;
   seed: number;
   won: boolean;
   date: number;
@@ -24,6 +26,8 @@ export interface ScoreRow {
 export interface Save {
   seed: number;
   difficulty: string;
+  mutators?: string[];
+  map?: string;
   daily?: string;
   commands: LogEntry[];
   version: number;
@@ -37,11 +41,15 @@ export interface Hero {
   bring?: string[]; // owned skills taken into the next game, at most MAX_BRING (+1 for some heroes)
   heroes?: string[]; // unlocked heroes besides the free one
   hero?: string; // picked for the next game
+  quests?: string[]; // completed quest ids
 }
 export interface Settings {
   speed: number;
   volume: number;
+  music?: number; // music level under volume
   difficulty: string; // for new games
+  map?: string; // for new games
+  tutorial?: boolean; // first-game hints seen
 }
 export interface MazeRow {
   name: string;
@@ -156,13 +164,18 @@ export async function set<K extends keyof Stores>(key: K, value: Stores[K]) {
 
 export type Board = 'score' | 'wave' | 'fastest';
 export const TOP = 10; // rows shown per board, and all a profile keeps
+/** Runs with mutators or a non-Classic map rank on their own board, not against standard runs. */
+const modded = (x: ScoreRow) => !!x.mutators?.length || (!!x.map && x.map !== 'classic');
 /** Top rows for a board, optionally filtered by difficulty. Fastest = full clears only. */
 export function board(rows: ScoreRow[], which: Board, difficulty = '') {
-  // Filter is a difficulty name, or "daily:<date>" for that day's challenge runs.
+  // Filter is a difficulty name, "daily:<date>" for that day's challenge runs, or "modded".
   const r = rows.filter((x) =>
-    difficulty.startsWith('daily:')
-      ? x.daily === difficulty.slice(6)
-      : !difficulty || x.difficulty === difficulty,
+    difficulty === 'modded'
+      ? modded(x)
+      : !modded(x) &&
+        (difficulty.startsWith('daily:')
+          ? x.daily === difficulty.slice(6)
+          : !difficulty || x.difficulty === difficulty),
   );
   if (which === 'score') return r.sort((a, b) => b.score - a.score).slice(0, TOP);
   if (which === 'wave')
@@ -175,7 +188,7 @@ export function board(rows: ScoreRow[], which: Board, difficulty = '') {
 
 /** Keep only rows that make the top TOP of some board under some filter; the rest can never show. */
 export function retain(rows: ScoreRow[]) {
-  const filters = new Set(['', ...rows.map((x) => x.difficulty)]);
+  const filters = new Set(['', 'modded', ...rows.map((x) => x.difficulty)]);
   for (const x of rows) if (x.daily) filters.add('daily:' + x.daily);
   const keep = new Set<ScoreRow>();
   for (const f of filters)

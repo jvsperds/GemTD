@@ -47,8 +47,43 @@ export function easyLevels(base: LevelDef[]) {
   return out;
 }
 
-export function newGame(seed: number, difficulty: Difficulty = 'normal') {
-  const sim = new WaveSim(new Maze(map as unknown as MapData), waves as WaveEntry[], seed);
+/** Optional rule changes picked at new game; they're saved with the run and shown on its score. */
+export const MUTATORS: Record<string, { name: string; tip: string }> = {
+  swift: { name: 'Swift', tip: 'Creeps move 30% faster' },
+  tough: { name: 'Tough', tip: 'Creeps have double HP; kills pay double gold' },
+  nomerge: { name: 'No merges', tip: 'Merge ×2 and ×4 are disabled' },
+  bosses: { name: 'Cunning bosses', tip: 'Bosses blink, shield, rush or split on death' },
+};
+
+/** Layouts: same grid and walls, different checkpoint order. */
+const classic = map as unknown as MapData;
+export const MAPS: Record<string, { name: string; data: MapData }> = {
+  classic: { name: 'Classic', data: classic },
+  // Top, left, bottom, right, then the centre: every leg crosses the middle.
+  cross: {
+    name: 'Crossroads',
+    data: {
+      ...classic,
+      checkpoints: [
+        [18, 4],
+        [4, 18],
+        [18, 32],
+        [32, 18],
+        [18, 18],
+      ],
+    },
+  },
+};
+
+export function newGame(
+  seed: number,
+  difficulty: Difficulty = 'normal',
+  mutators: string[] = [],
+  mapId = 'classic',
+) {
+  const on = (m: string) => mutators.includes(m);
+  const data = (MAPS[mapId] ?? MAPS.classic).data;
+  const sim = new WaveSim(new Maze(data), waves as WaveEntry[], seed);
   sim.hpMult = DIFFICULTY[difficulty].hp;
   const levels = quality.levels as LevelDef[];
   const g = new Game(
@@ -59,6 +94,10 @@ export function newGame(seed: number, difficulty: Difficulty = 'normal') {
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
   g.combat.stackCopies = difficulty === 'easy';
   if (difficulty === 'easy') [g.recipeLuck, g.endlessBuild] = [0.03, true];
+  if (on('swift')) sim.speedMult = 1.3;
+  if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
+  g.noMerge = on('nomerge');
+  sim.bossTricks = on('bosses');
   return g;
 }
 

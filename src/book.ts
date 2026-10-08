@@ -72,6 +72,7 @@ export function initBook(opts: {
   guide: () => Guide | null;
   showGuide: (g: Guide | null) => void;
   build?: (g: Guide) => void; // maze builder only: load a guide as stones
+  map?: MapData; // the game's layout, for measuring guides
 }) {
   const book = document.querySelector<HTMLElement>('#book')!;
   const body = document.querySelector<HTMLElement>('#bookbody')!;
@@ -142,7 +143,7 @@ export function initBook(opts: {
     body.append(el('p', 'note', 'Legs = route legs (of 6) that cross the middle.'));
     for (const g of guides()) {
       let st = stats.get(g.rows);
-      if (!st) stats.set(g.rows, (st = evaluate(g.rows)));
+      if (!st) stats.set(g.rows, (st = evaluate(g.rows, opts.map && new Maze(opts.map))));
       const row = el('div', 'maze' + (shown?.rows === g.rows ? ' on' : ''));
       row.append(thumb(g.rows));
       const text = el('div');
