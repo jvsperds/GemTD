@@ -927,12 +927,12 @@ function teach() {
   if (step === 'place')
     return game.placed.length
       ? `Gem ${game.placed.length + 1} of 5 · Gems block creeps like walls: stretch the path between the numbered checkpoints. Misplaced? U undoes.`
-      : 'Welcome! Click an empty tile to place a gem (5 per round). Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; make that walk long.';
+      : 'Welcome! Double-click an empty tile to place a gem (5 per round). Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; make that walk long.';
   if (step === 'choose')
     return !sel
       ? 'Click the gem you want to keep. The other four become stones and stay in your maze.'
       : game.recipesFor(sel).length
-        ? 'A cyan outline means a special recipe is ready: press Combine → … to build it.'
+        ? 'A pale glow means a special recipe is ready: press Combine → … to build it.'
         : game.canMerge(sel, 2)
           ? 'Two identical gems: Merge (M) keeps one a quality higher. Or Keep (K).'
           : 'Press Keep (K) to keep this gem. The wave starts right after.';
