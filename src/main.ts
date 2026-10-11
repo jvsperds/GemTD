@@ -195,6 +195,11 @@ const lowgfx = document.querySelector<HTMLInputElement>('#lowgfx')!;
 lowgfx.checked = view.low = toggles.lowgfx ?? view.low;
 view.resize();
 lowgfx.onchange = () => (remember('lowgfx', (view.low = lowgfx.checked)), view.resize());
+// Side bar: hideable from Settings; its hotkeys keep working.
+const dock = document.querySelector<HTMLElement>('#dock')!;
+const showDock = document.querySelector<HTMLInputElement>('#showdock')!;
+dock.hidden = !(showDock.checked = toggles.dock ?? true);
+showDock.onchange = () => (dock.hidden = !remember('dock', showDock.checked));
 if (toggles.book) book.toggle();
 
 const saveNow = (commands = game.log) =>

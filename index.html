@@ -1043,7 +1043,32 @@
         min-height: 38px;
         border-width: 0 0 1px;
         border-radius: 0;
-        background: linear-gradient(180deg, #2a261f, #121110 70%), #121110;
+        background: linear-gradient(180deg, #2a2b1f, #11140f 70%), #11140f;
+      }
+      /* Moss: blocky tufts hang off the top bar and grow up the bottom panel's top edge. */
+      #hud::after,
+      #panel::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 10px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='10' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='64' height='3' fill='%232c5524'/%3E%3Crect x='0' y='0' width='64' height='1' fill='%234f8a30'/%3E%3Crect x='2' y='3' width='8' height='3' fill='%233a6c28'/%3E%3Crect x='4' y='6' width='4' height='3' fill='%232c5524'/%3E%3Crect x='16' y='3' width='6' height='2' fill='%234f8a30'/%3E%3Crect x='28' y='3' width='10' height='4' fill='%232c5524'/%3E%3Crect x='30' y='7' width='4' height='3' fill='%233a6c28'/%3E%3Crect x='44' y='3' width='4' height='2' fill='%233a6c28'/%3E%3Crect x='52' y='3' width='8' height='3' fill='%234f8a30'/%3E%3Crect x='56' y='6' width='4' height='2' fill='%232c5524'/%3E%3C/svg%3E")
+          repeat-x;
+        image-rendering: pixelated;
+        pointer-events: none;
+      }
+      #hud::after {
+        top: 100%;
+      }
+      #panel::before {
+        bottom: 100%;
+        left: 10px;
+        right: 10px;
+        transform: scaleY(-1);
+      }
+      #dock[hidden] {
+        display: none;
       }
       #hudinfo {
         display: flex;
@@ -1455,7 +1480,7 @@
       <button data-a="pause" title="Pause (Space)">
         <i data-icon="pause"></i><span>Pause</span>
       </button>
-      <button data-a="speed" title="Game speed (1-4)">
+      <button data-a="speed" title="Game speed (1-5)">
         <i data-icon="speed"></i><span>×1</span>
       </button>
     </nav>
@@ -1646,16 +1671,18 @@
               <option value="2">×2</option>
               <option value="4">×4</option>
               <option value="10">×10</option>
+              <option value="20">×20</option>
             </select></label
           >
           <label>Volume <input id="volume" type="range" min="0" max="1" step="0.05" /></label>
           <label>Music <input id="music" type="range" min="0" max="1" step="0.05" /></label>
           <label><input id="lowgfx" type="checkbox" /> Low graphics</label>
+          <label><input id="showdock" type="checkbox" /> Side bar</label>
         </p>
         <p class="keys">
           Keys: K keep · M merge ×2 · N merge ×4 · D downgrade · R remove stone · L level up · S
-          skip turn · Space pause · 1/2/3 speed ×1/×2/×4 · G guide · B menu · F3 debug · wheel zoom
-          · right-drag pan
+          skip turn · Space pause · 1-5 speed ×1 to ×20 · G guide · B menu · F3 debug · wheel zoom ·
+          right-drag pan
         </p>
       </section>
     </div>

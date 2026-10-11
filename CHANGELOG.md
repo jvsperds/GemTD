@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Setting:** the board now stands on a ragged stone plateau, mossy at the rim with a cliff on its
+  south side, in a lowland of leafy green cubes and cube trees that runs to the edges of the screen.
+  Moss grows on the top bar and the bottom panel to match.
+- **Settings:** the Speed list now includes ×20, and a Side bar checkbox hides or shows the left
+  side bar (its hotkeys keep working).
 - **Saving:** the game keeps a snapshot of the board at the end of each wave. Resume and Undo load
   it and replay only the moves since, instead of re-simulating the run from wave 1, so long endless
   runs reopen at once. Saves from older builds still load (by full replay) and gain a snapshot at
