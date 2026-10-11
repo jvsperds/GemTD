@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Setting:** the board now stands on a ragged stone plateau, mossy at the rim with a cliff on its
+  south side, in a lowland of leafy green cubes and cube trees that runs to the edges of the screen.
+  Moss grows on the top bar and the bottom panel to match.
+  A vignette darkens the lowland toward the edge of the world, which is now as far as you can pan.
+- **Route ends:** a teal mosaic marks where creeps enter the field and a crimson one where they
+  leave.
+- **Settings:** the Speed list now includes ×20, and a Side bar checkbox hides or shows the left
+  side bar (its hotkeys keep working).
 - **Path and guides:** each leg of the route (S→1, 1→2, …) is drawn in its own colour, and while a
   maze guide is shown, stones standing where the guide wants open ground carry a faint X.
 - **Pinned recipes:** 📌 a recipe in the book and the gems you already hold for it wear a pink ring

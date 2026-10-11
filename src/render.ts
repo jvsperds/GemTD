@@ -38,6 +38,11 @@ export const MAX_PARTICLES = 800;
 const HUD_H = 44;
 const PANEL_H = 150; // bottom panel
 const FRAME = 2; // stone border around the board, in cells
+const PLATEAU = 4; // stone ground round the wall before the drop, in cells (ragged by ±0.75)
+const CLIFF = 1.5; // height of the plateau's south face, in cells
+const TREES = 0.07; // share of lowland cells that grow a tree
+const WORLD = 20; // lowland past the board you can pan to, in cells; it darkens toward this edge
+const DUSK = FRAME + PLATEAU + 3; // cells past the board where the darkening starts: clear of the cliff
 /** Cheap deterministic 0..1 noise for cosmetic per-cell variation. */
 const hash2 = (c: number, r: number) => {
   const n = Math.sin(c * 127.1 + r * 311.7) * 43758.5;
@@ -866,7 +871,7 @@ export class Renderer {
   private sprites = new Map<string, HTMLCanvasElement>();
   private terrainPat: [number, CanvasPattern] | null = null;
 
-  /** Out-of-bounds ground: a repeating tile of dark stone blocks at random heights. */
+  /** Lowland around the plateau: a repeating tile of leafy green blocks at random heights. */
   private terrain() {
     const s = this.cell;
     if (this.terrainPat?.[0] === s) return this.terrainPat[1];
@@ -876,7 +881,7 @@ export class Renderer {
       return n - Math.floor(n);
     };
     const tile = bake(N * s, N * s, (g) => {
-      g.fillStyle = '#141210';
+      g.fillStyle = '#0d170d';
       g.fillRect(0, 0, N * s, N * s);
       // Back to front so each row's tops cover the front faces of the row behind; one row past
       // each edge so faces that cross the seam wrap.
@@ -884,7 +889,7 @@ export class Renderer {
         for (let c = 0; c < N; c++) {
           const v = hash(c, r),
             h = Math.floor(v * 4) * 0.18 * s,
-            base = mix('#2a2622', '#4a443c', v);
+            base = mix('#1b3a1d', '#41702c', v);
           const y = r * s - h;
           g.fillStyle = shade(base, 0.55);
           g.fillRect(c * s, y + s, s, h);
@@ -951,6 +956,7 @@ export class Renderer {
       this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
       this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
     }
+    this.clamp(cell);
     if (cell !== this.cell) {
       this.cell = cell;
       this.sprites.clear();
@@ -961,6 +967,18 @@ export class Renderer {
   pan(dx: number, dy: number) {
     this.panX += dx * this.dpr;
     this.panY += dy * this.dpr;
+    this.clamp(this.cell);
+  }
+
+  /** Keep the view inside the world: the board plus WORLD cells of lowland on every side. */
+  private clamp(cell: number) {
+    const fit = (pan: number, size: number, n: number) => {
+      const a = size - (n + WORLD) * cell,
+        b = WORLD * cell;
+      return Math.min(Math.max(pan, Math.min(a, b)), Math.max(a, b));
+    };
+    this.panX = fit(this.panX, this.canvas.width, this.maze.w);
+    this.panY = fit(this.panY, this.canvas.height, this.maze.h);
   }
 
   /** Live creep drawn under a screen point, nearest first. */
@@ -1034,6 +1052,45 @@ export class Renderer {
       g.beginPath();
       g.ellipse(w / 2, w * 0.2, w / 2, w * 0.2, 0, 0, 7);
       g.fill();
+    });
+  }
+
+  /** Whether cell (c, r) is on the stone plateau the board stands on (the wall and board count). */
+  private onPlateau(c: number, r: number) {
+    const { w, h } = this.maze;
+    const dx = Math.max(-FRAME - c, c - (w + FRAME - 1), 0),
+      dy = Math.max(-FRAME - r, r - (h + FRAME - 1), 0);
+    // Coarse noise (2x2 cells) so the rim is ragged in blocks, not single-cell holes.
+    return Math.hypot(dx, dy) <= PLATEAU + 1.5 * hash2((c >> 1) + 7, (r >> 1) + 3) - 0.75;
+  }
+
+  /** Cube tree: a short trunk under two or three stacked leaf blocks, narrower toward the top. */
+  private tree(k: number) {
+    const s = this.cell,
+      w = s * 1.5,
+      h = s * 2.6;
+    return this.sprite(`tree${k}`, w, h, (g) => {
+      g.fillStyle = 'rgba(0,0,0,0.3)';
+      g.beginPath();
+      g.ellipse(w / 2, h - s * 0.15, s * 0.6, s * 0.15, 0, 0, 7);
+      g.fill();
+      g.fillStyle = '#4a3423';
+      g.fillRect(w / 2 - s * 0.12, h - s * 0.8, s * 0.24, s * 0.7);
+      const leaf = ['#2f6b2e', '#4a8a2c', '#255a33'][k];
+      const d = s * 0.5, // top face depth
+        f = s * 0.35; // front face height
+      let y = h - s * 0.45;
+      for (const cw of [1.3, 0.95, 0.6].slice(0, k === 1 ? 2 : 3)) {
+        const x = (w - cw * s) / 2,
+          ty = y - f - d;
+        g.fillStyle = shade(leaf, 0.6);
+        g.fillRect(x, y - f, cw * s, f);
+        g.fillStyle = leaf;
+        g.fillRect(x, ty, cw * s, d);
+        g.fillStyle = shade(leaf, 1.25);
+        g.fillRect(x, ty, cw * s, Math.max(1, s / 12));
+        y = ty + d * 0.45;
+      }
     });
   }
 
@@ -1181,6 +1238,38 @@ export class Renderer {
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
       }
+    // Start and end of the route: a 3x3 mosaic under the waypoint, teal for the gate the creeps
+    // come in by, crimson for the one they leave by.
+    const ends = [
+      [maze.waypoints[0], '80,220,200'],
+      [maze.waypoints[maze.waypoints.length - 1], '235,80,70'],
+    ] as const;
+    for (const [[wc, wr], rgb] of ends) {
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++) {
+          const x = (wc + dc) * s,
+            y = (wr + dr) * s,
+            i = Math.max(1, s / 8);
+          g.fillStyle = `rgba(${rgb},${(dc + dr) & 1 ? 0.03 : 0.06})`;
+          g.fillRect(x, y, s - 1, s - 1);
+          g.strokeStyle = `rgba(${rgb},0.08)`;
+          g.lineWidth = 1;
+          g.strokeRect(x + i + 0.5, y + i + 0.5, s - 2 * i - 2, s - 2 * i - 2);
+        }
+      // A diamond through the four edge tiles ties the mosaic together.
+      const cx = (wc + 0.5) * s,
+        cy = (wr + 0.5) * s,
+        d = s * 1.5;
+      g.strokeStyle = `rgba(${rgb},0.12)`;
+      g.lineWidth = Math.max(1, s / 10);
+      g.beginPath();
+      g.moveTo(cx, cy - d);
+      g.lineTo(cx + d, cy);
+      g.lineTo(cx, cy + d);
+      g.lineTo(cx - d, cy);
+      g.closePath();
+      g.stroke();
+    }
     // Vignette: the field darkens toward the wall, as if lit from the middle.
     const W = maze.w * s,
       H = maze.h * s;
@@ -1362,6 +1451,59 @@ export class Renderer {
     tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
     g.fillStyle = tp;
     g.fillRect(0, 0, B.width, B.height);
+    // The board stands on a ragged plateau of grey cubes, mossy at the rim, with a cliff on its
+    // south side; cube trees dot the lowland beyond. Rows back to front, visible cells only.
+    const { w, h } = this.maze,
+      R = FRAME + PLATEAU + 1, // furthest the plateau reaches past the board
+      T = R + 2, // trees keep clear of the plateau and its cliff
+      ox = panX | 0,
+      oy = panY | 0;
+    for (let r = Math.floor(-oy / s) - 3; r <= Math.ceil((B.height - oy) / s) + 3; r++)
+      for (let c = Math.floor(-ox / s) - 1; c <= Math.ceil((B.width - ox) / s); c++) {
+        if (c >= -FRAME && c < w + FRAME && r >= -FRAME && r < h + FRAME) continue; // wall, board
+        const x = ox + c * s,
+          v = hash2(c + 31, r + 57);
+        if (c < -T || c >= w + T || r < -T || r >= h + T) {
+          if (hash2(c * 3 + 11, r * 5 + 17) < TREES)
+            g.drawImage(this.tree(Math.floor(v * 3)), x - s / 4, oy + r * s + s * 0.8 - s * 2.6);
+          continue;
+        }
+        if (c < -R || c >= w + R || r < -R || r >= h + R || !this.onPlateau(c, r)) continue;
+        const edge = !this.onPlateau(c, r + 1),
+          rim =
+            edge ||
+            !this.onPlateau(c - 1, r) ||
+            !this.onPlateau(c + 1, r) ||
+            !this.onPlateau(c, r - 1);
+        const base = mix(mix('#34302b', '#5a534a', v), '#3d6a2c', rim ? 0.3 : 0),
+          lift = Math.floor(v * 4) * 0.18 * s,
+          y = oy + r * s - lift,
+          face = lift + (edge ? CLIFF * s : 0);
+        g.fillStyle = shade(base, 0.55);
+        g.fillRect(x, y + s, s, face);
+        if (edge) {
+          // The cliff darkens toward its foot and throws a shadow on the leaves below.
+          g.fillStyle = 'rgba(0,0,0,0.3)';
+          g.fillRect(x, y + s + face / 2, s, face / 2);
+          g.fillStyle = 'rgba(0,0,0,0.35)';
+          g.fillRect(x, y + s + face, s, s * 0.4);
+        }
+        g.fillStyle = base;
+        g.fillRect(x, y, s, s);
+        g.fillStyle = shade(base, 1.2);
+        g.fillRect(x, y, s, Math.max(1, s / 12));
+        g.fillStyle = 'rgba(0,0,0,0.25)';
+        g.fillRect(x + s - 1, y, 1, s);
+      }
+    // Vignette: the lowland darkens away from the plateau, near black at the edge of the world.
+    // Half-cell bands that follow the board's outline with rounded corners.
+    g.fillStyle = 'rgba(2,8,4,0.09)';
+    for (let k = DUSK; k < WORLD; k += 0.5) {
+      const band = new Path2D();
+      band.rect(0, 0, B.width, B.height);
+      band.roundRect(ox - k * s, oy - k * s, (w + 2 * k) * s, (h + 2 * k) * s, k * s);
+      g.fill(band, 'evenodd');
+    }
     const fm = Math.ceil(s * 1.5) + FRAME * s;
     g.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
     g.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
