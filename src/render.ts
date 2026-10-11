@@ -37,8 +37,8 @@ const FRAME = 2; // stone border around the board, in cells
 const PLATEAU = 4; // stone ground round the wall before the drop, in cells (ragged by ±0.75)
 const CLIFF = 1.5; // height of the plateau's south face, in cells
 const TREES = 0.07; // share of lowland cells that grow a tree
-const WORLD = 16; // lowland past the board you can pan to, in cells; it darkens toward this edge
-const DUSK = 4; // cells past the board where the darkening starts
+const WORLD = 20; // lowland past the board you can pan to, in cells; it darkens toward this edge
+const DUSK = FRAME + PLATEAU + 3; // cells past the board where the darkening starts: clear of the cliff
 /** Cheap deterministic 0..1 noise for cosmetic per-cell variation. */
 const hash2 = (c: number, r: number) => {
   const n = Math.sin(c * 127.1 + r * 311.7) * 43758.5;
@@ -1244,9 +1244,9 @@ export class Renderer {
           const x = (wc + dc) * s,
             y = (wr + dr) * s,
             i = Math.max(1, s / 8);
-          g.fillStyle = `rgba(${rgb},${(dc + dr) & 1 ? 0.14 : 0.3})`;
+          g.fillStyle = `rgba(${rgb},${(dc + dr) & 1 ? 0.03 : 0.06})`;
           g.fillRect(x, y, s - 1, s - 1);
-          g.strokeStyle = `rgba(${rgb},0.45)`;
+          g.strokeStyle = `rgba(${rgb},0.08)`;
           g.lineWidth = 1;
           g.strokeRect(x + i + 0.5, y + i + 0.5, s - 2 * i - 2, s - 2 * i - 2);
         }
@@ -1254,7 +1254,7 @@ export class Renderer {
       const cx = (wc + 0.5) * s,
         cy = (wr + 0.5) * s,
         d = s * 1.5;
-      g.strokeStyle = `rgba(${rgb},0.7)`;
+      g.strokeStyle = `rgba(${rgb},0.12)`;
       g.lineWidth = Math.max(1, s / 10);
       g.beginPath();
       g.moveTo(cx, cy - d);
@@ -1473,15 +1473,15 @@ export class Renderer {
         g.fillStyle = 'rgba(0,0,0,0.25)';
         g.fillRect(x + s - 1, y, 1, s);
       }
-    // Vignette: the lowland darkens away from the board, near black at the edge of the world.
-    const mx = ox + (w / 2) * s,
-      my = oy + (h / 2) * s,
-      half = Math.max(w, h) / 2;
-    const dusk = g.createRadialGradient(mx, my, (half + DUSK) * s, mx, my, (half + WORLD) * s);
-    dusk.addColorStop(0, 'rgba(0,0,0,0)');
-    dusk.addColorStop(1, 'rgba(2,8,4,0.88)');
-    g.fillStyle = dusk;
-    g.fillRect(0, 0, B.width, B.height);
+    // Vignette: the lowland darkens away from the plateau, near black at the edge of the world.
+    // Half-cell bands that follow the board's outline with rounded corners.
+    g.fillStyle = 'rgba(2,8,4,0.09)';
+    for (let k = DUSK; k < WORLD; k += 0.5) {
+      const band = new Path2D();
+      band.rect(0, 0, B.width, B.height);
+      band.roundRect(ox - k * s, oy - k * s, (w + 2 * k) * s, (h + 2 * k) * s, k * s);
+      g.fill(band, 'evenodd');
+    }
     const fm = Math.ceil(s * 1.5) + FRAME * s;
     g.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
     g.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
