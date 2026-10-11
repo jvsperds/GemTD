@@ -6,6 +6,7 @@ import {
   CASTLE_HP,
   CREEPS_PER_WAVE,
   ENDLESS,
+  ENRAGE_TIME,
   GIANT,
   WaveSim,
   type WaveEntry,
@@ -93,4 +94,20 @@ test('giant: 10x-HP creep only after a no-damage streak', () => {
   const giants = s['queue'].filter((d) => d.giant);
   expect(giants).toHaveLength(1);
   expect(giants[0].hp).toBe(s['queue'][1].hp * GIANT.hp);
+});
+
+test('enrage: after 3 minutes creeps ignore stuns and slows, so a locked wave ends', () => {
+  const s = sim();
+  s.startWave();
+  // Towers re-apply a stun and a full slow every tick: nothing leaks until the wave enrages.
+  for (let k = 0; k < 30 * 600 && s.phase === 'wave'; k++) {
+    s.tick();
+    if (!s.enraged) expect(s.castleHp).toBe(CASTLE_HP);
+    for (const c of s.creeps) [c.stunT, c.slowPct, c.slowPctT, c.slow] = [2, 0.9, 2, 999];
+  }
+  expect(s.phase).toBe('build');
+  expect(s.castleHp).toBe(CASTLE_HP - CREEPS_PER_WAVE);
+  expect(s.waveT).toBeGreaterThan(ENRAGE_TIME);
+  s.startWave();
+  expect(s.enraged).toBe(false);
 });
