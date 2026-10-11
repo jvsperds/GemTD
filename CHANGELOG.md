@@ -15,6 +15,19 @@
 - **Burn ground:** tiles inside a burn aura (Asteriated Ruby, Volcano, The Burning Stone...) are
   tinted red, darker the stronger the burn, and overlapping auras add up.
 - Pedals no longer show the calm-aura shield dome.
+- **Setting:** the board now stands on a ragged stone plateau, mossy at the rim with a cliff on its
+  south side, in a lowland of leafy green cubes and cube trees that runs to the edges of the screen.
+  Moss grows on the top bar and the bottom panel to match.
+  A vignette darkens the lowland toward the edge of the world, which is now as far as you can pan.
+- **Route ends:** a teal mosaic marks where creeps enter the field and a crimson one where they
+  leave.
+- **Settings:** the Speed list now includes ×20, and a Side bar checkbox hides or shows the left
+  side bar (its hotkeys keep working).
+- **Path and guides:** each leg of the route (S→1, 1→2, …) is drawn in its own colour, and while a
+  maze guide is shown, stones standing where the guide wants open ground carry a faint X.
+- **Pinned recipes:** 📌 a recipe in the book and the gems you already hold for it wear a pink ring
+  on the board; once every ingredient is down the ring becomes a pink aura, so a pinned tower that
+  is ready reads apart from the usual pale combine glow. Pins sort first and are remembered.
 - **Saving:** the game keeps a snapshot of the board at the end of each wave. Resume and Undo load
   it and replay only the moves since, instead of re-simulating the run from wave 1, so long endless
   runs reopen at once. Saves from older builds still load (by full replay) and gain a snapshot at

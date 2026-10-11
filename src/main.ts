@@ -35,7 +35,7 @@ import {
   type Creep,
   type WaveEntry,
 } from './sim/waves';
-import { initBook, mazeRows, measure, type Guide } from './book';
+import { initBook, mazeRows, measure, pinGlow, type Guide } from './book';
 import { initDmgChart, short } from './dmgchart';
 import { initMenu } from './ui';
 
@@ -196,6 +196,11 @@ const lowgfx = document.querySelector<HTMLInputElement>('#lowgfx')!;
 lowgfx.checked = view.low = toggles.lowgfx ?? view.low;
 view.resize();
 lowgfx.onchange = () => (remember('lowgfx', (view.low = lowgfx.checked)), view.resize());
+// Side bar: hideable from Settings; its hotkeys keep working.
+const dock = document.querySelector<HTMLElement>('#dock')!;
+const showDock = document.querySelector<HTMLInputElement>('#showdock')!;
+dock.hidden = !(showDock.checked = toggles.dock ?? true);
+showDock.onchange = () => (dock.hidden = !remember('dock', showDock.checked));
 if (toggles.book) book.toggle();
 
 const saveNow = (commands = game.log) =>
@@ -1249,6 +1254,7 @@ function updateHud() {
     view.showPath +
     view.showRanges +
     book.open +
+    [...book.pins] +
     guide?.name +
     mazeVer +
     recipes.map((x) => x.name) +
@@ -1288,12 +1294,13 @@ function updateHud() {
         },
       ),
     );
-    // The book and the combine hints only change with the board or the selection: matching every
-    // recipe against every tower is far too dear to redo on each counter tick.
+    // The book and the combine hints only change with the board, the pins or the selection:
+    // matching every recipe against every tower is far too dear to redo on each counter tick.
     const board =
       step +
       game.placed.length +
       game.over +
+      [...book.pins] +
       combat.towers.map((t) => `${codeOf(t.def)}@${maze.idx(t.c, t.r)}`).join();
     const bookKey = board + live?.def.name + book.open + guide?.name + mazeVer;
     if (bookKey !== lastBook) {
@@ -1302,10 +1309,15 @@ function updateHud() {
     }
     if (board !== lastBoard) {
       lastBoard = board;
-      // Highlight every tower that can combine into something right now.
+      // Highlight every tower that can combine into something right now; pinned recipes glow
+      // in their own colour.
+      const pin = pinGlow(book.pins, combat.towers, (t) => game.recipesFor(t));
+      const cell = (t: Tower) => maze.idx(t.c, t.r);
+      view.pinReady = pin.ready.map(cell);
+      view.pinned = pin.working.map(cell);
       view.hints = combat.towers
-        .filter((t) => game.recipesFor(t).length)
-        .map((t) => maze.idx(t.c, t.r));
+        .filter((t) => !pin.ready.includes(t) && game.recipesFor(t).length)
+        .map(cell);
     }
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
     view.multi = [...multi].filter((t) => combat.towers.includes(t)).map((t) => maze.idx(t.c, t.r));
