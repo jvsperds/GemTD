@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Saving:** the game keeps a snapshot of the board at the end of each wave. Resume and Undo load
+  it and replay only the moves since, instead of re-simulating the run from wave 1, so long endless
+  runs reopen at once. Saves from older builds still load (by full replay) and gain a snapshot at
+  their next wave.
+- **Loading toast:** a spinner with a message shows while the game starts, resumes a save or
+  reloads (new game, Watch, Undo), instead of a frozen or blank page.
+- **End run:** Menu → End run stops the game where it stands and records its score and shells.
+  Abandoning with New game still records nothing.
+- **Endless scaling:** Sunder and Soul Harvest lose 2% per endless wave against creep HP (about
+  half every 35 waves) on all difficulties, so creeps outgrow the end-game towers and a run ends.
+  Runs and Watch replays started before this keep the old rules.
 - **Quests:** 11 one-off goals checked at game over, paid in shells; menu → Quests.
 - **Mutators:** Swift, Tough, No merges and Cunning bosses (blink, shield, rush or split), chosen
   in the new-game dialog and shown with the score.

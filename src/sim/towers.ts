@@ -274,10 +274,11 @@ export class Combat {
   towers: Tower[] = [];
   heroAs = 0; // hero passive: +% attack speed for every tower
   heroProc = { execute: 0, luckyCrit: 0, bash: 0 }; // passive skills: per-hit chances
+  endgameLag = ENDGAME.lag; // 1 for runs started before Sunder and Soul Harvest lagged (rules 1)
   stackCopies = false; // easy mode: identical gems' buffs/debuffs stack too (else Dota rule: distinct types only)
   shots: { from: Tower; to: Creep }[] = [];
   onHeal: (() => void) | null = null;
-  private rand: () => number;
+  rand: () => number;
   private fxCache = new Map<GemDef, Fx>();
 
   /** A tower's effects, including Natural Zumurud's copied skills. */
@@ -475,6 +476,11 @@ export class Combat {
     );
   }
 
+  /** Share of a creep's max HP that Sunder and Soul Harvest still count this deep into endless. */
+  private lagged(cr: Creep) {
+    return cr.def.hp * this.endgameLag ** -this.sim.endless;
+  }
+
   private deal(t: Tower | null, cr: Creep, dmg: number, magic = false) {
     if (!cr.alive) return;
     if (t) cr.lastHit = t;
@@ -485,7 +491,7 @@ export class Combat {
       if (magic) t.magicDealt += dmg;
       if (!cr.alive) {
         t.kills++;
-        t.souls += cr.def.hp * this.tfx(t).souls;
+        t.souls += this.lagged(cr) * this.tfx(t).souls;
       }
     }
   }
@@ -532,7 +538,8 @@ export class Combat {
     if (f.gaze && this.rand() < GAZE.chance)
       for (const o of this.near(cr, GAZE.range)) o.stunT = o.ampT = GAZE.time;
     this.hit(t, cr, dmg);
-    if (f.maxHp) this.deal(t, cr, cr.def.hp * f.maxHp * (cr.def.boss ? ENDGAME.bossMaxHp : 1));
+    if (f.maxHp)
+      this.deal(t, cr, this.lagged(cr) * f.maxHp * (cr.def.boss ? ENDGAME.bossMaxHp : 1));
     if (t.bonds.t > 0) {
       // Fatal Bonds hero skill: pure damage to the enemy farthest from the tower.
       let far: Creep | null = null;

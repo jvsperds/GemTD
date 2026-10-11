@@ -70,7 +70,9 @@ their aim mode on the **Targeting** tab.
 
 After wave 50 the game goes endless: creeps get tougher and boss waves bring more bosses. Two Great
 gems of one type combine into an Ancient gem, which upgrades a top special tower into an end-game
-tower. Easy mode keeps its build rounds in endless.
+tower. Easy mode keeps its build rounds in endless. The end-game abilities lose 2% per endless
+wave against creep HP, so every run ends eventually; **End run** in the menu stops one early and
+records its score.
 
 Each game pays **shells**. Spend them in the menu's **Hero** tab on heroes, skills and passives,
 and choose what to bring before a run. **Quests** (menu → Quests) pay bonus shells the first time
@@ -116,7 +118,8 @@ and an installed Microsoft Edge.
 ## Branches and releases
 
 - **`dev`** is work in progress. Feature branches merge into `dev` through pull requests; CI runs
-  on every `dev` push and pull request.
+  on every `dev` push and pull request, and every `dev` push rebuilds the
+  `ghcr.io/jvsperds/gemtd:dev` image for trying a batch before it reaches `:latest`.
 - **`main`** is the current `:latest` Docker image. Promote `dev` to `main` with a pull request
   when the batch is ready for `:latest` users; every `main` push rebuilds `:latest`.
 - **Version tags** mark fixed releases. To release, bump `version` in `package.json` and add the
