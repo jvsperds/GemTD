@@ -1,7 +1,8 @@
 import { expect, test } from 'vitest';
 import towers from '../data/towers.json';
 import waves from '../data/waves.json';
-import { hasCreepModel, hasModel, shotKind, slug, sortByY } from '../src/render';
+import { hasAttack, hasCreepModel, hasModel, shotKind, slug, sortByY } from '../src/render';
+import { ENDGAME_TOWERS } from '../src/sim/endgame';
 
 test('sortByY orders by ground y in place', () => {
   const a = [5, 1, 4, 1, 3].map((y) => ({ y }));
@@ -11,6 +12,13 @@ test('sortByY orders by ground y in place', () => {
 
 test('every special tower has a model', () => {
   const missing = Object.keys(towers).filter((n) => !hasModel(slug(n)));
+  expect(missing).toEqual([]);
+});
+
+test('every special tower has its own attack effect', () => {
+  const missing = [...Object.keys(towers), ...Object.keys(ENDGAME_TOWERS)].filter(
+    (n) => !(towers as Record<string, { pedal?: boolean }>)[n]?.pedal && !hasAttack(slug(n)),
+  );
   expect(missing).toEqual([]);
 });
 

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Attack effects:** every tower now has its own attack: gems throw a cut shard of their colour,
+  specials fire bolts, beams, lobbed globs, lances of light or chain lightning in their own colour.
+  The dearer the tower, the bigger and longer-lived the effect: Huge Pink Diamond and Koh-i-noor
+  strike with a writhing Laguna-style bolt, The Crown Prince and The Blood King with a coiling
+  Finger-of-Death beam. Low graphics keeps the plain tracers.
+- **Burn ground:** tiles inside a burn aura (Asteriated Ruby, Volcano, The Burning Stone...) are
+  tinted red, darker the stronger the burn, and overlapping auras add up.
+- Pedals no longer show the calm-aura shield dome.
 - **Saving:** the game keeps a snapshot of the board at the end of each wave. Resume and Undo load
   it and replay only the moves since, instead of re-simulating the run from wave 1, so long endless
   runs reopen at once. Saves from older builds still load (by full replay) and gain a snapshot at
