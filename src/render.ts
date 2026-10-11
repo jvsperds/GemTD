@@ -3,7 +3,7 @@
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
 import { PEDAL, PEDALS, SPELL, TIERS } from './sim/pedals';
-import type { Combat, Tower } from './sim/towers';
+import type { Combat, GemDef, SpecialDef, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
 export const slug = (name: string) =>
@@ -1211,6 +1211,16 @@ export class Renderer {
     L.width = maze.w * s;
     L.height = maze.h * s + top;
     let g = L.getContext('2d')!;
+    // Burn auras heat the ground: each cell sums the burn of every aura that reaches it.
+    const heat = new Float32Array(maze.w * maze.h);
+    for (const t of this.combat.towers)
+      for (const e of this.combat.tfx(t).enemy) {
+        if (!e.dps) continue;
+        const R = e.range / UNITS_PER_CELL;
+        for (let r = Math.max(0, Math.floor(t.r - R)); r <= Math.min(maze.h - 1, t.r + R); r++)
+          for (let c = Math.max(0, Math.floor(t.c - R)); c <= Math.min(maze.w - 1, t.c + R); c++)
+            if (Math.hypot(c - t.c, r - t.r) <= R) heat[maze.idx(c, r)] += e.dps;
+      }
     g.translate(0, top);
     g.fillStyle = '#0a1510'; // grid lines: the 1px gaps between cells
     g.fillRect(0, 0, maze.w * s, maze.h * s);
@@ -1231,6 +1241,15 @@ export class Renderer {
           // Visual-only marks: grey on the main axes, a lighter grey on the exact middle.
           g.fillStyle = onX && onY ? 'rgba(200,200,200,0.35)' : 'rgba(150,150,150,0.18)';
           g.fillRect(c * s, r * s, s - 1, s - 1);
+        }
+        const hot = heat[maze.idx(c, r)];
+        if (hot) {
+          // Darker and redder the more burn lands here (log scale: 60 dps to several thousand).
+          const k = Math.min(1, Math.log10(1 + hot / 60) / 2);
+          g.globalAlpha = 0.2 + 0.35 * k;
+          g.fillStyle = mix('#e0461c', '#5a0606', k);
+          g.fillRect(c * s, r * s, s - 1, s - 1);
+          g.globalAlpha = 1;
         }
         const k = this.guide?.[r]?.[c] ?? '.';
         if (k && k !== '.' && maze.cells[maze.idx(c, r)] !== WALL) {
@@ -1381,6 +1400,176 @@ export class Renderer {
     p[o + 5] = colour;
   }
 
+  /** Draw and age the lingering attack effects; `w` scales with what the tower cost. */
+  private drawFx(dt: number, now: number) {
+    const { ctx, cell: s, panX, panY } = this;
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < this.fx.length;) {
+      const f = this.fx[i];
+      if ((f.age += dt) >= f.life) {
+        this.fx[i] = this.fx[this.fx.length - 1];
+        this.fx.pop();
+        continue;
+      }
+      i++;
+      if (f.to.alive) [f.x1, f.y1] = [f.to.x, f.to.y - (f.to.def.flying ? FLY_Z : 0.15)];
+      const p = f.age / f.life,
+        a = 1 - p,
+        w = (0.04 + 0.16 * f.k) * s,
+        x0 = panX + f.x0 * s,
+        y0 = panY + f.y0 * s,
+        x1 = panX + f.x1 * s,
+        y1 = panY + f.y1 * s,
+        dx = x1 - x0,
+        dy = y1 - y0,
+        len = Math.hypot(dx, dy) || 1,
+        nx = -dy / len,
+        ny = dx / len;
+      // A path from tower to target, `n` segments, each knocked sideways by `off(t)`.
+      const path = (n: number, off: (t: number) => number) => {
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        for (let q = 1; q < n; q++) {
+          const t = q / n,
+            j = off(t);
+          ctx.lineTo(x0 + dx * t + nx * j, y0 + dy * t + ny * j);
+        }
+        ctx.lineTo(x1, y1);
+      };
+      // Stroke the current path as a coloured body and a bright core. No wider halo pass:
+      // big translucent strokes are what the GPU pays for.
+      const glow = (wide: number, core: number, coreCol = '#fff') => {
+        ctx.strokeStyle = f.col;
+        ctx.globalAlpha = a * 0.6;
+        ctx.lineWidth = wide * 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = coreCol;
+        ctx.lineWidth = Math.max(1, core);
+        ctx.stroke();
+      };
+      const ring = (r: number, lw: number) => {
+        ctx.strokeStyle = f.col;
+        ctx.globalAlpha = a;
+        ctx.lineWidth = Math.max(1, lw);
+        ctx.beginPath();
+        ctx.arc(x1, y1, r, 0, 7);
+        ctx.stroke();
+      };
+      const dot = (x: number, y: number, r: number, col: string, alpha: number) => {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 7);
+        ctx.fill();
+      };
+      const jitter = (amp: number) => () => (Math.random() - 0.5) * amp;
+      switch (f.style) {
+        case 'line':
+          path(1, () => 0);
+          glow(w * 2, w * 0.5);
+          break;
+        case 'beam':
+          path(1, () => 0);
+          glow(w * 4 * (0.5 + 0.5 * a), w);
+          dot(x1, y1, w * 2 * a + 1, '#fff', a);
+          break;
+        case 'zap':
+          // Jagged bolt, re-rolled every frame so it crackles.
+          path(6, jitter(s * 0.5));
+          glow(w * 2.5, w * 0.6);
+          break;
+        case 'laguna': {
+          // Laguna Blade: a fat writhing bolt with a thin fork, a flare at the tower and a
+          // shock ring at the target.
+          const wave = (t: number) =>
+            Math.sin(t * 11 + now / 50 + f.seed) * s * 0.22 * Math.sin(t * Math.PI) +
+            (Math.random() - 0.5) * s * (0.3 + 0.5 * f.k);
+          path(10, wave);
+          glow(w * 5, w * 1.1);
+          path(7, jitter(s * 1.1));
+          glow(w * 1.6, w * 0.3);
+          ring(s * (0.3 + 1.1 * p), w * a);
+          dot(x0, y0, w * 2.5 * a + 1, '#fff', a);
+          dot(x1, y1, w * 3 * a + 1, '#fff', a * 0.9);
+          break;
+        }
+        case 'finger': {
+          // Finger of Death: two strands coiling round a hard core, a dark bloom at the target.
+          for (const sign of [1, -1]) {
+            path(
+              16,
+              (t) => Math.sin(t * 16 - now / 35 + f.seed) * s * 0.26 * sign * Math.sin(t * Math.PI),
+            );
+            glow(w * 2.2, w * 0.4, '#ffd8c8');
+          }
+          path(1, () => 0);
+          glow(w * 5, w);
+          dot(x1, y1, s * (0.25 + 0.5 * p), '#000', a * 0.45);
+          ring(s * (0.25 + 0.9 * p), w * a);
+          dot(x1, y1, w * 2.5 * a + 1, '#fff', a);
+          break;
+        }
+        case 'ray': {
+          // Lance of light: broad at the tower, a point at the target.
+          const h = w * 3 * a + 1;
+          ctx.globalAlpha = a * 0.55;
+          ctx.fillStyle = f.col;
+          ctx.beginPath();
+          ctx.moveTo(x0 + nx * h, y0 + ny * h);
+          ctx.lineTo(x1, y1);
+          ctx.lineTo(x0 - nx * h, y0 - ny * h);
+          ctx.fill();
+          path(1, () => 0);
+          glow(w * 1.5, w * 0.5);
+          dot(x1, y1, w * 2.5 * a + 1, '#fff', a);
+          break;
+        }
+        default: {
+          // Projectiles: fly for the first 70% of the effect, then pop.
+          const t = Math.min(1, p / 0.7),
+            lift = f.style === 'glob' ? Math.sin(t * Math.PI) * s * 0.8 : 0,
+            px = x0 + dx * t,
+            py = y0 + dy * t - lift;
+          if (t >= 1) {
+            ring(w * 2 + s * 0.5 * ((p - 0.7) / 0.3), w * 0.6);
+            break;
+          }
+          const tt = Math.max(0, t - 0.25),
+            tl = f.style === 'glob' ? Math.sin(tt * Math.PI) * s * 0.8 : 0;
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = f.col;
+          ctx.lineWidth = Math.max(1, w);
+          ctx.beginPath();
+          ctx.moveTo(x0 + dx * tt, y0 + dy * tt - tl);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+          if (f.style === 'shard') {
+            // A cut gem flying point first.
+            const l = w * 3 + 3,
+              h = w * 1.2 + 1.5,
+              ux = dx / len,
+              uy = dy / len;
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = f.col;
+            ctx.beginPath();
+            ctx.moveTo(px + ux * l, py + uy * l);
+            ctx.lineTo(px + nx * h, py + ny * h);
+            ctx.lineTo(px - ux * l, py - uy * l);
+            ctx.lineTo(px - nx * h, py - ny * h);
+            ctx.fill();
+            dot(px + ux * l * 0.3, py + uy * l * 0.3, Math.max(1, h * 0.4), '#fff', 0.9);
+          } else {
+            dot(px, py, w * 1.6 + 2, f.col, 1);
+            dot(px, py, w * 0.7 + 1, '#fff', 0.9);
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.lineJoin = 'miter';
+  }
+
   /** Cosmetic ring burst (deaths, splash impacts). */
   private burst(x: number, y: number, n: number, speed = 3, colour = 0) {
     for (let k = 0; k < n; k++) {
@@ -1392,13 +1581,52 @@ export class Renderer {
   /** Burn-aura towers with at least one enemy inside, refreshed each sim tick. */
   private burning = new Set<Tower>();
 
+  /** Attack effects still on screen: hits resolve at once, their look lingers for a moment. */
+  private fx: Fx[] = [];
+  private fxAt = new WeakMap<Tower, number>(); // when each tower last spawned an effect
+  private tiers = new Map<GemDef, number>();
+  /** What a tower cost to build: a gem's quality, or the sum over a special's ingredients. */
+  private tier(d: GemDef): number {
+    let n = this.tiers.get(d);
+    if (n === undefined) {
+      this.tiers.set(d, 1); // guards a recipe loop
+      const rec = d.quality ? null : (d as Partial<SpecialDef>).recipes?.[0];
+      const of = (code: string) => (this.combat.gems[code] ? this.tier(this.combat.gems[code]) : 1);
+      n = rec ? rec.reduce((a, code) => a + of(code), 0) : d.quality || 1;
+      this.tiers.set(d, n);
+    }
+    return n;
+  }
+
   /** Emit cosmetic hit sparks, splash rings and burn embers (call once per sim tick). */
   sparks() {
-    const { combat } = this;
+    const { combat } = this,
+      now = performance.now();
     for (const { from, to } of combat.shots) {
       const a = Math.random() * 7; // cosmetic only, so Math.random is fine
       const y = to.y - (to.def.flying ? FLY_Z : 0);
       const kind = shotKind(combat, from);
+      // One effect per tower per FX_GAP (a volley in the same tick counts as one): fast towers
+      // and high game speeds would otherwise stack wide translucent strokes and sink the frame rate.
+      const last = this.fxAt.get(from);
+      if (!this.low && this.fx.length < MAX_FX && (last === now || now - (last ?? 0) >= FX_GAP)) {
+        this.fxAt.set(from, now);
+        const [style, col] = attackOf(from.def);
+        const k = Math.min(1, this.tier(from.def) / 40);
+        this.fx.push({
+          x0: from.c + 0.5,
+          y0: from.r + 0.48 - TOWER_H - TALL,
+          to,
+          x1: to.x,
+          y1: y - 0.15,
+          age: 0,
+          life: FX_LIFE[style][0] + FX_LIFE[style][1] * k,
+          style,
+          col,
+          k,
+          seed: a,
+        });
+      }
       if (kind === 'frost')
         // Snow: a few flakes that puff out and drift down.
         for (let k = 0; k < 4; k++)
@@ -1830,38 +2058,41 @@ export class Renderer {
       }
     }
 
-    // Tracers by shot kind: thin white, icy blue (slow), thick silver beam, forked lightning.
+    // Attacks. Low graphics: plain tracers by shot kind (thin white, icy blue, silver beam, forked
+    // lightning), batched per kind. Otherwise every tower has its own lingering effect.
     const head = (t: Tower) => [X(t.c + 0.5), Y(t.r + 0.48 - TOWER_H - TALL)] as const;
     const hit = (cr: Creep) => [X(cr.x), Y(cr.y - (cr.def.flying ? FLY_Z : 0.15))] as const;
-    for (const [kind, colour, width, glow] of TRACERS) {
-      ctx.strokeStyle = colour;
-      ctx.lineWidth = Math.max(1, width * s);
-      ctx.shadowColor = glow;
-      ctx.shadowBlur = glow === 'transparent' ? 0 : (this.glow * s) / 2;
-      ctx.beginPath();
-      for (const { from, to } of this.combat.shots) {
-        if (shotKind(this.combat, from) !== kind) continue;
-        const [x0, y0] = head(from),
-          [x1, y1] = hit(to);
-        ctx.moveTo(x0, y0);
-        if (kind === 'lightning') {
-          // Jagged bolt: re-rolled every frame so it crackles.
-          const n = 6,
-            nx = -(y1 - y0),
-            ny = x1 - x0,
-            len = Math.hypot(nx, ny) || 1;
-          for (let k = 1; k < n; k++) {
-            const j = (Math.random() - 0.5) * s * 0.5;
-            ctx.lineTo(
-              x0 + ((x1 - x0) * k) / n + (nx / len) * j,
-              y0 + ((y1 - y0) * k) / n + (ny / len) * j,
-            );
+    if (this.low) {
+      for (const [kind, colour, width, glow] of TRACERS) {
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = Math.max(1, width * s);
+        ctx.shadowColor = glow;
+        ctx.shadowBlur = glow === 'transparent' ? 0 : (this.glow * s) / 2;
+        ctx.beginPath();
+        for (const { from, to } of this.combat.shots) {
+          if (shotKind(this.combat, from) !== kind) continue;
+          const [x0, y0] = head(from),
+            [x1, y1] = hit(to);
+          ctx.moveTo(x0, y0);
+          if (kind === 'lightning') {
+            // Jagged bolt: re-rolled every frame so it crackles.
+            const n = 6,
+              nx = -(y1 - y0),
+              ny = x1 - x0,
+              len = Math.hypot(nx, ny) || 1;
+            for (let k = 1; k < n; k++) {
+              const j = (Math.random() - 0.5) * s * 0.5;
+              ctx.lineTo(
+                x0 + ((x1 - x0) * k) / n + (nx / len) * j,
+                y0 + ((y1 - y0) * k) / n + (ny / len) * j,
+              );
+            }
           }
+          ctx.lineTo(x1, y1);
         }
-        ctx.lineTo(x1, y1);
+        ctx.stroke();
       }
-      ctx.stroke();
-    }
+    } else this.drawFx(dt, now);
     ctx.shadowBlur = 0;
 
     // Howl-buffed towers: a pulsing red-bronze glow round the head.
@@ -1884,7 +2115,7 @@ export class Renderer {
     ctx.strokeStyle = 'rgba(150,220,255,0.7)';
     ctx.lineWidth = Math.max(1.5, s / 16);
     for (const t of this.combat.towers) {
-      if (!t.aura.calm) continue;
+      if (!t.aura.calm || t.def.pedal) continue; // pedals lie flat: no dome
       const [x, y] = head(t);
       ctx.beginPath();
       ctx.arc(x, y + s * 0.15, s * 0.45, Math.PI * 1.1, Math.PI * 1.9);
@@ -1924,6 +2155,93 @@ export class Renderer {
   }
 }
 
+type Style = 'line' | 'beam' | 'zap' | 'laguna' | 'finger' | 'orb' | 'glob' | 'shard' | 'ray';
+interface Fx {
+  x0: number; // tower head, in cells
+  y0: number;
+  to: Creep; // followed while it lives
+  x1: number;
+  y1: number;
+  age: number;
+  life: number;
+  style: Style;
+  col: string;
+  k: number; // 0..1: how dear the tower is; scales width, length of stay and extras
+  seed: number;
+}
+const MAX_FX = 120;
+const FX_GAP = 90; // ms between effects from one tower
+// Seconds on screen: [base, extra at the top tier].
+const FX_LIFE: Record<Style, [number, number]> = {
+  line: [0.12, 0.05],
+  beam: [0.18, 0.15],
+  zap: [0.15, 0.1],
+  laguna: [0.3, 0.25],
+  finger: [0.35, 0.25],
+  orb: [0.2, 0],
+  glob: [0.28, 0],
+  shard: [0.18, 0],
+  ray: [0.2, 0.2],
+};
+// Every special tower's attack: a style and its colour. Width, stay and extras come from its cost.
+const ATTACK: Record<string, [Style, string]> = {
+  silver: ['line', '#bfe4ff'],
+  'silver-knight': ['beam', '#cfe6ff'],
+  'pink-diamond': ['zap', '#ff9be6'],
+  'huge-pink-diamond': ['laguna', '#ff5fd2'],
+  'koh-i-noor-diamond': ['laguna', '#6fb4ff'],
+  malachite: ['shard', '#2f8f3a'],
+  'vivid-malachite': ['shard', '#7dff7a'],
+  'uranium-238': ['glob', '#b6ff3a'],
+  'uranium-235': ['glob', '#ffe23a'],
+  'depleted-kyparium': ['ray', '#4fd8ff'],
+  'asteriated-ruby': ['orb', '#ff7a2a'],
+  volcano: ['glob', '#ff5a1a'],
+  bloodstone: ['zap', '#ff5a4a'],
+  'antique-bloodstone': ['zap', '#ff8a3a'],
+  'the-crown-prince': ['finger', '#b05aff'],
+  jade: ['glob', '#7fe05a'],
+  quartz: ['shard', '#ffe8d8'],
+  'grey-jade': ['glob', '#6fa8e0'],
+  'monkey-king-jade': ['shard', '#ffb040'],
+  'diamond-cullinan': ['ray', '#fff2b0'],
+  'lucky-chinese-jade': ['glob', '#ffcf40'],
+  'charming-lazurite': ['shard', '#b07aff'],
+  'golden-jubilee': ['ray', '#ffb020'],
+  gold: ['orb', '#ffd24a'],
+  'egypt-gold': ['orb', '#ffe890'],
+  'dark-emerald': ['orb', '#39d98a'],
+  'emerald-golem': ['glob', '#9be0b0'],
+  'paraiba-tourmaline': ['orb', '#4fe0d8'],
+  'elaborately-carved-tourmaline': ['orb', '#ffb050'],
+  'sapphire-star-of-adam': ['beam', '#5aa8ff'],
+  'deepsea-pearl': ['orb', '#f4f0d0'],
+  'chrysoberyl-cat-s-eye': ['line', '#d8e07a'],
+  'red-coral': ['orb', '#ff7a5a'],
+  'natural-zumurud': ['shard', '#7a6aff'],
+  'carmen-lucia': ['finger', '#ff6a8a'],
+  'yellow-sapphire': ['line', '#ffe27a'],
+  'northern-saber-s-eye': ['zap', '#9fe8ff'],
+  'star-sapphire': ['beam', '#cfe0ff'],
+  obsidian: ['beam', '#ff7a3a'],
+  agate: ['shard', '#e0a860'],
+  'fantastic-miss-shrimp': ['zap', '#ffd040'],
+  geluanshi: ['ray', '#fff0c0'],
+  'the-burning-stone': ['orb', '#6fc0ff'],
+  'the-great-stone': ['glob', '#a8c070'],
+  'black-opal': ['finger', '#8a4ae0'],
+  ehome: ['ray', '#ff7ab8'],
+  'wings-stone': ['shard', '#fff2c0'],
+  'regent-diamond': ['laguna', '#ff3a6a'],
+  'kyparium-core': ['ray', '#4fe0d8'],
+  'the-blood-king': ['finger', '#ff2020'],
+  'cullinan-heart': ['laguna', '#ffe680'],
+  'star-of-eden': ['laguna', '#4dff8a'],
+};
+export const hasAttack = (key: string) => key in ATTACK;
+/** Gems throw a cut shard of their own colour; specials have their own entry. */
+const attackOf = (d: GemDef): [Style, string] =>
+  (!d.quality && ATTACK[slug(d.name)]) || ['shard', GEM_COLOR[d.type] ?? '#ffffff'];
 type Shot = 'normal' | 'frost' | 'beam' | 'lightning';
 const BEAM = new Set(['Silver', 'Silver Knight', 'Koh-i-noor Diamond']);
 const LIGHTNING = new Set(['Pink Diamond', 'Huge Pink Diamond']);

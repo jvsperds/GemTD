@@ -14,7 +14,7 @@ import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { MAPS, newGame, RULES, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
-import { AIM, AIM_ELITE, AURA, type Tower } from './sim/towers';
+import { AIM, AIM_ELITE, AURA, codeOf, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
   BLINK_CHANCE,
@@ -43,7 +43,8 @@ const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const hud = document.querySelector<HTMLElement>('#hudinfo')!;
 const hintEl = document.querySelector<HTMLElement>('#hint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
-const stress = location.hash === '#stress';
+const bench = location.hash === '#bench'; // late-game frame-rate benchmark, see below
+const stress = bench || location.hash === '#stress';
 /** Show the loading toast with `msg`, and give the browser a moment to paint it. */
 function busy(msg: string) {
   const el = document.querySelector<HTMLElement>('#loading')!;
@@ -507,7 +508,19 @@ addEventListener('keydown', (e) => {
   }
 });
 
-if (stress) {
+if (bench) {
+  // Benchmark: 80 special towers (every kind in turn) on wave 99 rolling into 100 and on through
+  // endless, castle unbreakable, HUD live. The target is 60 fps here.
+  const names = Object.entries(combat.gems)
+    .filter(([, d]) => !d.quality && !d.pedal)
+    .map(([k]) => k);
+  for (let i = 0, n = 0; n < 80 && i < maze.w * maze.h; i += 7)
+    if (combat.place(names[n % names.length], i % maze.w, (i / maze.w) | 0)) n++;
+  sim.wave = 98;
+  sim.castleHp = Infinity;
+  game.run(['skip']);
+  debug.hidden = false;
+} else if (stress) {
   // Stress scene (BUILD.md §3.7): 80 towers, 400 unkillable creeps, 1,500 tracers, 800 particles.
   const types = Object.keys(GEM_COLOR);
   for (let i = 0, n = 0; n < 80 && i < maze.w * maze.h; i += 7)
@@ -1142,6 +1155,11 @@ Combine: ${x.parts.map((p) => p.def.name).join(' + ')}`;
   );
 }
 
+const HUD_MS = 100;
+let lastCounters = '',
+  lastBoard = '',
+  lastBook = '',
+  hudAt = 0;
 let lastHud = '',
   lastLog = -1;
 function updateHud() {
@@ -1217,8 +1235,17 @@ function updateHud() {
   const recipes = live ? game.recipesFor(live) : [];
   const total = combat.towers.reduce((n, t) => n + t.damageDealt, 0) || 1;
   const share = live ? Math.round((live.damageDealt / total) * 100) : 0;
-  const key =
+  // Counters (time, gold, kills, damage share...) tick over many times a second at high game
+  // speed, so they repaint at most every HUD_MS; selection, buttons and phase repaint at once.
+  const counters =
     s +
+    game.xp +
+    game.kills +
+    live?.kills +
+    live?.souls +
+    share +
+    (creep ? `${Math.ceil(creep.hp)}` + sim.speed(creep) : '');
+  const key =
     hint +
     speed +
     autoSkip +
@@ -1230,8 +1257,6 @@ function updateHud() {
     [...book.pins] +
     guide?.name +
     mazeVer +
-    game.xp +
-    game.kills +
     recipes.map((x) => x.name) +
     combat.towers.length +
     game.pedals.length +
@@ -1240,15 +1265,11 @@ function updateHud() {
     live?.mode +
     multi.size +
     (live ? maze.idx(live.c, live.r) : '') + // same-type towers differ only by cell
-    live?.kills +
-    live?.souls +
-    share +
     (live ? statuses(live).map((x) => x[0] + x[1]) : '') +
-    (creep
-      ? `${Math.ceil(creep.hp)}` + creepStatuses(creep).map((x) => x[0] + x[1]) + sim.speed(creep)
-      : '');
-  if (key !== lastHud) {
-    lastHud = key;
+    (creep ? creepStatuses(creep).map((x) => x[0] + x[1]) : '');
+  const nowMs = performance.now();
+  if (key !== lastHud || (counters !== lastCounters && nowMs - hudAt >= HUD_MS)) {
+    [lastHud, lastCounters, hudAt] = [key, counters, nowMs];
     hud.innerHTML = s;
     hintEl.textContent = hint;
     if (game.gold > prevGold) flashEl('gold', 'pop');
@@ -1273,15 +1294,31 @@ function updateHud() {
         },
       ),
     );
-    book.draw();
-    // Highlight every tower that can combine into something right now.
-    const pin = pinGlow(book.pins, combat.towers, (t) => game.recipesFor(t));
-    const cell = (t: Tower) => maze.idx(t.c, t.r);
-    view.pinReady = pin.ready.map(cell);
-    view.pinned = pin.working.map(cell);
-    view.hints = combat.towers
-      .filter((t) => !pin.ready.includes(t) && game.recipesFor(t).length)
-      .map(cell);
+    // The book and the combine hints only change with the board, the pins or the selection:
+    // matching every recipe against every tower is far too dear to redo on each counter tick.
+    const board =
+      step +
+      game.placed.length +
+      game.over +
+      [...book.pins] +
+      combat.towers.map((t) => `${codeOf(t.def)}@${maze.idx(t.c, t.r)}`).join();
+    const bookKey = board + live?.def.name + book.open + guide?.name + mazeVer;
+    if (bookKey !== lastBook) {
+      lastBook = bookKey;
+      book.draw();
+    }
+    if (board !== lastBoard) {
+      lastBoard = board;
+      // Highlight every tower that can combine into something right now; pinned recipes glow
+      // in their own colour.
+      const pin = pinGlow(book.pins, combat.towers, (t) => game.recipesFor(t));
+      const cell = (t: Tower) => maze.idx(t.c, t.r);
+      view.pinReady = pin.ready.map(cell);
+      view.pinned = pin.working.map(cell);
+      view.hints = combat.towers
+        .filter((t) => !pin.ready.includes(t) && game.recipesFor(t).length)
+        .map(cell);
+    }
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
     view.multi = [...multi].filter((t) => combat.towers.includes(t)).map((t) => maze.idx(t.c, t.r));
     // Glow the round's gems until one is kept, merged or combined.
@@ -1326,12 +1363,22 @@ function updateHud() {
 }
 
 // Perf stats, averaged per second; also exposed for the e2e budget check.
-const perf = { fps: 0, tickMs: 0, drawMs: 0, creeps: 0, towers: 0, shots: 0, particles: 0 };
+const perf = {
+  fps: 0,
+  tickMs: 0,
+  drawMs: 0,
+  hudMs: 0, // worst HUD update in the last second
+  creeps: 0,
+  towers: 0,
+  shots: 0,
+  particles: 0,
+};
 (window as unknown as { perf: typeof perf }).perf = perf;
 let frames = 0,
   ticks = 0,
   tickT = 0,
   drawT = 0,
+  hudT = 0,
   second = performance.now();
 
 let last = performance.now(),
@@ -1354,7 +1401,9 @@ requestAnimationFrame(function frame(now) {
     while (replaying?.[ri] && sim.phase === 'wave' && game.ticks >= replaying[ri][0])
       run(replaying[ri++][1]);
     game.tick();
-    if (stress) topUpStress();
+    if (bench)
+      sim.castleHp = Infinity; // leaks and boss hits never end the benchmark
+    else if (stress) topUpStress();
     tickT += performance.now() - t0;
     ticks++;
     ticked = true;
@@ -1364,7 +1413,9 @@ requestAnimationFrame(function frame(now) {
   view.render(acc / TICK, dt, now);
   drawT += performance.now() - t0;
   frames++;
-  if (!stress) updateHud();
+  const h0 = performance.now();
+  if (!stress || bench) updateHud();
+  hudT = Math.max(hudT, performance.now() - h0);
   if (game.over && !recorded) recordScore();
   sounds();
   if (sim.wave !== bannerWave && sim.phase === 'wave' && !stress) showBanner();
@@ -1374,6 +1425,7 @@ requestAnimationFrame(function frame(now) {
       fps: Math.round((frames * 1000) / (now - second)),
       tickMs: +(tickT / Math.max(1, ticks)).toFixed(2),
       drawMs: +(drawT / frames).toFixed(2),
+      hudMs: +hudT.toFixed(2),
       creeps: sim.creeps.length,
       towers: combat.towers.length,
       shots: combat.shots.length,
@@ -1383,7 +1435,7 @@ requestAnimationFrame(function frame(now) {
       debug.textContent = Object.entries(perf)
         .map(([k, v]) => `${k} ${v}`)
         .join('\n');
-    frames = ticks = tickT = drawT = 0;
+    frames = ticks = tickT = drawT = hudT = 0;
     second = now;
   }
   requestAnimationFrame(frame);
