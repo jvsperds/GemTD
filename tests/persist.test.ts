@@ -71,6 +71,18 @@ test('boards sort and filter; fastest lists only full clears', () => {
   expect(board(rows, 'fastest').map((r) => r.timeSec)).toEqual([800, 900]);
 });
 
+test('mutator and map runs rank only on their own board', () => {
+  const rows = [
+    row({ score: 5 }),
+    row({ score: 9, mutators: ['tough'] }),
+    row({ score: 8, map: 'crossroads' }),
+    row({ score: 6, map: 'classic' }),
+  ];
+  expect(board(rows, 'score').map((r) => r.score)).toEqual([6, 5]);
+  expect(board(rows, 'score', 'modded').map((r) => r.score)).toEqual([9, 8]);
+  expect(retain(rows)).toHaveLength(4);
+});
+
 test('only rows that can reach a top-10 board are kept', () => {
   const rows = Array.from({ length: 30 }, (_, i) => row({ score: i, wavesCleared: i, date: i }));
   rows.push(row({ score: -1, wavesCleared: 0, difficulty: 'hard', date: 99 })); // tops the hard board

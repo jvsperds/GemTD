@@ -9,11 +9,12 @@ import { BLURB } from './blurbs';
 import { fillIcons, icon } from './hud';
 import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
+import { newlyDone } from './quests';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
-import { newGame, type Difficulty } from './sim/setup';
+import { MAPS, newGame, RULES, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
-import { AIM, AIM_ELITE, AURA, type Tower } from './sim/towers';
+import { AIM, AIM_ELITE, AURA, codeOf, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
   BLINK_CHANCE,
@@ -34,7 +35,7 @@ import {
   type Creep,
   type WaveEntry,
 } from './sim/waves';
-import { initBook, mazeRows, measure, type Guide } from './book';
+import { initBook, mazeRows, measure, pinGlow, type Guide } from './book';
 import { initDmgChart, short } from './dmgchart';
 import { initMenu } from './ui';
 
@@ -42,17 +43,28 @@ const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const hud = document.querySelector<HTMLElement>('#hudinfo')!;
 const hintEl = document.querySelector<HTMLElement>('#hint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
-const stress = location.hash === '#stress';
+const bench = location.hash === '#bench'; // late-game frame-rate benchmark, see below
+const stress = bench || location.hash === '#stress';
+/** Show the loading toast with `msg`, and give the browser a moment to paint it. */
+function busy(msg: string) {
+  const el = document.querySelector<HTMLElement>('#loading')!;
+  el.textContent = msg;
+  el.hidden = false;
+  return new Promise((r) => setTimeout(r, 50));
+}
 const settings = await db.get('settings');
 // A fresh start (new game / daily / replay) is handed over the reload in sessionStorage.
 type Start = {
   seed: number;
   difficulty: string;
   daily?: string;
+  mutators?: string[];
+  map?: string;
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout; // a replay's hero skills
   hero?: string;
+  rules?: number; // a replay's rule set
 };
 let start: Start | null = null;
 try {
@@ -64,10 +76,12 @@ try {
 const save = stress || start ? null : await db.get('save');
 const cfg = start ??
   save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
-const game = newGame(cfg.seed, cfg.difficulty as Difficulty);
-const hero = await db.get('hero');
-// A new game takes the picked hero and skills; a resume or replay keeps the ones it started with.
+// A new game takes the picked hero and skills and the current rules; a resume or replay keeps
+// the ones it started with.
 const past = start?.replay ? start : save;
+const rules = past ? (past.rules ?? 1) : RULES;
+const game = newGame(cfg.seed, cfg.difficulty as Difficulty, cfg.mutators, cfg.map, rules);
+const hero = await db.get('hero');
 const pick = HEROES[hero.hero ?? ''] ? hero.hero! : DEFAULT_HERO;
 game.skills = past
   ? (past.skills ?? {})
@@ -78,11 +92,14 @@ game.skills = past
         .map((id) => [id, hero.skills[id]]),
     );
 game.setHero(past ? (past.hero ?? '') : pick);
-// Resume: waves before the last command replay headless. A save the current rules can't replay
-// (corrupt, or left by an older build) is dropped rather than leaving a blank page.
+// Resume from the save's wave-end snapshot; only the commands after it replay (a save without
+// one replays every wave headless). A save that can't be resumed (corrupt, or left by an older
+// build) is dropped rather than leaving a blank page.
 if (save)
   try {
-    game.replay(save.commands);
+    // Resuming blocks the page (for minutes on a long run saved without a snapshot): say so first.
+    await busy(save.snap ? 'Resuming your game…' : 'Replaying your saved game…');
+    game.resume(save.commands, save.snap);
   } catch (e) {
     console.warn('dropping unreadable save', e);
     await db.set('save', null);
@@ -108,6 +125,7 @@ const menu = initMenu(
   (s) => (speed = s),
   sfx.setVolume,
   () => book.save(mazeRows(maze)),
+  !replaying && !builder && !stress,
 );
 let guide: Guide | null = null;
 const showGuide = (g: Guide | null) => {
@@ -139,6 +157,7 @@ const book = initBook({
       .join('\n\n'),
   guide: () => guide,
   showGuide,
+  map: (MAPS[cfg.map ?? ''] ?? MAPS.classic).data,
   build: builder
     ? (g) => {
         // Stones in a valid guide never block part-way, so placing them one by one is safe.
@@ -177,6 +196,11 @@ const lowgfx = document.querySelector<HTMLInputElement>('#lowgfx')!;
 lowgfx.checked = view.low = toggles.lowgfx ?? view.low;
 view.resize();
 lowgfx.onchange = () => (remember('lowgfx', (view.low = lowgfx.checked)), view.resize());
+// Side bar: hideable from Settings; its hotkeys keep working.
+const dock = document.querySelector<HTMLElement>('#dock')!;
+const showDock = document.querySelector<HTMLInputElement>('#showdock')!;
+dock.hidden = !(showDock.checked = toggles.dock ?? true);
+showDock.onchange = () => (dock.hidden = !remember('dock', showDock.checked));
 if (toggles.book) book.toggle();
 
 const saveNow = (commands = game.log) =>
@@ -184,13 +208,18 @@ const saveNow = (commands = game.log) =>
     seed: game.seed,
     difficulty: cfg.difficulty,
     daily: cfg.daily,
+    mutators: cfg.mutators,
+    map: cfg.map,
     commands,
+    snap: game.snap,
+    rules,
     version: db.VERSION,
     skills: game.skills,
     hero: game.hero,
   });
 if (!replaying && !stress && !builder) {
-  game.onCommand = () => saveNow();
+  // An ended run is not saved: its score row replaces the save once it is recorded.
+  game.onCommand = () => game.over || saveNow();
   if (start) saveNow(); // so a reload before the first move resumes this game, not the old one
 }
 function run(cmd: Cmd) {
@@ -200,6 +229,7 @@ function run(cmd: Cmd) {
   return ok;
 }
 sfx.setVolume(settings.volume);
+sfx.setMusic(settings.music ?? 0.3);
 addEventListener('pointerdown', sfx.unlock);
 // iOS Safari ignores user-scalable=no; its pinch arrives as gesture events.
 addEventListener('gesturestart', (e) => e.preventDefault());
@@ -335,9 +365,11 @@ function act(a: string) {
   } else if (a === 'stone') removing = !removing;
   // Undo: save the log minus the last placement and resume from it. Gem rolls come from the seeded
   // rng, so the re-placed gem is the same gem: this moves it, it can't reroll it.
-  // ponytail: resumes via reload (replays the whole log); do it in place if late-game undo lags.
+  // ponytail: resumes via reload (the wave-end snapshot plus this round's commands).
   else if (a === 'undo' && canUndo())
-    void saveNow(game.log.slice(0, -1)).then(() => location.reload());
+    void busy('Undoing…')
+      .then(() => saveNow(game.log.slice(0, -1)))
+      .then(() => location.reload());
   else if (a === 'level') run(['level']);
   else if (a === 'skip' && autoSkip) autoSkip = false;
   else if (a === 'skip') run(['skip']);
@@ -476,7 +508,19 @@ addEventListener('keydown', (e) => {
   }
 });
 
-if (stress) {
+if (bench) {
+  // Benchmark: 80 special towers (every kind in turn) on wave 99 rolling into 100 and on through
+  // endless, castle unbreakable, HUD live. The target is 60 fps here.
+  const names = Object.entries(combat.gems)
+    .filter(([, d]) => !d.quality && !d.pedal)
+    .map(([k]) => k);
+  for (let i = 0, n = 0; n < 80 && i < maze.w * maze.h; i += 7)
+    if (combat.place(names[n % names.length], i % maze.w, (i / maze.w) | 0)) n++;
+  sim.wave = 98;
+  sim.castleHp = Infinity;
+  game.run(['skip']);
+  debug.hidden = false;
+} else if (stress) {
   // Stress scene (BUILD.md §3.7): 80 towers, 400 unkillable creeps, 1,500 tracers, 800 particles.
   const types = Object.keys(GEM_COLOR);
   for (let i = 0, n = 0; n < 80 && i < maze.w * maze.h; i += 7)
@@ -499,6 +543,8 @@ async function recordScore() {
     timeSec: Math.round(game.seconds),
     difficulty: cfg.difficulty,
     daily: cfg.daily,
+    mutators: cfg.mutators,
+    map: cfg.map,
     seed: game.seed,
     won: game.wavesCleared >= sim.lastWave,
     date: Date.now(),
@@ -506,18 +552,32 @@ async function recordScore() {
     commands: game.log,
     skills: game.skills,
     hero: game.hero,
+    rules,
   });
   await db.set('scores', db.retain(scores));
   await db.set('save', null);
-  const shells = shellsFor(game.wavesCleared, game.wavesCleared >= sim.lastWave);
+  const won = game.wavesCleared >= sim.lastWave;
   const h = await db.get('hero');
-  await db.set('hero', { ...h, shells: h.shells + shells });
-  menu.show({
-    score: score(game),
-    won: game.wavesCleared >= sim.lastWave,
-    shells,
-    summary: summary(),
+  const quests = newlyDone(
+    {
+      won,
+      waves: game.wavesCleared,
+      difficulty: cfg.difficulty,
+      daily: !!cfg.daily,
+      fullHp: sim.castleHp >= CASTLE_HP,
+      maxLevel: game.level >= game.levels.length,
+      towers: combat.towers.map((t) => t.def.name),
+    },
+    h.quests,
+  );
+  const shells = shellsFor(game.wavesCleared, won) + quests.reduce((n, q) => n + q.shells, 0);
+  await db.set('hero', {
+    ...h,
+    shells: h.shells + shells,
+    quests: [...(h.quests ?? []), ...quests.map((q) => q.id)],
   });
+  const ended = game.log.at(-1)?.[1][0] === 'end';
+  menu.show({ score: score(game), won, ended, shells, summary: summary(), quests });
 }
 /** Game-over recap: run totals, then the five towers that did the most damage. */
 function summary() {
@@ -574,6 +634,15 @@ function showBanner() {
 let prev = { kills: 0, hp: sim.castleHp, phase: sim.phase as string };
 function sounds() {
   if (stress) return;
+  sfx.setMood(
+    game.over || builder
+      ? 'off'
+      : sim.phase === 'wave'
+        ? sim.current?.boss
+          ? 'boss'
+          : 'wave'
+        : 'build',
+  );
   if (game.kills > prev.kills) sfx.play('kill');
   if (sim.castleHp < prev.hp) sfx.play('leak');
   if (sim.phase !== prev.phase)
@@ -889,6 +958,27 @@ function slot(
   if (o.lvl) b.append(el('u', '', '•'.repeat(o.lvl)));
   return b;
 }
+// Tutorial: the first game's first three waves swap the short hints for teaching ones.
+let tutorial = !settings.tutorial && !replaying && !builder && !stress;
+function teach() {
+  if (!tutorial) return '';
+  const step = game.step;
+  if (step === 'place')
+    return game.placed.length
+      ? `Gem ${game.placed.length + 1} of 5 · Gems block creeps like walls: stretch the path between the numbered checkpoints. Misplaced? U undoes.`
+      : 'Welcome! Double-click an empty tile to place a gem (5 per round). Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; make that walk long.';
+  if (step === 'choose')
+    return !sel
+      ? 'Click the gem you want to keep. The other four become stones and stay in your maze.'
+      : game.recipesFor(sel).length
+        ? 'A pale glow means a special recipe is ready: press Combine → … to build it.'
+        : game.canMerge(sel, 2)
+          ? 'Two identical gems: Merge (M) keeps one a quality higher. Or Keep (K).'
+          : 'Press Keep (K) to keep this gem. The wave starts right after.';
+  if (step === 'wave')
+    return 'Kills give gold and XP; XP raises your level for better gems (odds under the XP bar).';
+  return '';
+}
 /** Only this round's last gem placement can be undone. */
 const canUndo = () =>
   !replaying && !builder && sim.phase === 'build' && game.log.at(-1)?.[1][0] === 'place';
@@ -1065,6 +1155,11 @@ Combine: ${x.parts.map((p) => p.def.name).join(' + ')}`;
   );
 }
 
+const HUD_MS = 100;
+let lastCounters = '',
+  lastBoard = '',
+  lastBook = '',
+  hudAt = 0;
 let lastHud = '',
   lastLog = -1;
 function updateHud() {
@@ -1081,19 +1176,26 @@ function updateHud() {
         ? 'Click a stone to shatter it'
         : game.pedals.length
           ? `Lay your ${game.pedals[0]} on the path: creeps set it off by stepping on it`
-          : step === 'place'
-            ? `Place gem ${game.placed.length + 1} of 5`
-            : step === 'choose'
-              ? sel
-                ? `Selected ${sel.def.name}: keep, merge or combine it`
-                : 'Click one of this round’s gems to select it'
-              : step === 'won'
-                ? `You win! Score ${score(game)}`
-                : step === 'lost'
-                  ? `Game over. Score ${score(game)}`
-                  : speed
-                    ? `Wave in progress ×${speed}`
-                    : 'Paused (Space)';
+          : teach()
+            ? teach()
+            : step === 'place'
+              ? `Place gem ${game.placed.length + 1} of 5`
+              : step === 'choose'
+                ? sel
+                  ? `Selected ${sel.def.name}: keep, merge or combine it`
+                  : 'Click one of this round’s gems to select it'
+                : step === 'won'
+                  ? `You win! Score ${score(game)}`
+                  : step === 'lost'
+                    ? `Game over. Score ${score(game)}`
+                    : speed
+                      ? `Wave in progress ×${speed}`
+                      : 'Paused (Space)';
+  if (tutorial && game.wavesCleared >= 3) {
+    tutorial = false;
+    settings.tutorial = true;
+    void db.set('settings', settings);
+  }
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
@@ -1102,6 +1204,7 @@ function updateHud() {
     replaying && 'Replay',
     builder && 'Maze builder',
     cfg.daily && `Daily ${cfg.daily}`,
+    cfg.map && cfg.map !== 'classic' && MAPS[cfg.map]?.name,
     !builder && cfg.difficulty,
   ].filter(Boolean);
   const s =
@@ -1132,8 +1235,17 @@ function updateHud() {
   const recipes = live ? game.recipesFor(live) : [];
   const total = combat.towers.reduce((n, t) => n + t.damageDealt, 0) || 1;
   const share = live ? Math.round((live.damageDealt / total) * 100) : 0;
-  const key =
+  // Counters (time, gold, kills, damage share...) tick over many times a second at high game
+  // speed, so they repaint at most every HUD_MS; selection, buttons and phase repaint at once.
+  const counters =
     s +
+    game.xp +
+    game.kills +
+    live?.kills +
+    live?.souls +
+    share +
+    (creep ? `${Math.ceil(creep.hp)}` + sim.speed(creep) : '');
+  const key =
     hint +
     speed +
     autoSkip +
@@ -1142,10 +1254,9 @@ function updateHud() {
     view.showPath +
     view.showRanges +
     book.open +
+    [...book.pins] +
     guide?.name +
     mazeVer +
-    game.xp +
-    game.kills +
     recipes.map((x) => x.name) +
     combat.towers.length +
     game.pedals.length +
@@ -1154,15 +1265,11 @@ function updateHud() {
     live?.mode +
     multi.size +
     (live ? maze.idx(live.c, live.r) : '') + // same-type towers differ only by cell
-    live?.kills +
-    live?.souls +
-    share +
     (live ? statuses(live).map((x) => x[0] + x[1]) : '') +
-    (creep
-      ? `${Math.ceil(creep.hp)}` + creepStatuses(creep).map((x) => x[0] + x[1]) + sim.speed(creep)
-      : '');
-  if (key !== lastHud) {
-    lastHud = key;
+    (creep ? creepStatuses(creep).map((x) => x[0] + x[1]) : '');
+  const nowMs = performance.now();
+  if (key !== lastHud || (counters !== lastCounters && nowMs - hudAt >= HUD_MS)) {
+    [lastHud, lastCounters, hudAt] = [key, counters, nowMs];
     hud.innerHTML = s;
     hintEl.textContent = hint;
     if (game.gold > prevGold) flashEl('gold', 'pop');
@@ -1187,11 +1294,31 @@ function updateHud() {
         },
       ),
     );
-    book.draw();
-    // Highlight every tower that can combine into something right now.
-    view.hints = combat.towers
-      .filter((t) => game.recipesFor(t).length)
-      .map((t) => maze.idx(t.c, t.r));
+    // The book and the combine hints only change with the board, the pins or the selection:
+    // matching every recipe against every tower is far too dear to redo on each counter tick.
+    const board =
+      step +
+      game.placed.length +
+      game.over +
+      [...book.pins] +
+      combat.towers.map((t) => `${codeOf(t.def)}@${maze.idx(t.c, t.r)}`).join();
+    const bookKey = board + live?.def.name + book.open + guide?.name + mazeVer;
+    if (bookKey !== lastBook) {
+      lastBook = bookKey;
+      book.draw();
+    }
+    if (board !== lastBoard) {
+      lastBoard = board;
+      // Highlight every tower that can combine into something right now; pinned recipes glow
+      // in their own colour.
+      const pin = pinGlow(book.pins, combat.towers, (t) => game.recipesFor(t));
+      const cell = (t: Tower) => maze.idx(t.c, t.r);
+      view.pinReady = pin.ready.map(cell);
+      view.pinned = pin.working.map(cell);
+      view.hints = combat.towers
+        .filter((t) => !pin.ready.includes(t) && game.recipesFor(t).length)
+        .map(cell);
+    }
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
     view.multi = [...multi].filter((t) => combat.towers.includes(t)).map((t) => maze.idx(t.c, t.r));
     // Glow the round's gems until one is kept, merged or combined.
@@ -1236,16 +1363,27 @@ function updateHud() {
 }
 
 // Perf stats, averaged per second; also exposed for the e2e budget check.
-const perf = { fps: 0, tickMs: 0, drawMs: 0, creeps: 0, towers: 0, shots: 0, particles: 0 };
+const perf = {
+  fps: 0,
+  tickMs: 0,
+  drawMs: 0,
+  hudMs: 0, // worst HUD update in the last second
+  creeps: 0,
+  towers: 0,
+  shots: 0,
+  particles: 0,
+};
 (window as unknown as { perf: typeof perf }).perf = perf;
 let frames = 0,
   ticks = 0,
   tickT = 0,
   drawT = 0,
+  hudT = 0,
   second = performance.now();
 
 let last = performance.now(),
   acc = 0;
+document.querySelector<HTMLElement>('#loading')!.hidden = true;
 requestAnimationFrame(function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.25);
   acc = Math.min(acc + dt * speed, 0.25 * Math.max(1, speed));
@@ -1263,7 +1401,9 @@ requestAnimationFrame(function frame(now) {
     while (replaying?.[ri] && sim.phase === 'wave' && game.ticks >= replaying[ri][0])
       run(replaying[ri++][1]);
     game.tick();
-    if (stress) topUpStress();
+    if (bench)
+      sim.castleHp = Infinity; // leaks and boss hits never end the benchmark
+    else if (stress) topUpStress();
     tickT += performance.now() - t0;
     ticks++;
     ticked = true;
@@ -1273,7 +1413,9 @@ requestAnimationFrame(function frame(now) {
   view.render(acc / TICK, dt, now);
   drawT += performance.now() - t0;
   frames++;
-  if (!stress) updateHud();
+  const h0 = performance.now();
+  if (!stress || bench) updateHud();
+  hudT = Math.max(hudT, performance.now() - h0);
   if (game.over && !recorded) recordScore();
   sounds();
   if (sim.wave !== bannerWave && sim.phase === 'wave' && !stress) showBanner();
@@ -1283,6 +1425,7 @@ requestAnimationFrame(function frame(now) {
       fps: Math.round((frames * 1000) / (now - second)),
       tickMs: +(tickT / Math.max(1, ticks)).toFixed(2),
       drawMs: +(drawT / frames).toFixed(2),
+      hudMs: +hudT.toFixed(2),
       creeps: sim.creeps.length,
       towers: combat.towers.length,
       shots: combat.shots.length,
@@ -1292,7 +1435,7 @@ requestAnimationFrame(function frame(now) {
       debug.textContent = Object.entries(perf)
         .map(([k, v]) => `${k} ${v}`)
         .join('\n');
-    frames = ticks = tickT = drawT = 0;
+    frames = ticks = tickT = drawT = hudT = 0;
     second = now;
   }
   requestAnimationFrame(frame);

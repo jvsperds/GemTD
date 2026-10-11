@@ -1,13 +1,16 @@
 // End-game towers for long endless runs (issue #83). Quality 7 "Ancient" gems are combined from
 // two Great (Q6) gems of one type anywhere on the board; nothing rolls or merges into Q7. Each
-// end-game tower is a top special tower + an Ancient gem, and adds damage that keeps up with
-// endless HP scaling (×1.15 per wave): a % of the target's max HP, or damage grown from kills.
+// end-game tower is a top special tower + an Ancient gem, and adds damage that follows endless
+// HP scaling (×1.15 per wave): a % of the target's max HP, or damage grown from kills. Both count
+// creep HP as if it grew `lag` slower per endless wave, so creeps outgrow them and a run ends.
 // ponytail: stats and percentages are first guesses; tune with long `npm run balance` runs.
 import type { GemDef, SpecialDef } from './towers';
 
 /** Ability values: `endgame_maxhp` % of max HP per hit (half on bosses), `endgame_souls` % of a
- *  killed creep's max HP added to the tower's attack damage for good. */
-export const ENDGAME = { maxHp: 0.02, bossMaxHp: 0.5, souls: 0.01 };
+ *  killed creep's max HP added to the tower's attack damage for good. Each endless wave divides
+ *  both by `lag`: at 1.02 they halve about every 35 waves. */
+export const ENDGAME = { maxHp: 0.02, bossMaxHp: 0.5, souls: 0.01, lag: 1.02 };
+const LAG = `${Math.round((ENDGAME.lag - 1) * 100)}% weaker per endless wave`;
 
 export function ancientGems(gems: Record<string, GemDef>) {
   const out: Record<string, GemDef & Pick<SpecialDef, 'recipes'>> = {};
@@ -89,14 +92,14 @@ export const ENDGAME_TIPS = new Map([
     'endgame_maxhp',
     {
       name: 'Sunder',
-      tip: `Each hit also deals ${ENDGAME.maxHp * 100}% of the target's max HP as pure damage (half on bosses)`,
+      tip: `Each hit also deals ${ENDGAME.maxHp * 100}% of the target's max HP as pure damage (half on bosses); ${LAG}`,
     },
   ],
   [
     'endgame_souls',
     {
       name: 'Soul Harvest',
-      tip: `Each kill adds ${ENDGAME.souls * 100}% of the creep's max HP to this tower's attack damage, for good`,
+      tip: `Each kill adds ${ENDGAME.souls * 100}% of the creep's max HP to this tower's attack damage, for good; ${LAG}`,
     },
   ],
 ]);

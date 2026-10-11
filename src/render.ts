@@ -3,7 +3,7 @@
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
 import { PEDAL, PEDALS, SPELL, TIERS } from './sim/pedals';
-import type { Combat, Tower } from './sim/towers';
+import type { Combat, GemDef, SpecialDef, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
 
 export const slug = (name: string) =>
@@ -26,6 +26,10 @@ export const GEM_COLOR: Record<string, string> = {
   S: '#ff7ad9', // special towers
 };
 const GUIDE_COLOR = '#f2c52e80'; // one colour for every guide mark, as in the game
+// Route legs in order: gold, cyan, pink, lime, orange, violet.
+const LEG_COLORS = ['#ffd24a', '#4ad2ff', '#ff6ec7', '#8cff5a', '#ff9440', '#b48cff'].map(
+  (c) => c + '66',
+);
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
 const TALL = 0.55;
@@ -34,6 +38,11 @@ export const MAX_PARTICLES = 800;
 const HUD_H = 44;
 const PANEL_H = 150; // bottom panel
 const FRAME = 2; // stone border around the board, in cells
+const PLATEAU = 4; // stone ground round the wall before the drop, in cells (ragged by ±0.75)
+const CLIFF = 1.5; // height of the plateau's south face, in cells
+const TREES = 0.07; // share of lowland cells that grow a tree
+const WORLD = 20; // lowland past the board you can pan to, in cells; it darkens toward this edge
+const DUSK = FRAME + PLATEAU + 3; // cells past the board where the darkening starts: clear of the cliff
 /** Cheap deterministic 0..1 noise for cosmetic per-cell variation. */
 const hash2 = (c: number, r: number) => {
   const n = Math.sin(c * 127.1 + r * 311.7) * 43758.5;
@@ -844,6 +853,8 @@ export class Renderer {
   multi: number[] = []; // cells of extra Ctrl-selected towers
   creep: Creep | null = null; // selected creep
   hints: number[] = []; // cells of towers that can combine now
+  pinned: number[] = []; // cells of pinned-recipe ingredients still waiting on the rest
+  pinReady: number[] = []; // cells of pinned-recipe ingredients that can combine now
   pending: number[] = []; // this round's gems, one of which must be picked to finish it
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
@@ -860,7 +871,7 @@ export class Renderer {
   private sprites = new Map<string, HTMLCanvasElement>();
   private terrainPat: [number, CanvasPattern] | null = null;
 
-  /** Out-of-bounds ground: a repeating tile of dark stone blocks at random heights. */
+  /** Lowland around the plateau: a repeating tile of leafy green blocks at random heights. */
   private terrain() {
     const s = this.cell;
     if (this.terrainPat?.[0] === s) return this.terrainPat[1];
@@ -870,7 +881,7 @@ export class Renderer {
       return n - Math.floor(n);
     };
     const tile = bake(N * s, N * s, (g) => {
-      g.fillStyle = '#141210';
+      g.fillStyle = '#0d170d';
       g.fillRect(0, 0, N * s, N * s);
       // Back to front so each row's tops cover the front faces of the row behind; one row past
       // each edge so faces that cross the seam wrap.
@@ -878,7 +889,7 @@ export class Renderer {
         for (let c = 0; c < N; c++) {
           const v = hash(c, r),
             h = Math.floor(v * 4) * 0.18 * s,
-            base = mix('#2a2622', '#4a443c', v);
+            base = mix('#1b3a1d', '#41702c', v);
           const y = r * s - h;
           g.fillStyle = shade(base, 0.55);
           g.fillRect(c * s, y + s, s, h);
@@ -945,6 +956,7 @@ export class Renderer {
       this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
       this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
     }
+    this.clamp(cell);
     if (cell !== this.cell) {
       this.cell = cell;
       this.sprites.clear();
@@ -955,6 +967,18 @@ export class Renderer {
   pan(dx: number, dy: number) {
     this.panX += dx * this.dpr;
     this.panY += dy * this.dpr;
+    this.clamp(this.cell);
+  }
+
+  /** Keep the view inside the world: the board plus WORLD cells of lowland on every side. */
+  private clamp(cell: number) {
+    const fit = (pan: number, size: number, n: number) => {
+      const a = size - (n + WORLD) * cell,
+        b = WORLD * cell;
+      return Math.min(Math.max(pan, Math.min(a, b)), Math.max(a, b));
+    };
+    this.panX = fit(this.panX, this.canvas.width, this.maze.w);
+    this.panY = fit(this.panY, this.canvas.height, this.maze.h);
   }
 
   /** Live creep drawn under a screen point, nearest first. */
@@ -1028,6 +1052,45 @@ export class Renderer {
       g.beginPath();
       g.ellipse(w / 2, w * 0.2, w / 2, w * 0.2, 0, 0, 7);
       g.fill();
+    });
+  }
+
+  /** Whether cell (c, r) is on the stone plateau the board stands on (the wall and board count). */
+  private onPlateau(c: number, r: number) {
+    const { w, h } = this.maze;
+    const dx = Math.max(-FRAME - c, c - (w + FRAME - 1), 0),
+      dy = Math.max(-FRAME - r, r - (h + FRAME - 1), 0);
+    // Coarse noise (2x2 cells) so the rim is ragged in blocks, not single-cell holes.
+    return Math.hypot(dx, dy) <= PLATEAU + 1.5 * hash2((c >> 1) + 7, (r >> 1) + 3) - 0.75;
+  }
+
+  /** Cube tree: a short trunk under two or three stacked leaf blocks, narrower toward the top. */
+  private tree(k: number) {
+    const s = this.cell,
+      w = s * 1.5,
+      h = s * 2.6;
+    return this.sprite(`tree${k}`, w, h, (g) => {
+      g.fillStyle = 'rgba(0,0,0,0.3)';
+      g.beginPath();
+      g.ellipse(w / 2, h - s * 0.15, s * 0.6, s * 0.15, 0, 0, 7);
+      g.fill();
+      g.fillStyle = '#4a3423';
+      g.fillRect(w / 2 - s * 0.12, h - s * 0.8, s * 0.24, s * 0.7);
+      const leaf = ['#2f6b2e', '#4a8a2c', '#255a33'][k];
+      const d = s * 0.5, // top face depth
+        f = s * 0.35; // front face height
+      let y = h - s * 0.45;
+      for (const cw of [1.3, 0.95, 0.6].slice(0, k === 1 ? 2 : 3)) {
+        const x = (w - cw * s) / 2,
+          ty = y - f - d;
+        g.fillStyle = shade(leaf, 0.6);
+        g.fillRect(x, y - f, cw * s, f);
+        g.fillStyle = leaf;
+        g.fillRect(x, ty, cw * s, d);
+        g.fillStyle = shade(leaf, 1.25);
+        g.fillRect(x, ty, cw * s, Math.max(1, s / 12));
+        y = ty + d * 0.45;
+      }
     });
   }
 
@@ -1148,6 +1211,16 @@ export class Renderer {
     L.width = maze.w * s;
     L.height = maze.h * s + top;
     let g = L.getContext('2d')!;
+    // Burn auras heat the ground: each cell sums the burn of every aura that reaches it.
+    const heat = new Float32Array(maze.w * maze.h);
+    for (const t of this.combat.towers)
+      for (const e of this.combat.tfx(t).enemy) {
+        if (!e.dps) continue;
+        const R = e.range / UNITS_PER_CELL;
+        for (let r = Math.max(0, Math.floor(t.r - R)); r <= Math.min(maze.h - 1, t.r + R); r++)
+          for (let c = Math.max(0, Math.floor(t.c - R)); c <= Math.min(maze.w - 1, t.c + R); c++)
+            if (Math.hypot(c - t.c, r - t.r) <= R) heat[maze.idx(c, r)] += e.dps;
+      }
     g.translate(0, top);
     g.fillStyle = '#0a1510'; // grid lines: the 1px gaps between cells
     g.fillRect(0, 0, maze.w * s, maze.h * s);
@@ -1169,12 +1242,53 @@ export class Renderer {
           g.fillStyle = onX && onY ? 'rgba(200,200,200,0.35)' : 'rgba(150,150,150,0.18)';
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
+        const hot = heat[maze.idx(c, r)];
+        if (hot) {
+          // Darker and redder the more burn lands here (log scale: 60 dps to several thousand).
+          const k = Math.min(1, Math.log10(1 + hot / 60) / 2);
+          g.globalAlpha = 0.2 + 0.35 * k;
+          g.fillStyle = mix('#e0461c', '#5a0606', k);
+          g.fillRect(c * s, r * s, s - 1, s - 1);
+          g.globalAlpha = 1;
+        }
         const k = this.guide?.[r]?.[c] ?? '.';
         if (k && k !== '.' && maze.cells[maze.idx(c, r)] !== WALL) {
           g.fillStyle = GUIDE_COLOR;
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
       }
+    // Start and end of the route: a 3x3 mosaic under the waypoint, teal for the gate the creeps
+    // come in by, crimson for the one they leave by.
+    const ends = [
+      [maze.waypoints[0], '80,220,200'],
+      [maze.waypoints[maze.waypoints.length - 1], '235,80,70'],
+    ] as const;
+    for (const [[wc, wr], rgb] of ends) {
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++) {
+          const x = (wc + dc) * s,
+            y = (wr + dr) * s,
+            i = Math.max(1, s / 8);
+          g.fillStyle = `rgba(${rgb},${(dc + dr) & 1 ? 0.03 : 0.06})`;
+          g.fillRect(x, y, s - 1, s - 1);
+          g.strokeStyle = `rgba(${rgb},0.08)`;
+          g.lineWidth = 1;
+          g.strokeRect(x + i + 0.5, y + i + 0.5, s - 2 * i - 2, s - 2 * i - 2);
+        }
+      // A diamond through the four edge tiles ties the mosaic together.
+      const cx = (wc + 0.5) * s,
+        cy = (wr + 0.5) * s,
+        d = s * 1.5;
+      g.strokeStyle = `rgba(${rgb},0.12)`;
+      g.lineWidth = Math.max(1, s / 10);
+      g.beginPath();
+      g.moveTo(cx, cy - d);
+      g.lineTo(cx + d, cy);
+      g.lineTo(cx, cy + d);
+      g.lineTo(cx - d, cy);
+      g.closePath();
+      g.stroke();
+    }
     // Vignette: the field darkens toward the wall, as if lit from the middle.
     const W = maze.w * s,
       H = maze.h * s;
@@ -1185,15 +1299,16 @@ export class Renderer {
     g.fillRect(0, 0, W, H);
     const route = maze.route();
     if (route && this.showPath) {
-      g.strokeStyle = 'rgba(255,210,74,0.3)';
       g.lineWidth = Math.max(1, s / 6);
-      g.beginPath();
-      route.forEach((field, i) =>
+      // One colour per leg (S→1, 1→2, ...), so crossing legs can be told apart.
+      route.forEach((field, i) => {
+        g.strokeStyle = LEG_COLORS[i % LEG_COLORS.length];
+        g.beginPath();
         maze
           .walk(field, maze.waypoints[i])
-          .forEach(([c, r], k) => g[k ? 'lineTo' : 'moveTo']((c + 0.5) * s, (r + 0.5) * s)),
-      );
-      g.stroke();
+          .forEach(([c, r], k) => g[k ? 'lineTo' : 'moveTo']((c + 0.5) * s, (r + 0.5) * s));
+        g.stroke();
+      });
     }
     // Waypoint plaques: dark tile, gold rim, serif letter.
     g.font = `${Math.max(10, s * 0.62)}px 'Palatino Linotype', Palatino, Georgia, serif`;
@@ -1237,8 +1352,23 @@ export class Renderer {
             (r - TOWER_H - TALL) * s,
           );
           g.filter = 'none';
-        } else
+        } else {
           g.drawImage(this.block(cell === WALL ? '#1c1c24' : '#8a8a8a'), c * s, (r - BLOCK_H) * s);
+          // A stone the shown guide wants open: a faint X on its top face.
+          if (cell === ROCK && this.guide && (this.guide[r]?.[c] ?? '.') === '.') {
+            const x = (c + 0.25) * s,
+              y = (r - BLOCK_H + 0.25) * s,
+              d = s / 2;
+            g.strokeStyle = 'rgba(40,0,0,0.45)';
+            g.lineWidth = Math.max(1, s / 10);
+            g.beginPath();
+            g.moveTo(x, y);
+            g.lineTo(x + d, y + d);
+            g.moveTo(x + d, y);
+            g.lineTo(x, y + d);
+            g.stroke();
+          }
+        }
       }
     // Quality numbers last, so a tower in front never hides the one behind's number.
     g.fillStyle = '#fff';
@@ -1270,6 +1400,176 @@ export class Renderer {
     p[o + 5] = colour;
   }
 
+  /** Draw and age the lingering attack effects; `w` scales with what the tower cost. */
+  private drawFx(dt: number, now: number) {
+    const { ctx, cell: s, panX, panY } = this;
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < this.fx.length;) {
+      const f = this.fx[i];
+      if ((f.age += dt) >= f.life) {
+        this.fx[i] = this.fx[this.fx.length - 1];
+        this.fx.pop();
+        continue;
+      }
+      i++;
+      if (f.to.alive) [f.x1, f.y1] = [f.to.x, f.to.y - (f.to.def.flying ? FLY_Z : 0.15)];
+      const p = f.age / f.life,
+        a = 1 - p,
+        w = (0.04 + 0.16 * f.k) * s,
+        x0 = panX + f.x0 * s,
+        y0 = panY + f.y0 * s,
+        x1 = panX + f.x1 * s,
+        y1 = panY + f.y1 * s,
+        dx = x1 - x0,
+        dy = y1 - y0,
+        len = Math.hypot(dx, dy) || 1,
+        nx = -dy / len,
+        ny = dx / len;
+      // A path from tower to target, `n` segments, each knocked sideways by `off(t)`.
+      const path = (n: number, off: (t: number) => number) => {
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        for (let q = 1; q < n; q++) {
+          const t = q / n,
+            j = off(t);
+          ctx.lineTo(x0 + dx * t + nx * j, y0 + dy * t + ny * j);
+        }
+        ctx.lineTo(x1, y1);
+      };
+      // Stroke the current path as a coloured body and a bright core. No wider halo pass:
+      // big translucent strokes are what the GPU pays for.
+      const glow = (wide: number, core: number, coreCol = '#fff') => {
+        ctx.strokeStyle = f.col;
+        ctx.globalAlpha = a * 0.6;
+        ctx.lineWidth = wide * 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = coreCol;
+        ctx.lineWidth = Math.max(1, core);
+        ctx.stroke();
+      };
+      const ring = (r: number, lw: number) => {
+        ctx.strokeStyle = f.col;
+        ctx.globalAlpha = a;
+        ctx.lineWidth = Math.max(1, lw);
+        ctx.beginPath();
+        ctx.arc(x1, y1, r, 0, 7);
+        ctx.stroke();
+      };
+      const dot = (x: number, y: number, r: number, col: string, alpha: number) => {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 7);
+        ctx.fill();
+      };
+      const jitter = (amp: number) => () => (Math.random() - 0.5) * amp;
+      switch (f.style) {
+        case 'line':
+          path(1, () => 0);
+          glow(w * 2, w * 0.5);
+          break;
+        case 'beam':
+          path(1, () => 0);
+          glow(w * 4 * (0.5 + 0.5 * a), w);
+          dot(x1, y1, w * 2 * a + 1, '#fff', a);
+          break;
+        case 'zap':
+          // Jagged bolt, re-rolled every frame so it crackles.
+          path(6, jitter(s * 0.5));
+          glow(w * 2.5, w * 0.6);
+          break;
+        case 'laguna': {
+          // Laguna Blade: a fat writhing bolt with a thin fork, a flare at the tower and a
+          // shock ring at the target.
+          const wave = (t: number) =>
+            Math.sin(t * 11 + now / 50 + f.seed) * s * 0.22 * Math.sin(t * Math.PI) +
+            (Math.random() - 0.5) * s * (0.3 + 0.5 * f.k);
+          path(10, wave);
+          glow(w * 5, w * 1.1);
+          path(7, jitter(s * 1.1));
+          glow(w * 1.6, w * 0.3);
+          ring(s * (0.3 + 1.1 * p), w * a);
+          dot(x0, y0, w * 2.5 * a + 1, '#fff', a);
+          dot(x1, y1, w * 3 * a + 1, '#fff', a * 0.9);
+          break;
+        }
+        case 'finger': {
+          // Finger of Death: two strands coiling round a hard core, a dark bloom at the target.
+          for (const sign of [1, -1]) {
+            path(
+              16,
+              (t) => Math.sin(t * 16 - now / 35 + f.seed) * s * 0.26 * sign * Math.sin(t * Math.PI),
+            );
+            glow(w * 2.2, w * 0.4, '#ffd8c8');
+          }
+          path(1, () => 0);
+          glow(w * 5, w);
+          dot(x1, y1, s * (0.25 + 0.5 * p), '#000', a * 0.45);
+          ring(s * (0.25 + 0.9 * p), w * a);
+          dot(x1, y1, w * 2.5 * a + 1, '#fff', a);
+          break;
+        }
+        case 'ray': {
+          // Lance of light: broad at the tower, a point at the target.
+          const h = w * 3 * a + 1;
+          ctx.globalAlpha = a * 0.55;
+          ctx.fillStyle = f.col;
+          ctx.beginPath();
+          ctx.moveTo(x0 + nx * h, y0 + ny * h);
+          ctx.lineTo(x1, y1);
+          ctx.lineTo(x0 - nx * h, y0 - ny * h);
+          ctx.fill();
+          path(1, () => 0);
+          glow(w * 1.5, w * 0.5);
+          dot(x1, y1, w * 2.5 * a + 1, '#fff', a);
+          break;
+        }
+        default: {
+          // Projectiles: fly for the first 70% of the effect, then pop.
+          const t = Math.min(1, p / 0.7),
+            lift = f.style === 'glob' ? Math.sin(t * Math.PI) * s * 0.8 : 0,
+            px = x0 + dx * t,
+            py = y0 + dy * t - lift;
+          if (t >= 1) {
+            ring(w * 2 + s * 0.5 * ((p - 0.7) / 0.3), w * 0.6);
+            break;
+          }
+          const tt = Math.max(0, t - 0.25),
+            tl = f.style === 'glob' ? Math.sin(tt * Math.PI) * s * 0.8 : 0;
+          ctx.globalAlpha = 0.5;
+          ctx.strokeStyle = f.col;
+          ctx.lineWidth = Math.max(1, w);
+          ctx.beginPath();
+          ctx.moveTo(x0 + dx * tt, y0 + dy * tt - tl);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+          if (f.style === 'shard') {
+            // A cut gem flying point first.
+            const l = w * 3 + 3,
+              h = w * 1.2 + 1.5,
+              ux = dx / len,
+              uy = dy / len;
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = f.col;
+            ctx.beginPath();
+            ctx.moveTo(px + ux * l, py + uy * l);
+            ctx.lineTo(px + nx * h, py + ny * h);
+            ctx.lineTo(px - ux * l, py - uy * l);
+            ctx.lineTo(px - nx * h, py - ny * h);
+            ctx.fill();
+            dot(px + ux * l * 0.3, py + uy * l * 0.3, Math.max(1, h * 0.4), '#fff', 0.9);
+          } else {
+            dot(px, py, w * 1.6 + 2, f.col, 1);
+            dot(px, py, w * 0.7 + 1, '#fff', 0.9);
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.lineJoin = 'miter';
+  }
+
   /** Cosmetic ring burst (deaths, splash impacts). */
   private burst(x: number, y: number, n: number, speed = 3, colour = 0) {
     for (let k = 0; k < n; k++) {
@@ -1281,13 +1581,52 @@ export class Renderer {
   /** Burn-aura towers with at least one enemy inside, refreshed each sim tick. */
   private burning = new Set<Tower>();
 
+  /** Attack effects still on screen: hits resolve at once, their look lingers for a moment. */
+  private fx: Fx[] = [];
+  private fxAt = new WeakMap<Tower, number>(); // when each tower last spawned an effect
+  private tiers = new Map<GemDef, number>();
+  /** What a tower cost to build: a gem's quality, or the sum over a special's ingredients. */
+  private tier(d: GemDef): number {
+    let n = this.tiers.get(d);
+    if (n === undefined) {
+      this.tiers.set(d, 1); // guards a recipe loop
+      const rec = d.quality ? null : (d as Partial<SpecialDef>).recipes?.[0];
+      const of = (code: string) => (this.combat.gems[code] ? this.tier(this.combat.gems[code]) : 1);
+      n = rec ? rec.reduce((a, code) => a + of(code), 0) : d.quality || 1;
+      this.tiers.set(d, n);
+    }
+    return n;
+  }
+
   /** Emit cosmetic hit sparks, splash rings and burn embers (call once per sim tick). */
   sparks() {
-    const { combat } = this;
+    const { combat } = this,
+      now = performance.now();
     for (const { from, to } of combat.shots) {
       const a = Math.random() * 7; // cosmetic only, so Math.random is fine
       const y = to.y - (to.def.flying ? FLY_Z : 0);
       const kind = shotKind(combat, from);
+      // One effect per tower per FX_GAP (a volley in the same tick counts as one): fast towers
+      // and high game speeds would otherwise stack wide translucent strokes and sink the frame rate.
+      const last = this.fxAt.get(from);
+      if (!this.low && this.fx.length < MAX_FX && (last === now || now - (last ?? 0) >= FX_GAP)) {
+        this.fxAt.set(from, now);
+        const [style, col] = attackOf(from.def);
+        const k = Math.min(1, this.tier(from.def) / 40);
+        this.fx.push({
+          x0: from.c + 0.5,
+          y0: from.r + 0.48 - TOWER_H - TALL,
+          to,
+          x1: to.x,
+          y1: y - 0.15,
+          age: 0,
+          life: FX_LIFE[style][0] + FX_LIFE[style][1] * k,
+          style,
+          col,
+          k,
+          seed: a,
+        });
+      }
       if (kind === 'frost')
         // Snow: a few flakes that puff out and drift down.
         for (let k = 0; k < 4; k++)
@@ -1340,6 +1679,59 @@ export class Renderer {
     tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
     g.fillStyle = tp;
     g.fillRect(0, 0, B.width, B.height);
+    // The board stands on a ragged plateau of grey cubes, mossy at the rim, with a cliff on its
+    // south side; cube trees dot the lowland beyond. Rows back to front, visible cells only.
+    const { w, h } = this.maze,
+      R = FRAME + PLATEAU + 1, // furthest the plateau reaches past the board
+      T = R + 2, // trees keep clear of the plateau and its cliff
+      ox = panX | 0,
+      oy = panY | 0;
+    for (let r = Math.floor(-oy / s) - 3; r <= Math.ceil((B.height - oy) / s) + 3; r++)
+      for (let c = Math.floor(-ox / s) - 1; c <= Math.ceil((B.width - ox) / s); c++) {
+        if (c >= -FRAME && c < w + FRAME && r >= -FRAME && r < h + FRAME) continue; // wall, board
+        const x = ox + c * s,
+          v = hash2(c + 31, r + 57);
+        if (c < -T || c >= w + T || r < -T || r >= h + T) {
+          if (hash2(c * 3 + 11, r * 5 + 17) < TREES)
+            g.drawImage(this.tree(Math.floor(v * 3)), x - s / 4, oy + r * s + s * 0.8 - s * 2.6);
+          continue;
+        }
+        if (c < -R || c >= w + R || r < -R || r >= h + R || !this.onPlateau(c, r)) continue;
+        const edge = !this.onPlateau(c, r + 1),
+          rim =
+            edge ||
+            !this.onPlateau(c - 1, r) ||
+            !this.onPlateau(c + 1, r) ||
+            !this.onPlateau(c, r - 1);
+        const base = mix(mix('#34302b', '#5a534a', v), '#3d6a2c', rim ? 0.3 : 0),
+          lift = Math.floor(v * 4) * 0.18 * s,
+          y = oy + r * s - lift,
+          face = lift + (edge ? CLIFF * s : 0);
+        g.fillStyle = shade(base, 0.55);
+        g.fillRect(x, y + s, s, face);
+        if (edge) {
+          // The cliff darkens toward its foot and throws a shadow on the leaves below.
+          g.fillStyle = 'rgba(0,0,0,0.3)';
+          g.fillRect(x, y + s + face / 2, s, face / 2);
+          g.fillStyle = 'rgba(0,0,0,0.35)';
+          g.fillRect(x, y + s + face, s, s * 0.4);
+        }
+        g.fillStyle = base;
+        g.fillRect(x, y, s, s);
+        g.fillStyle = shade(base, 1.2);
+        g.fillRect(x, y, s, Math.max(1, s / 12));
+        g.fillStyle = 'rgba(0,0,0,0.25)';
+        g.fillRect(x + s - 1, y, 1, s);
+      }
+    // Vignette: the lowland darkens away from the plateau, near black at the edge of the world.
+    // Half-cell bands that follow the board's outline with rounded corners.
+    g.fillStyle = 'rgba(2,8,4,0.09)';
+    for (let k = DUSK; k < WORLD; k += 0.5) {
+      const band = new Path2D();
+      band.rect(0, 0, B.width, B.height);
+      band.roundRect(ox - k * s, oy - k * s, (w + 2 * k) * s, (h + 2 * k) * s, k * s);
+      g.fill(band, 'evenodd');
+    }
     const fm = Math.ceil(s * 1.5) + FRAME * s;
     g.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
     g.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
@@ -1466,28 +1858,34 @@ export class Renderer {
           ctx.stroke();
         }
 
-    // Combinable towers: a soft pulsing aura over the tower body.
+    // Combinable towers: a soft pulsing aura over the tower body. Pinned recipes glow pink
+    // instead: a steady ring while ingredients are missing, the full aura once it can be built.
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const aura = 0.35 + 0.2 * Math.sin(now / 300);
-    for (const h of this.hints) {
-      const cx = X((h % this.maze.w) + 0.5),
-        cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
-        rad = s * 0.85;
-      if (this.low) {
-        ctx.strokeStyle = `rgba(170,255,240,${aura + 0.3})`;
-        ctx.lineWidth = Math.max(2, s / 10);
-        ctx.beginPath();
-        ctx.arc(cx, cy, rad * 0.6, 0, 7);
-        ctx.stroke();
-        continue;
+    for (const [cells, rgb, ring] of [
+      [this.hints, '170,255,240', this.low],
+      [this.pinned, '255,130,225', true],
+      [this.pinReady, '255,130,225', this.low],
+    ] as const)
+      for (const h of cells) {
+        const cx = X((h % this.maze.w) + 0.5),
+          cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
+          rad = s * 0.85;
+        if (ring) {
+          ctx.strokeStyle = `rgba(${rgb},${cells === this.pinned ? 0.6 : aura + 0.3})`;
+          ctx.lineWidth = Math.max(2, s / 10);
+          ctx.beginPath();
+          ctx.arc(cx, cy, rad * 0.6, 0, 7);
+          ctx.stroke();
+          continue;
+        }
+        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        gr.addColorStop(0, `rgba(${rgb},${aura})`);
+        gr.addColorStop(1, `rgba(${rgb},0)`);
+        ctx.fillStyle = gr;
+        ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
       }
-      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      gr.addColorStop(0, `rgba(170,255,240,${aura})`);
-      gr.addColorStop(1, 'rgba(170,255,240,0)');
-      ctx.fillStyle = gr;
-      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
-    }
     ctx.restore();
     if (this.pending.length) {
       ctx.save();
@@ -1660,38 +2058,41 @@ export class Renderer {
       }
     }
 
-    // Tracers by shot kind: thin white, icy blue (slow), thick silver beam, forked lightning.
+    // Attacks. Low graphics: plain tracers by shot kind (thin white, icy blue, silver beam, forked
+    // lightning), batched per kind. Otherwise every tower has its own lingering effect.
     const head = (t: Tower) => [X(t.c + 0.5), Y(t.r + 0.48 - TOWER_H - TALL)] as const;
     const hit = (cr: Creep) => [X(cr.x), Y(cr.y - (cr.def.flying ? FLY_Z : 0.15))] as const;
-    for (const [kind, colour, width, glow] of TRACERS) {
-      ctx.strokeStyle = colour;
-      ctx.lineWidth = Math.max(1, width * s);
-      ctx.shadowColor = glow;
-      ctx.shadowBlur = glow === 'transparent' ? 0 : (this.glow * s) / 2;
-      ctx.beginPath();
-      for (const { from, to } of this.combat.shots) {
-        if (shotKind(this.combat, from) !== kind) continue;
-        const [x0, y0] = head(from),
-          [x1, y1] = hit(to);
-        ctx.moveTo(x0, y0);
-        if (kind === 'lightning') {
-          // Jagged bolt: re-rolled every frame so it crackles.
-          const n = 6,
-            nx = -(y1 - y0),
-            ny = x1 - x0,
-            len = Math.hypot(nx, ny) || 1;
-          for (let k = 1; k < n; k++) {
-            const j = (Math.random() - 0.5) * s * 0.5;
-            ctx.lineTo(
-              x0 + ((x1 - x0) * k) / n + (nx / len) * j,
-              y0 + ((y1 - y0) * k) / n + (ny / len) * j,
-            );
+    if (this.low) {
+      for (const [kind, colour, width, glow] of TRACERS) {
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = Math.max(1, width * s);
+        ctx.shadowColor = glow;
+        ctx.shadowBlur = glow === 'transparent' ? 0 : (this.glow * s) / 2;
+        ctx.beginPath();
+        for (const { from, to } of this.combat.shots) {
+          if (shotKind(this.combat, from) !== kind) continue;
+          const [x0, y0] = head(from),
+            [x1, y1] = hit(to);
+          ctx.moveTo(x0, y0);
+          if (kind === 'lightning') {
+            // Jagged bolt: re-rolled every frame so it crackles.
+            const n = 6,
+              nx = -(y1 - y0),
+              ny = x1 - x0,
+              len = Math.hypot(nx, ny) || 1;
+            for (let k = 1; k < n; k++) {
+              const j = (Math.random() - 0.5) * s * 0.5;
+              ctx.lineTo(
+                x0 + ((x1 - x0) * k) / n + (nx / len) * j,
+                y0 + ((y1 - y0) * k) / n + (ny / len) * j,
+              );
+            }
           }
+          ctx.lineTo(x1, y1);
         }
-        ctx.lineTo(x1, y1);
+        ctx.stroke();
       }
-      ctx.stroke();
-    }
+    } else this.drawFx(dt, now);
     ctx.shadowBlur = 0;
 
     // Howl-buffed towers: a pulsing red-bronze glow round the head.
@@ -1714,7 +2115,7 @@ export class Renderer {
     ctx.strokeStyle = 'rgba(150,220,255,0.7)';
     ctx.lineWidth = Math.max(1.5, s / 16);
     for (const t of this.combat.towers) {
-      if (!t.aura.calm) continue;
+      if (!t.aura.calm || t.def.pedal) continue; // pedals lie flat: no dome
       const [x, y] = head(t);
       ctx.beginPath();
       ctx.arc(x, y + s * 0.15, s * 0.45, Math.PI * 1.1, Math.PI * 1.9);
@@ -1754,6 +2155,93 @@ export class Renderer {
   }
 }
 
+type Style = 'line' | 'beam' | 'zap' | 'laguna' | 'finger' | 'orb' | 'glob' | 'shard' | 'ray';
+interface Fx {
+  x0: number; // tower head, in cells
+  y0: number;
+  to: Creep; // followed while it lives
+  x1: number;
+  y1: number;
+  age: number;
+  life: number;
+  style: Style;
+  col: string;
+  k: number; // 0..1: how dear the tower is; scales width, length of stay and extras
+  seed: number;
+}
+const MAX_FX = 120;
+const FX_GAP = 90; // ms between effects from one tower
+// Seconds on screen: [base, extra at the top tier].
+const FX_LIFE: Record<Style, [number, number]> = {
+  line: [0.12, 0.05],
+  beam: [0.18, 0.15],
+  zap: [0.15, 0.1],
+  laguna: [0.3, 0.25],
+  finger: [0.35, 0.25],
+  orb: [0.2, 0],
+  glob: [0.28, 0],
+  shard: [0.18, 0],
+  ray: [0.2, 0.2],
+};
+// Every special tower's attack: a style and its colour. Width, stay and extras come from its cost.
+const ATTACK: Record<string, [Style, string]> = {
+  silver: ['line', '#bfe4ff'],
+  'silver-knight': ['beam', '#cfe6ff'],
+  'pink-diamond': ['zap', '#ff9be6'],
+  'huge-pink-diamond': ['laguna', '#ff5fd2'],
+  'koh-i-noor-diamond': ['laguna', '#6fb4ff'],
+  malachite: ['shard', '#2f8f3a'],
+  'vivid-malachite': ['shard', '#7dff7a'],
+  'uranium-238': ['glob', '#b6ff3a'],
+  'uranium-235': ['glob', '#ffe23a'],
+  'depleted-kyparium': ['ray', '#4fd8ff'],
+  'asteriated-ruby': ['orb', '#ff7a2a'],
+  volcano: ['glob', '#ff5a1a'],
+  bloodstone: ['zap', '#ff5a4a'],
+  'antique-bloodstone': ['zap', '#ff8a3a'],
+  'the-crown-prince': ['finger', '#b05aff'],
+  jade: ['glob', '#7fe05a'],
+  quartz: ['shard', '#ffe8d8'],
+  'grey-jade': ['glob', '#6fa8e0'],
+  'monkey-king-jade': ['shard', '#ffb040'],
+  'diamond-cullinan': ['ray', '#fff2b0'],
+  'lucky-chinese-jade': ['glob', '#ffcf40'],
+  'charming-lazurite': ['shard', '#b07aff'],
+  'golden-jubilee': ['ray', '#ffb020'],
+  gold: ['orb', '#ffd24a'],
+  'egypt-gold': ['orb', '#ffe890'],
+  'dark-emerald': ['orb', '#39d98a'],
+  'emerald-golem': ['glob', '#9be0b0'],
+  'paraiba-tourmaline': ['orb', '#4fe0d8'],
+  'elaborately-carved-tourmaline': ['orb', '#ffb050'],
+  'sapphire-star-of-adam': ['beam', '#5aa8ff'],
+  'deepsea-pearl': ['orb', '#f4f0d0'],
+  'chrysoberyl-cat-s-eye': ['line', '#d8e07a'],
+  'red-coral': ['orb', '#ff7a5a'],
+  'natural-zumurud': ['shard', '#7a6aff'],
+  'carmen-lucia': ['finger', '#ff6a8a'],
+  'yellow-sapphire': ['line', '#ffe27a'],
+  'northern-saber-s-eye': ['zap', '#9fe8ff'],
+  'star-sapphire': ['beam', '#cfe0ff'],
+  obsidian: ['beam', '#ff7a3a'],
+  agate: ['shard', '#e0a860'],
+  'fantastic-miss-shrimp': ['zap', '#ffd040'],
+  geluanshi: ['ray', '#fff0c0'],
+  'the-burning-stone': ['orb', '#6fc0ff'],
+  'the-great-stone': ['glob', '#a8c070'],
+  'black-opal': ['finger', '#8a4ae0'],
+  ehome: ['ray', '#ff7ab8'],
+  'wings-stone': ['shard', '#fff2c0'],
+  'regent-diamond': ['laguna', '#ff3a6a'],
+  'kyparium-core': ['ray', '#4fe0d8'],
+  'the-blood-king': ['finger', '#ff2020'],
+  'cullinan-heart': ['laguna', '#ffe680'],
+  'star-of-eden': ['laguna', '#4dff8a'],
+};
+export const hasAttack = (key: string) => key in ATTACK;
+/** Gems throw a cut shard of their own colour; specials have their own entry. */
+const attackOf = (d: GemDef): [Style, string] =>
+  (!d.quality && ATTACK[slug(d.name)]) || ['shard', GEM_COLOR[d.type] ?? '#ffffff'];
 type Shot = 'normal' | 'frost' | 'beam' | 'lightning';
 const BEAM = new Set(['Silver', 'Silver Knight', 'Koh-i-noor Diamond']);
 const LIGHTNING = new Set(['Pink Diamond', 'Huge Pink Diamond']);

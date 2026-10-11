@@ -55,15 +55,28 @@ export const GIANT = { streak: 3, chance: 0.3, hp: 10 };
 // capped at `cap`, so long runs end instead of looping forever.
 // ponytail: rates are guesses until long playtests.
 export const ENDLESS_BOSS = { every: 20, streak: 3, max: 10, ramp: 10, cap: 100 };
+// Cunning bosses mutator: each boss wave borrows creep attributes; 'boss_split' breaks the boss
+// into `n` creeps with `hp` of its max HP each on death. ponytail: sizes are guesses until playtests.
+export const BOSS_TRICKS: Record<number, string[]> = {
+  10: ['enemy_shanshuo'],
+  20: ['enemy_zheguang'],
+  30: ['runrunrun'],
+  40: ['boss_split'],
+  50: ['boss_split', 'enemy_shanshuo'],
+};
+export const SPLIT = { n: 4, hp: 0.1 };
 
-/** Seeded PRNG (mulberry32) so the sim is deterministic. */
-export function rng(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+/** Seeded PRNG (mulberry32) so the sim is deterministic. `s` is its state, for snapshots. */
+export type Rng = (() => number) & { s: number };
+export function rng(seed: number): Rng {
+  const f = (() => {
+    const s = (f.s = (f.s + 0x6d2b79f5) | 0);
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  }) as Rng;
+  f.s = seed;
+  return f;
 }
 
 export interface Creep {
@@ -183,7 +196,9 @@ export class WaveSim {
   creeps: Creep[] = [];
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
-  hpMult = 1; // difficulty
+  hpMult = 1; // difficulty (and the Tough mutator)
+  speedMult = 1; // Swift mutator
+  bossTricks = false; // Cunning bosses mutator
   streak = 0; // waves in a row that ended with no castle damage
   endless = 0; // waves past the last one, for the current wave
   bosses = 1; // bosses in the current boss wave
@@ -206,7 +221,11 @@ export class WaveSim {
   }
 
   /** Build flow fields from the current maze. Call whenever the maze changes (build phase). */
+  private routeOf = ''; // the maze the flow fields were built for
   refreshRoute() {
+    // Endless waves follow each other with no build round: the same maze needs no new fields.
+    const sig = this.maze.cells.join('') + this.maze.waypoints.join();
+    if (sig === this.routeOf) return;
     const fields = this.maze.route();
     if (!fields) throw new Error('route blocked');
     this.next = fields.map((f) => {
@@ -215,12 +234,13 @@ export class WaveSim {
         for (let c = 0; c < this.maze.w; c++) {
           const i = this.maze.idx(c, r);
           if (f[i] > 0 && f[i] < Infinity) {
-            const [nc, nr] = this.maze.walk(f, [c, r])[1];
+            const [nc, nr] = this.maze.step(f, c, r); // one step: a full walk per cell cost ~50 ms
             next[i] = this.maze.idx(nc, nr);
           }
         }
       return next;
     });
+    this.routeOf = sig;
   }
 
   startWave() {
@@ -244,6 +264,11 @@ export class WaveSim {
       .filter((w) => w.wave === base)
       .map((w) =>
         mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra },
+      )
+      .map((w) =>
+        this.bossTricks && w.boss
+          ? { ...w, abilities: [...w.abilities, ...(BOSS_TRICKS[base] ?? [])] }
+          : w,
       );
     this.current = defs[0];
     const b = ENDLESS_BOSS;
@@ -284,7 +309,23 @@ export class WaveSim {
     }
     if (creep.hp <= 0 && creep.alive) {
       creep.alive = false;
+      if (hasAbility(creep, 'boss_split')) this.split(creep);
       this.onKill?.(creep);
+    }
+  }
+
+  /** Split: smaller non-boss copies carry on from where the boss fell. */
+  private split(cr: Creep) {
+    const def = {
+      ...cr.def,
+      boss: false,
+      hp: cr.def.hp * SPLIT.hp,
+      abilities: cr.def.abilities.filter((a) => a !== 'boss_split'),
+    };
+    for (let k = 0; k < SPLIT.n; k++) {
+      const c = newCreep(def, cr.x, cr.y);
+      [c.seg, c.tc, c.tr, c.dir] = [cr.seg, cr.tc, cr.tr, cr.dir];
+      this.creeps.push(c);
     }
   }
 
@@ -346,7 +387,10 @@ export class WaveSim {
   /** Move speed after rush, % slows (multiplicative) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
     const pct = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct) * (1 - cr.stackPct);
-    const v = cr.def.speed * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) - cr.slow - cr.auraSlow;
+    const v =
+      cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) -
+      cr.slow -
+      cr.auraSlow;
     return Math.max(v, MIN_SPEED);
   }
 

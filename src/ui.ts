@@ -1,7 +1,9 @@
 // Menu overlay: leaderboards (3 boards + difficulty filter; global on the server), settings, new game.
 import * as db from './persist';
+import * as sfx from './sfx';
 import type { Game, LogEntry } from './sim/game';
-import { dailySeed } from './sim/setup';
+import { MAPS, MUTATORS, dailySeed } from './sim/setup';
+import { QUESTS, type Quest } from './quests';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import {
   PASSIVES,
@@ -18,16 +20,20 @@ function startNext(o: {
   seed: number;
   difficulty: string;
   daily?: string;
+  mutators?: string[];
+  map?: string;
   replay?: LogEntry[];
   builder?: boolean;
   skills?: Loadout;
   hero?: string;
+  rules?: number;
 }) {
   try {
     sessionStorage.setItem('gemtd.start', JSON.stringify(o));
   } catch {
     /* storage blocked: reload still starts a fresh random game */
   }
+  document.getElementById('loading')!.hidden = false;
   location.reload();
 }
 
@@ -42,6 +48,7 @@ export function initMenu(
   setSpeed: (s: number) => void,
   setVolume: (v: number) => void,
   saveMaze: () => Promise<boolean>,
+  live: boolean, // a game being played: not a replay, the maze builder or the stress scene
 ) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const menu = $<HTMLElement>('menu');
@@ -66,7 +73,11 @@ export function initMenu(
     for (const s of document.querySelectorAll<HTMLElement>('#menu [data-pane]'))
       s.hidden = s.dataset.pane !== t;
   };
-  for (const b of tabs) b.onclick = () => tab(b.dataset.tab!);
+  for (const b of tabs)
+    b.onclick = () => {
+      tab(b.dataset.tab!);
+      if (b.dataset.tab === 'quests') void drawQuests();
+    };
   $<HTMLOptionElement>('dailyopt').value = 'daily:' + today();
 
   async function draw() {
@@ -82,7 +93,11 @@ export function initMenu(
           x.wavesCleared,
           x.hpLeft,
           `${x.timeSec}s`,
-          x.difficulty,
+          [
+            x.difficulty,
+            ...(x.map && x.map !== 'classic' ? [MAPS[x.map]?.name ?? x.map] : []),
+            ...(x.mutators ?? []).map((m) => MUTATORS[m]?.name ?? m),
+          ].join(' + '),
           new Date(x.date).toLocaleDateString(),
         ]) {
           const td = document.createElement('td');
@@ -99,7 +114,10 @@ export function initMenu(
               seed: x.seed,
               difficulty: x.difficulty,
               daily: x.daily,
+              mutators: x.mutators,
+              map: x.map,
               replay: x.commands,
+              rules: x.rules,
               skills: x.skills,
               hero: x.hero,
             });
@@ -110,6 +128,18 @@ export function initMenu(
       }),
     );
     if (!list.length) rows.innerHTML = '<tr><td colspan="9">No scores yet</td></tr>';
+  }
+  /** Quests tab: every quest, done ones ticked. */
+  async function drawQuests() {
+    const done = (await db.get('hero')).quests ?? [];
+    $('questlist').replaceChildren(
+      ...QUESTS.map((q) => {
+        const li = document.createElement('li');
+        li.className = done.includes(q.id) ? 'done' : '';
+        li.textContent = `${done.includes(q.id) ? '✓' : '○'} ${q.name}: ${q.tip} (${q.shells} 🐚)`;
+        return li;
+      }),
+    );
   }
   /** Hero tab: pick or unlock a hero, buy or upgrade skills, and choose which to bring. */
   async function drawShop() {
@@ -213,6 +243,13 @@ export function initMenu(
     setSpeed(settings.speed);
     saveSettings();
   };
+  const musicIn = $<HTMLInputElement>('music');
+  musicIn.value = String(settings.music ?? 0.3);
+  musicIn.oninput = () => {
+    settings.music = +musicIn.value;
+    sfx.setMusic(settings.music);
+    saveSettings();
+  };
   volume.oninput = () => {
     settings.volume = +volume.value;
     setVolume(settings.volume);
@@ -224,7 +261,12 @@ export function initMenu(
       markDiff();
       saveSettings();
     };
-  const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
+  const confirmLeave = () =>
+    game.over ||
+    !game.log.length ||
+    confirm('Abandon the current game? Its score is not recorded (End run records it).');
+  const endRun = $<HTMLButtonElement>('endrun');
+  endRun.onclick = () => confirm('End this run and record its score?') && game.run(['end']);
   const hide = () => {
     menu.hidden = true;
     lastFocus?.focus();
@@ -236,13 +278,35 @@ export function initMenu(
     tab('hero');
   };
   $('newgame').onclick = () =>
-    startNext({ seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty });
+    startNext({
+      seed: (Math.random() * 2 ** 31) | 0,
+      difficulty: settings.difficulty,
+      map: settings.map,
+      mutators: [...document.querySelectorAll<HTMLInputElement>('#mutators input:checked')].map(
+        (i) => i.value,
+      ),
+    });
   $('cancelnew').onclick = () => dlg.close();
   $('opennew').onclick = () => newGame();
   $('builder').onclick = () =>
     confirmLeave() && startNext({ seed: 0, difficulty: 'normal', builder: true });
   $('daily').onclick = () =>
     confirmLeave() && startNext({ seed: dailySeed(), difficulty: 'normal', daily: today() });
+  const mapSel = $<HTMLSelectElement>('mapsel');
+  mapSel.replaceChildren(...Object.entries(MAPS).map(([id, m]) => new Option(m.name, id)));
+  mapSel.value = settings.map ?? 'classic';
+  mapSel.onchange = () => {
+    settings.map = mapSel.value;
+    saveSettings();
+  };
+  $('mutators').replaceChildren(
+    ...Object.entries(MUTATORS).map(([id, m]) => {
+      const l = document.createElement('label');
+      l.title = m.tip;
+      l.innerHTML = `<input type="checkbox" value="${id}"> ${m.name}`;
+      return l;
+    }),
+  );
   /** The new-game dialog: difficulty, loadout, then Begin. */
   const newGame = () => {
     if (!confirmLeave()) return;
@@ -270,19 +334,22 @@ export function initMenu(
   const show = (result?: {
     score: number;
     won: boolean;
+    ended?: boolean; // by End run, not a fallen castle
     shells: number;
     summary?: {
       lines: string[];
       towers: { name: string; share: number; kills: number; mvp: number }[];
     };
+    quests?: Quest[];
   }) => {
     lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     menu.hidden = false;
     over.hidden = !result;
+    endRun.hidden = !live || game.over || !game.log.length;
     drawShop();
     if (result) {
-      over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
-        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}
+      over.innerHTML = `<div>${result.won ? '👑 Victory!' : result.ended ? '🏳 Run ended' : '💀 The castle has fallen'}</div>
+        <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}${(result.quests ?? []).map((q) => `<div class="quest">📜 ${q.name} +${q.shells} 🐚</div>`).join('')}
         <div class="dialog-actions"><button>💾 Save maze to library</button><button class="primary">⚔ Play again</button></div>`;
       const [save, again] = over.querySelectorAll('button');
       save.onclick = async () => {

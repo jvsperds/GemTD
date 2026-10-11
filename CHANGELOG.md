@@ -1,5 +1,54 @@
 # Changelog
 
+## Unreleased
+
+- **Performance:** late-game runs hold 60 fps (80 special towers on wave 100+, also at ×20). Wave
+  starts no longer stall for ~50 ms rebuilding the creep route, the HUD repaints its counters at most
+  ten times a second and only re-matches recipes when the board changes, and attack effects are
+  limited to one per tower every 90 ms. `#bench` opens the benchmark scene; F3 now also shows the
+  worst HUD update (`hudMs`).
+- **Attack effects:** every tower now has its own attack: gems throw a cut shard of their colour,
+  specials fire bolts, beams, lobbed globs, lances of light or chain lightning in their own colour.
+  The dearer the tower, the bigger and longer-lived the effect: Huge Pink Diamond and Koh-i-noor
+  strike with a writhing Laguna-style bolt, The Crown Prince and The Blood King with a coiling
+  Finger-of-Death beam. Low graphics keeps the plain tracers.
+- **Burn ground:** tiles inside a burn aura (Asteriated Ruby, Volcano, The Burning Stone...) are
+  tinted red, darker the stronger the burn, and overlapping auras add up.
+- Pedals no longer show the calm-aura shield dome.
+- **Setting:** the board now stands on a ragged stone plateau, mossy at the rim with a cliff on its
+  south side, in a lowland of leafy green cubes and cube trees that runs to the edges of the screen.
+  Moss grows on the top bar and the bottom panel to match.
+  A vignette darkens the lowland toward the edge of the world, which is now as far as you can pan.
+- **Route ends:** a teal mosaic marks where creeps enter the field and a crimson one where they
+  leave.
+- **Settings:** the Speed list now includes ×20, and a Side bar checkbox hides or shows the left
+  side bar (its hotkeys keep working).
+- **Path and guides:** each leg of the route (S→1, 1→2, …) is drawn in its own colour, and while a
+  maze guide is shown, stones standing where the guide wants open ground carry a faint X.
+- **Pinned recipes:** 📌 a recipe in the book and the gems you already hold for it wear a pink ring
+  on the board; once every ingredient is down the ring becomes a pink aura, so a pinned tower that
+  is ready reads apart from the usual pale combine glow. Pins sort first and are remembered.
+- **Saving:** the game keeps a snapshot of the board at the end of each wave. Resume and Undo load
+  it and replay only the moves since, instead of re-simulating the run from wave 1, so long endless
+  runs reopen at once. Saves from older builds still load (by full replay) and gain a snapshot at
+  their next wave.
+- **Loading toast:** a spinner with a message shows while the game starts, resumes a save or
+  reloads (new game, Watch, Undo), instead of a frozen or blank page.
+- **End run:** Menu → End run stops the game where it stands and records its score and shells.
+  Abandoning with New game still records nothing.
+- **Endless scaling:** Sunder and Soul Harvest lose 2% per endless wave against creep HP (about
+  half every 35 waves) on all difficulties, so creeps outgrow the end-game towers and a run ends.
+  Runs and Watch replays started before this keep the old rules.
+- **Quests:** 11 one-off goals checked at game over, paid in shells; menu → Quests.
+- **Mutators:** Swift, Tough, No merges and Cunning bosses (blink, shield, rush or split), chosen
+  in the new-game dialog and shown with the score.
+- **Maps & tutorial:** Crossroads map with a picker in the new-game dialog; hints for the first
+  three waves of your first game.
+- **Music:** procedural arpeggio and drone that follows building, waves and bosses; Music slider.
+- **Leaderboards:** runs with mutators or a non-Classic map rank on their own **Mutators & maps**
+  board instead of against standard runs.
+- `docs/` is no longer tracked.
+
 ## 0.4.0 — 2026-10-07
 
 - **Performance:** the ground, wall, board and torch light are composited once per pan/zoom/edit

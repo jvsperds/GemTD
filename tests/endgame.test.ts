@@ -53,6 +53,31 @@ test('Ancient gems come only from two Great gems; end-game towers sunder and har
   expect(king.souls).toBe(1000 * ENDGAME.souls);
 });
 
+test('Sunder and Soul Harvest fall behind creep HP in endless, except on runs under the old rules', () => {
+  const gain = (rules: number, endless: number) => {
+    const { combat, sim } = newGame(1, 'normal', [], 'classic', rules);
+    sim.endless = endless;
+    const king = combat.place('The Blood King', 10, 14)!;
+    const prey = newCreep({ ...base, hp: 1000 }, 10.5, 13.5);
+    sim.creeps.push(prey);
+    for (let i = 0; i < 100 && prey.alive; i++) combat.tick();
+    return king.souls;
+  };
+  expect(gain(2, 0)).toBe(1000 * ENDGAME.souls);
+  expect(gain(2, 35)).toBeCloseTo((1000 * ENDGAME.souls) / ENDGAME.lag ** 35);
+  expect(gain(2, 35)).toBeLessThan(gain(2, 0) / 1.9); // about half after 35 waves
+  expect(gain(1, 35)).toBe(1000 * ENDGAME.souls);
+
+  const { combat, sim } = newGame(1);
+  sim.endless = 35;
+  combat.place('Regent Diamond', 10, 10);
+  const hp = 1e12;
+  const cr = newCreep({ ...base, hp }, 10.5, 9.5);
+  sim.creeps.push(cr);
+  combat.tick();
+  expect(hp - cr.hp).toBeLessThan(hp * ENDGAME.maxHp * 0.6);
+});
+
 test('endless boss waves add bosses with depth and streak; leaks scale with HP left, capped', () => {
   const { sim } = newGame(1);
   const boss = { ...base, boss: true, hp: 100 };

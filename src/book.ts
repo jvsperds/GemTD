@@ -45,6 +45,26 @@ export function measure(m: Maze) {
   };
 }
 
+/** Board glow for pinned recipes: their ingredients on the board, split by whether the recipe
+ * can be built right now. */
+export function pinGlow(
+  pins: Iterable<string>,
+  towers: Tower[],
+  recipesFor: (t: Tower) => { name: string; parts: Tower[] }[],
+) {
+  const pinned = new Set(pins);
+  const ready = new Set<Tower>();
+  for (const t of towers)
+    for (const x of recipesFor(t)) if (pinned.has(x.name)) x.parts.forEach((p) => ready.add(p));
+  const want = new Set(
+    [...pinned].flatMap((p) => (DEFS[p] as Partial<SpecialDef> | undefined)?.recipes?.[0] ?? []),
+  );
+  return {
+    ready: [...ready],
+    working: towers.filter((t) => !ready.has(t) && want.has(codeOf(t.def))),
+  };
+}
+
 const el = (tag: string, cls = '', text = '') => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -72,6 +92,7 @@ export function initBook(opts: {
   guide: () => Guide | null;
   showGuide: (g: Guide | null) => void;
   build?: (g: Guide) => void; // maze builder only: load a guide as stones
+  map?: MapData; // the game's layout, for measuring guides
 }) {
   const book = document.querySelector<HTMLElement>('#book')!;
   const body = document.querySelector<HTMLElement>('#bookbody')!;
@@ -80,6 +101,22 @@ export function initBook(opts: {
   let library: Guide[] = [];
   const stats = new Map<string[], ReturnType<typeof evaluate>>();
   const guides = (): Guide[] => [...GUIDES, ...library];
+  // Pinned recipe codes, per browser: their ingredients glow on the board.
+  const pins = new Set<string>();
+  try {
+    for (const p of JSON.parse(localStorage.getItem('gemtd.pins') ?? '[]')) pins.add(p);
+  } catch {
+    /* storage blocked or garbled: start with no pins */
+  }
+  const togglePin = (code: string) => {
+    if (!pins.delete(code)) pins.add(code);
+    try {
+      localStorage.setItem('gemtd.pins', JSON.stringify([...pins]));
+    } catch {
+      /* storage blocked: pins last until reload */
+    }
+    draw();
+  };
 
   const loadLibrary = async () => {
     library = (await db.get('mazes')).map((m) => ({ name: m.name, rows: m.rows, lib: true }));
@@ -109,9 +146,11 @@ export function initBook(opts: {
           'Pedals cast a spell on creeps that come near. 3× same → Sparkling → 3× → Blingbling.',
         ),
       );
+    const pinned = (d: GemDef) => pins.has(codeOf(d));
+    all.sort((a, b) => +pinned(b) - +pinned(a)); // pinned first, otherwise data order
     for (const d of all) {
       const r = (mine && d.recipes!.find((x) => x.includes(mine))) || d.recipes![0];
-      const row = el('div', 'recipe');
+      const row = el('div', 'recipe' + (pinned(d) ? ' on' : ''));
       row.title = opts.tip?.(d as SpecialDef) ?? '';
       const im = document.createElement('img');
       im.src = towerIcon(d);
@@ -133,6 +172,12 @@ export function initBook(opts: {
       const tip = d.pedal && PEDAL_TIPS.get(d.abilities[0])?.tip;
       if (tip) text.append(el('div', 'parts', tip));
       row.append(text);
+      const pin = el('button', 'pin', '📌');
+      pin.title = pinned(d) ? 'Unpin' : 'Pin: its ingredients glow on the board';
+      pin.setAttribute('aria-label', `${pinned(d) ? 'Unpin' : 'Pin'} ${d.name}`);
+      pin.setAttribute('aria-pressed', String(pinned(d)));
+      pin.onclick = () => togglePin(codeOf(d));
+      row.append(pin);
       body.append(row);
     }
   }
@@ -142,7 +187,7 @@ export function initBook(opts: {
     body.append(el('p', 'note', 'Legs = route legs (of 6) that cross the middle.'));
     for (const g of guides()) {
       let st = stats.get(g.rows);
-      if (!st) stats.set(g.rows, (st = evaluate(g.rows)));
+      if (!st) stats.set(g.rows, (st = evaluate(g.rows, opts.map && new Maze(opts.map))));
       const row = el('div', 'maze' + (shown?.rows === g.rows ? ' on' : ''));
       row.append(thumb(g.rows));
       const text = el('div');
@@ -199,6 +244,7 @@ export function initBook(opts: {
 
   return {
     guides,
+    pins,
     draw,
     toggle() {
       book.hidden = !book.hidden;

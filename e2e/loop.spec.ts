@@ -14,10 +14,11 @@ test('place 5 gems, keep one, wave starts', async ({ page }) => {
   const ox = (box.width - cell * 37) / 2;
   const oy = (box.height - cell * 37) / 2;
   for (let c = 10; c < 15; c++) await page.mouse.dblclick(ox + (c + 0.5) * cell, oy + 16.5 * cell);
-  await expect(page.locator('#hint')).toContainText('select it');
+  // A fresh visit is the first game, so the tutorial hints replace the short ones.
+  await expect(page.locator('#hint')).toContainText('gem you want to keep');
   await page.mouse.click(ox + 10.5 * cell, oy + 16.5 * cell);
   await page.keyboard.press('k');
-  await expect(page.locator('#hint')).toContainText('Wave in progress');
+  await expect(page.locator('#hint')).toContainText('Kills give gold');
 });
 
 test('mid-game reload resumes from the saved command log', async ({ page }) => {
