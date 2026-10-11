@@ -4,7 +4,7 @@ import map from '../../data/map.json';
 import quality from '../../data/quality_levels.json';
 import towerData from '../../data/towers.json';
 import waves from '../../data/waves.json';
-import { ancientGems, ENDGAME_TOWERS } from './endgame';
+import { ancientGems, ENDGAME, ENDGAME_TOWERS } from './endgame';
 import { Game, type LevelDef } from './game';
 import { PEDALS } from './pedals';
 import { Maze, type MapData } from './maze';
@@ -76,8 +76,9 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
 };
 
 /** Rule set of new games. A run records its own, so a save or Watch replay from before a change to
- *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless. */
-export const RULES = 2;
+ *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless.
+ *  3: they lag twice as fast (4% per wave), as MVP and kill bonuses kept runs going past wave 300. */
+export const RULES = 3;
 
 export function newGame(
   seed: number,
@@ -102,7 +103,7 @@ export function newGame(
   if (on('swift')) sim.speedMult = 1.3;
   if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
   g.noMerge = on('nomerge');
-  if (rules < 2) g.combat.endgameLag = 1;
+  if (rules < 3) g.combat.endgameLag = rules < 2 ? 1 : ENDGAME.lag2;
   sim.bossTricks = on('bosses');
   return g;
 }
