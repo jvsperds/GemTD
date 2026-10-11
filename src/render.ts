@@ -26,6 +26,10 @@ export const GEM_COLOR: Record<string, string> = {
   S: '#ff7ad9', // special towers
 };
 const GUIDE_COLOR = '#f2c52e80'; // one colour for every guide mark, as in the game
+// Route legs in order: gold, cyan, pink, lime, orange, violet.
+const LEG_COLORS = ['#ffd24a', '#4ad2ff', '#ff6ec7', '#8cff5a', '#ff9440', '#b48cff'].map(
+  (c) => c + '66',
+);
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
 const TALL = 0.55;
@@ -1187,15 +1191,16 @@ export class Renderer {
     g.fillRect(0, 0, W, H);
     const route = maze.route();
     if (route && this.showPath) {
-      g.strokeStyle = 'rgba(255,210,74,0.3)';
       g.lineWidth = Math.max(1, s / 6);
-      g.beginPath();
-      route.forEach((field, i) =>
+      // One colour per leg (S→1, 1→2, ...), so crossing legs can be told apart.
+      route.forEach((field, i) => {
+        g.strokeStyle = LEG_COLORS[i % LEG_COLORS.length];
+        g.beginPath();
         maze
           .walk(field, maze.waypoints[i])
-          .forEach(([c, r], k) => g[k ? 'lineTo' : 'moveTo']((c + 0.5) * s, (r + 0.5) * s)),
-      );
-      g.stroke();
+          .forEach(([c, r], k) => g[k ? 'lineTo' : 'moveTo']((c + 0.5) * s, (r + 0.5) * s));
+        g.stroke();
+      });
     }
     // Waypoint plaques: dark tile, gold rim, serif letter.
     g.font = `${Math.max(10, s * 0.62)}px 'Palatino Linotype', Palatino, Georgia, serif`;
@@ -1239,8 +1244,23 @@ export class Renderer {
             (r - TOWER_H - TALL) * s,
           );
           g.filter = 'none';
-        } else
+        } else {
           g.drawImage(this.block(cell === WALL ? '#1c1c24' : '#8a8a8a'), c * s, (r - BLOCK_H) * s);
+          // A stone the shown guide wants open: a faint X on its top face.
+          if (cell === ROCK && this.guide && (this.guide[r]?.[c] ?? '.') === '.') {
+            const x = (c + 0.25) * s,
+              y = (r - BLOCK_H + 0.25) * s,
+              d = s / 2;
+            g.strokeStyle = 'rgba(40,0,0,0.45)';
+            g.lineWidth = Math.max(1, s / 10);
+            g.beginPath();
+            g.moveTo(x, y);
+            g.lineTo(x + d, y + d);
+            g.moveTo(x + d, y);
+            g.lineTo(x, y + d);
+            g.stroke();
+          }
+        }
       }
     // Quality numbers last, so a tower in front never hides the one behind's number.
     g.fillStyle = '#fff';

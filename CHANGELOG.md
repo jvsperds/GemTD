@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Path and guides:** each leg of the route (S→1, 1→2, …) is drawn in its own colour, and while a
+  maze guide is shown, stones standing where the guide wants open ground carry a faint X.
 - **Pinned recipes:** 📌 a recipe in the book and the gems you already hold for it wear a pink ring
   on the board; once every ingredient is down the ring becomes a pink aura, so a pinned tower that
   is ready reads apart from the usual pale combine glow. Pins sort first and are remembered.
