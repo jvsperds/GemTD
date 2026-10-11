@@ -37,6 +37,8 @@ const FRAME = 2; // stone border around the board, in cells
 const PLATEAU = 4; // stone ground round the wall before the drop, in cells (ragged by ±0.75)
 const CLIFF = 1.5; // height of the plateau's south face, in cells
 const TREES = 0.07; // share of lowland cells that grow a tree
+const WORLD = 16; // lowland past the board you can pan to, in cells; it darkens toward this edge
+const DUSK = 4; // cells past the board where the darkening starts
 /** Cheap deterministic 0..1 noise for cosmetic per-cell variation. */
 const hash2 = (c: number, r: number) => {
   const n = Math.sin(c * 127.1 + r * 311.7) * 43758.5;
@@ -948,6 +950,7 @@ export class Renderer {
       this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
       this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
     }
+    this.clamp(cell);
     if (cell !== this.cell) {
       this.cell = cell;
       this.sprites.clear();
@@ -958,6 +961,18 @@ export class Renderer {
   pan(dx: number, dy: number) {
     this.panX += dx * this.dpr;
     this.panY += dy * this.dpr;
+    this.clamp(this.cell);
+  }
+
+  /** Keep the view inside the world: the board plus WORLD cells of lowland on every side. */
+  private clamp(cell: number) {
+    const fit = (pan: number, size: number, n: number) => {
+      const a = size - (n + WORLD) * cell,
+        b = WORLD * cell;
+      return Math.min(Math.max(pan, Math.min(a, b)), Math.max(a, b));
+    };
+    this.panX = fit(this.panX, this.canvas.width, this.maze.w);
+    this.panY = fit(this.panY, this.canvas.height, this.maze.h);
   }
 
   /** Live creep drawn under a screen point, nearest first. */
@@ -1217,6 +1232,38 @@ export class Renderer {
           g.fillRect(c * s, r * s, s - 1, s - 1);
         }
       }
+    // Start and end of the route: a 3x3 mosaic under the waypoint, teal for the gate the creeps
+    // come in by, crimson for the one they leave by.
+    const ends = [
+      [maze.waypoints[0], '80,220,200'],
+      [maze.waypoints[maze.waypoints.length - 1], '235,80,70'],
+    ] as const;
+    for (const [[wc, wr], rgb] of ends) {
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++) {
+          const x = (wc + dc) * s,
+            y = (wr + dr) * s,
+            i = Math.max(1, s / 8);
+          g.fillStyle = `rgba(${rgb},${(dc + dr) & 1 ? 0.14 : 0.3})`;
+          g.fillRect(x, y, s - 1, s - 1);
+          g.strokeStyle = `rgba(${rgb},0.45)`;
+          g.lineWidth = 1;
+          g.strokeRect(x + i + 0.5, y + i + 0.5, s - 2 * i - 2, s - 2 * i - 2);
+        }
+      // A diamond through the four edge tiles ties the mosaic together.
+      const cx = (wc + 0.5) * s,
+        cy = (wr + 0.5) * s,
+        d = s * 1.5;
+      g.strokeStyle = `rgba(${rgb},0.7)`;
+      g.lineWidth = Math.max(1, s / 10);
+      g.beginPath();
+      g.moveTo(cx, cy - d);
+      g.lineTo(cx + d, cy);
+      g.lineTo(cx, cy + d);
+      g.lineTo(cx - d, cy);
+      g.closePath();
+      g.stroke();
+    }
     // Vignette: the field darkens toward the wall, as if lit from the middle.
     const W = maze.w * s,
       H = maze.h * s;
@@ -1426,6 +1473,15 @@ export class Renderer {
         g.fillStyle = 'rgba(0,0,0,0.25)';
         g.fillRect(x + s - 1, y, 1, s);
       }
+    // Vignette: the lowland darkens away from the board, near black at the edge of the world.
+    const mx = ox + (w / 2) * s,
+      my = oy + (h / 2) * s,
+      half = Math.max(w, h) / 2;
+    const dusk = g.createRadialGradient(mx, my, (half + DUSK) * s, mx, my, (half + WORLD) * s);
+    dusk.addColorStop(0, 'rgba(0,0,0,0)');
+    dusk.addColorStop(1, 'rgba(2,8,4,0.88)');
+    g.fillStyle = dusk;
+    g.fillRect(0, 0, B.width, B.height);
     const fm = Math.ceil(s * 1.5) + FRAME * s;
     g.drawImage(this.frame(), (panX - fm) | 0, (panY - fm) | 0);
     g.drawImage(this.staticLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
