@@ -26,6 +26,10 @@ export const GEM_COLOR: Record<string, string> = {
   S: '#ff7ad9', // special towers
 };
 const GUIDE_COLOR = '#f2c52e80'; // one colour for every guide mark, as in the game
+// Route legs in order: gold, cyan, pink, lime, orange, violet.
+const LEG_COLORS = ['#ffd24a', '#4ad2ff', '#ff6ec7', '#8cff5a', '#ff9440', '#b48cff'].map(
+  (c) => c + '66',
+);
 const FLY_Z = 40 / UNITS_PER_CELL; // cells
 const BLOCK_H = 0.5; // front-face height of stones/towers, in cells
 const TALL = 0.55;
@@ -844,6 +848,8 @@ export class Renderer {
   multi: number[] = []; // cells of extra Ctrl-selected towers
   creep: Creep | null = null; // selected creep
   hints: number[] = []; // cells of towers that can combine now
+  pinned: number[] = []; // cells of pinned-recipe ingredients still waiting on the rest
+  pinReady: number[] = []; // cells of pinned-recipe ingredients that can combine now
   pending: number[] = []; // this round's gems, one of which must be picked to finish it
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
@@ -1185,15 +1191,16 @@ export class Renderer {
     g.fillRect(0, 0, W, H);
     const route = maze.route();
     if (route && this.showPath) {
-      g.strokeStyle = 'rgba(255,210,74,0.3)';
       g.lineWidth = Math.max(1, s / 6);
-      g.beginPath();
-      route.forEach((field, i) =>
+      // One colour per leg (S→1, 1→2, ...), so crossing legs can be told apart.
+      route.forEach((field, i) => {
+        g.strokeStyle = LEG_COLORS[i % LEG_COLORS.length];
+        g.beginPath();
         maze
           .walk(field, maze.waypoints[i])
-          .forEach(([c, r], k) => g[k ? 'lineTo' : 'moveTo']((c + 0.5) * s, (r + 0.5) * s)),
-      );
-      g.stroke();
+          .forEach(([c, r], k) => g[k ? 'lineTo' : 'moveTo']((c + 0.5) * s, (r + 0.5) * s));
+        g.stroke();
+      });
     }
     // Waypoint plaques: dark tile, gold rim, serif letter.
     g.font = `${Math.max(10, s * 0.62)}px 'Palatino Linotype', Palatino, Georgia, serif`;
@@ -1237,8 +1244,23 @@ export class Renderer {
             (r - TOWER_H - TALL) * s,
           );
           g.filter = 'none';
-        } else
+        } else {
           g.drawImage(this.block(cell === WALL ? '#1c1c24' : '#8a8a8a'), c * s, (r - BLOCK_H) * s);
+          // A stone the shown guide wants open: a faint X on its top face.
+          if (cell === ROCK && this.guide && (this.guide[r]?.[c] ?? '.') === '.') {
+            const x = (c + 0.25) * s,
+              y = (r - BLOCK_H + 0.25) * s,
+              d = s / 2;
+            g.strokeStyle = 'rgba(40,0,0,0.45)';
+            g.lineWidth = Math.max(1, s / 10);
+            g.beginPath();
+            g.moveTo(x, y);
+            g.lineTo(x + d, y + d);
+            g.moveTo(x + d, y);
+            g.lineTo(x, y + d);
+            g.stroke();
+          }
+        }
       }
     // Quality numbers last, so a tower in front never hides the one behind's number.
     g.fillStyle = '#fff';
@@ -1466,28 +1488,34 @@ export class Renderer {
           ctx.stroke();
         }
 
-    // Combinable towers: a soft pulsing aura over the tower body.
+    // Combinable towers: a soft pulsing aura over the tower body. Pinned recipes glow pink
+    // instead: a steady ring while ingredients are missing, the full aura once it can be built.
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const aura = 0.35 + 0.2 * Math.sin(now / 300);
-    for (const h of this.hints) {
-      const cx = X((h % this.maze.w) + 0.5),
-        cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
-        rad = s * 0.85;
-      if (this.low) {
-        ctx.strokeStyle = `rgba(170,255,240,${aura + 0.3})`;
-        ctx.lineWidth = Math.max(2, s / 10);
-        ctx.beginPath();
-        ctx.arc(cx, cy, rad * 0.6, 0, 7);
-        ctx.stroke();
-        continue;
+    for (const [cells, rgb, ring] of [
+      [this.hints, '170,255,240', this.low],
+      [this.pinned, '255,130,225', true],
+      [this.pinReady, '255,130,225', this.low],
+    ] as const)
+      for (const h of cells) {
+        const cx = X((h % this.maze.w) + 0.5),
+          cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
+          rad = s * 0.85;
+        if (ring) {
+          ctx.strokeStyle = `rgba(${rgb},${cells === this.pinned ? 0.6 : aura + 0.3})`;
+          ctx.lineWidth = Math.max(2, s / 10);
+          ctx.beginPath();
+          ctx.arc(cx, cy, rad * 0.6, 0, 7);
+          ctx.stroke();
+          continue;
+        }
+        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        gr.addColorStop(0, `rgba(${rgb},${aura})`);
+        gr.addColorStop(1, `rgba(${rgb},0)`);
+        ctx.fillStyle = gr;
+        ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
       }
-      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      gr.addColorStop(0, `rgba(170,255,240,${aura})`);
-      gr.addColorStop(1, 'rgba(170,255,240,0)');
-      ctx.fillStyle = gr;
-      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
-    }
     ctx.restore();
     if (this.pending.length) {
       ctx.save();
