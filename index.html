@@ -834,8 +834,19 @@
         border-radius: 6px;
         background: #0003;
       }
-      .maze.on {
+      .maze.on,
+      .recipe.on {
         border-color: var(--accent);
+      }
+      .recipe .pin {
+        margin-left: auto;
+        flex: none;
+        padding: 2px 4px;
+        opacity: 0.35;
+      }
+      .recipe.on .pin,
+      .recipe .pin:hover {
+        opacity: 1;
       }
       .recipe img {
         width: 36px;

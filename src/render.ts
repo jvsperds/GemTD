@@ -844,6 +844,8 @@ export class Renderer {
   multi: number[] = []; // cells of extra Ctrl-selected towers
   creep: Creep | null = null; // selected creep
   hints: number[] = []; // cells of towers that can combine now
+  pinned: number[] = []; // cells of pinned-recipe ingredients still waiting on the rest
+  pinReady: number[] = []; // cells of pinned-recipe ingredients that can combine now
   pending: number[] = []; // this round's gems, one of which must be picked to finish it
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
@@ -1466,28 +1468,34 @@ export class Renderer {
           ctx.stroke();
         }
 
-    // Combinable towers: a soft pulsing aura over the tower body.
+    // Combinable towers: a soft pulsing aura over the tower body. Pinned recipes glow pink
+    // instead: a steady ring while ingredients are missing, the full aura once it can be built.
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     const aura = 0.35 + 0.2 * Math.sin(now / 300);
-    for (const h of this.hints) {
-      const cx = X((h % this.maze.w) + 0.5),
-        cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
-        rad = s * 0.85;
-      if (this.low) {
-        ctx.strokeStyle = `rgba(170,255,240,${aura + 0.3})`;
-        ctx.lineWidth = Math.max(2, s / 10);
-        ctx.beginPath();
-        ctx.arc(cx, cy, rad * 0.6, 0, 7);
-        ctx.stroke();
-        continue;
+    for (const [cells, rgb, ring] of [
+      [this.hints, '170,255,240', this.low],
+      [this.pinned, '255,130,225', true],
+      [this.pinReady, '255,130,225', this.low],
+    ] as const)
+      for (const h of cells) {
+        const cx = X((h % this.maze.w) + 0.5),
+          cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
+          rad = s * 0.85;
+        if (ring) {
+          ctx.strokeStyle = `rgba(${rgb},${cells === this.pinned ? 0.6 : aura + 0.3})`;
+          ctx.lineWidth = Math.max(2, s / 10);
+          ctx.beginPath();
+          ctx.arc(cx, cy, rad * 0.6, 0, 7);
+          ctx.stroke();
+          continue;
+        }
+        const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        gr.addColorStop(0, `rgba(${rgb},${aura})`);
+        gr.addColorStop(1, `rgba(${rgb},0)`);
+        ctx.fillStyle = gr;
+        ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
       }
-      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      gr.addColorStop(0, `rgba(170,255,240,${aura})`);
-      gr.addColorStop(1, 'rgba(170,255,240,0)');
-      ctx.fillStyle = gr;
-      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
-    }
     ctx.restore();
     if (this.pending.length) {
       ctx.save();

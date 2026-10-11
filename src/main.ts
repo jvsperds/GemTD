@@ -35,7 +35,7 @@ import {
   type Creep,
   type WaveEntry,
 } from './sim/waves';
-import { initBook, mazeRows, measure, type Guide } from './book';
+import { initBook, mazeRows, measure, pinGlow, type Guide } from './book';
 import { initDmgChart, short } from './dmgchart';
 import { initMenu } from './ui';
 
@@ -1222,6 +1222,7 @@ function updateHud() {
     view.showPath +
     view.showRanges +
     book.open +
+    [...book.pins] +
     guide?.name +
     mazeVer +
     game.xp +
@@ -1269,9 +1270,13 @@ function updateHud() {
     );
     book.draw();
     // Highlight every tower that can combine into something right now.
+    const pin = pinGlow(book.pins, combat.towers, (t) => game.recipesFor(t));
+    const cell = (t: Tower) => maze.idx(t.c, t.r);
+    view.pinReady = pin.ready.map(cell);
+    view.pinned = pin.working.map(cell);
     view.hints = combat.towers
-      .filter((t) => game.recipesFor(t).length)
-      .map((t) => maze.idx(t.c, t.r));
+      .filter((t) => !pin.ready.includes(t) && game.recipesFor(t).length)
+      .map(cell);
     view.selected = sel ? maze.idx(sel.c, sel.r) : -1;
     view.multi = [...multi].filter((t) => combat.towers.includes(t)).map((t) => maze.idx(t.c, t.r));
     // Glow the round's gems until one is kept, merged or combined.
