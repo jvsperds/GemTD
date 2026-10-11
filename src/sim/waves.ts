@@ -221,7 +221,11 @@ export class WaveSim {
   }
 
   /** Build flow fields from the current maze. Call whenever the maze changes (build phase). */
+  private routeOf = ''; // the maze the flow fields were built for
   refreshRoute() {
+    // Endless waves follow each other with no build round: the same maze needs no new fields.
+    const sig = this.maze.cells.join('') + this.maze.waypoints.join();
+    if (sig === this.routeOf) return;
     const fields = this.maze.route();
     if (!fields) throw new Error('route blocked');
     this.next = fields.map((f) => {
@@ -230,12 +234,13 @@ export class WaveSim {
         for (let c = 0; c < this.maze.w; c++) {
           const i = this.maze.idx(c, r);
           if (f[i] > 0 && f[i] < Infinity) {
-            const [nc, nr] = this.maze.walk(f, [c, r])[1];
+            const [nc, nr] = this.maze.step(f, c, r); // one step: a full walk per cell cost ~50 ms
             next[i] = this.maze.idx(nc, nr);
           }
         }
       return next;
     });
+    this.routeOf = sig;
   }
 
   startWave() {

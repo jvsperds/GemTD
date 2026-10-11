@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Performance:** late-game runs hold 60 fps (80 special towers on wave 100+, also at ×20). Wave
+  starts no longer stall for ~50 ms rebuilding the creep route, the HUD repaints its counters at most
+  ten times a second and only re-matches recipes when the board changes, and attack effects are
+  limited to one per tower every 90 ms. `#bench` opens the benchmark scene; F3 now also shows the
+  worst HUD update (`hudMs`).
 - **Attack effects:** every tower now has its own attack: gems throw a cut shard of their colour,
   specials fire bolts, beams, lobbed globs, lances of light or chain lightning in their own colour.
   The dearer the tower, the bigger and longer-lived the effect: Huge Pink Diamond and Koh-i-noor

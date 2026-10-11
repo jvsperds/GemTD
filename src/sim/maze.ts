@@ -153,21 +153,26 @@ export class Maze {
     return fields.map((f, s) => f[this.idx(...this.waypoints[s])]);
   }
 
+  /** The neighbour of (c, r) one step down the field: the next cell on the way to its goal. */
+  step(field: Float64Array, c: number, r: number): Cell {
+    let best: Cell = [c, r];
+    for (const [dc, dr] of DIRS) {
+      const nc = c + dc,
+        nr = r + dr;
+      if (!this.walkable(nc, nr)) continue;
+      if (dc && dr && (!this.walkable(c + dc, r) || !this.walkable(c, r + dr))) continue;
+      if (field[this.idx(nc, nr)] < field[this.idx(...best)]) best = [nc, nr];
+    }
+    return best;
+  }
+
   /** Cells walked from segment start to its goal, by steepest descent on the field. */
   walk(field: Float64Array, from: Cell): Cell[] {
     const out: Cell[] = [from];
     let [c, r] = from;
     while (field[this.idx(c, r)] > 0) {
-      let best: Cell = [c, r];
-      for (const [dc, dr] of DIRS) {
-        const nc = c + dc,
-          nr = r + dr;
-        if (!this.walkable(nc, nr)) continue;
-        if (dc && dr && (!this.walkable(c + dc, r) || !this.walkable(c, r + dr))) continue;
-        if (field[this.idx(nc, nr)] < field[this.idx(...best)]) best = [nc, nr];
-      }
-      [c, r] = best;
-      out.push(best);
+      [c, r] = this.step(field, c, r);
+      out.push([c, r]);
     }
     return out;
   }
