@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-10
 
 - **Performance:** late-game runs hold 60 fps (80 special towers on wave 100+, also at ×20). Wave
   starts no longer stall for ~50 ms rebuilding the creep route, the HUD repaints its counters at most
