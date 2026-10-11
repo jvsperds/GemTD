@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Enrage:** a wave that is still running after 3 minutes makes its creeps immune to stuns and
+  slows, on every difficulty, so a boss that is locked in place but out-heals your towers walks on
+  and the wave ends.
 - **Performance:** late-game runs hold 60 fps (80 special towers on wave 100+, also at ×20). Wave
   starts no longer stall for ~50 ms rebuilding the creep route, the HUD repaints its counters at most
   ten times a second and only re-matches recipes when the board changes, and attack effects are

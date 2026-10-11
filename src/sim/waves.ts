@@ -65,6 +65,9 @@ export const BOSS_TRICKS: Record<number, string[]> = {
   50: ['boss_split', 'enemy_shanshuo'],
 };
 export const SPLIT = { n: 4, hp: 0.1 };
+// Enrage: a wave still running after this long makes its creeps immune to stuns and slows, so a
+// creep that is locked in place but out-heals the towers walks on and the wave ends.
+export const ENRAGE_TIME = 180; // seconds
 
 /** Seeded PRNG (mulberry32) so the sim is deterministic. `s` is its state, for snapshots. */
 export type Rng = (() => number) & { s: number };
@@ -202,6 +205,7 @@ export class WaveSim {
   streak = 0; // waves in a row that ended with no castle damage
   endless = 0; // waves past the last one, for the current wave
   bosses = 1; // bosses in the current boss wave
+  waveT = 0; // seconds the current wave has run
   private hurt = false; // castle took damage this wave
   current: WaveEntry | null = null; // this wave's creep, for the banner
   private queue: WaveEntry[] = [];
@@ -214,6 +218,11 @@ export class WaveSim {
     seed = 1,
   ) {
     this.rand = rng(seed ^ 0xc4ee);
+  }
+
+  /** The wave has run past ENRAGE_TIME: creeps ignore stuns and slows. */
+  get enraged() {
+    return this.waveT >= ENRAGE_TIME;
   }
 
   get lastWave() {
@@ -283,6 +292,7 @@ export class WaveSim {
       this.queue[k] = { ...d, giant: true, hp: d.hp * GIANT.hp };
     }
     this.hurt = false;
+    this.waveT = 0;
     this.spawnTimer = 0;
     this.phase = 'wave';
     return true;
@@ -331,6 +341,7 @@ export class WaveSim {
 
   tick() {
     if (this.phase !== 'wave') return;
+    this.waveT += TICK;
     this.spawnTimer -= TICK;
     if (this.queue.length && this.spawnTimer <= 0) {
       this.spawn(this.queue.shift()!);
@@ -386,11 +397,10 @@ export class WaveSim {
 
   /** Move speed after rush, % slows (multiplicative) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
+    const base = cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1);
+    if (this.enraged) return base;
     const pct = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct) * (1 - cr.stackPct);
-    const v =
-      cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) -
-      cr.slow -
-      cr.auraSlow;
+    const v = base * (1 - pct) - cr.slow - cr.auraSlow;
     return Math.max(v, MIN_SPEED);
   }
 
@@ -398,6 +408,7 @@ export class WaveSim {
     for (const k of ['slowPctT', 'stunT', 'noHealT', 'ampT', 'rushT', 'reactiveT'] as const)
       if (cr[k] > 0) cr[k] -= TICK;
     if (cr.slowPctT <= 0) cr.slowPct = 0;
+    if (this.enraged) cr.stunT = 0;
     if (cr.reactiveT <= 0) cr.reactive = 0;
     if ((cr.krakenT -= TICK) <= 0) [cr.kraken, cr.krakenT] = [0, KRAKEN_INTERVAL];
     if (hasAbility(cr, 'enemy_recharge') && cr.noHealT <= 0)

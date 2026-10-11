@@ -20,6 +20,7 @@ import {
   BLINK_CHANCE,
   CASTLE_HP,
   DISARM_RANGE,
+  ENRAGE_TIME,
   EVASION,
   HIGH_ARMOR,
   KRAKEN_CLEANSE,
@@ -798,6 +799,14 @@ const CREEP_ABILITY: Record<string, [string, string]> = {
 /** Debuffs and buffs currently on a creep, in the same shape as tower statuses. */
 function creepStatuses(cr: Creep): [string, string, string, boolean][] {
   const out: [string, string, string, boolean][] = [];
+  if (sim.enraged)
+    out.push([
+      'status_rush',
+      '',
+      `Enraged
+Wave has run over ${ENRAGE_TIME / 60} minutes: immune to stuns and slows`,
+      false,
+    ]);
   // One card per debuff stack (gem type, pedal level, or tower on easy), like tower buff cards.
   for (const d of cr.stacks.values()) {
     const fx = [
