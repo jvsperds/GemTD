@@ -1292,7 +1292,7 @@ export class Renderer {
   /** Draw and age the lingering attack effects; `w` scales with what the tower cost. */
   private drawFx(dt: number, now: number) {
     const { ctx, cell: s, panX, panY } = this;
-    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.lineJoin = 'round';
     for (let i = 0; i < this.fx.length;) {
       const f = this.fx[i];
       if ((f.age += dt) >= f.life) {
@@ -1325,14 +1325,12 @@ export class Renderer {
         }
         ctx.lineTo(x1, y1);
       };
-      // Stroke the current path as a soft halo, a coloured body and a bright core.
+      // Stroke the current path as a coloured body and a bright core. No wider halo pass:
+      // big translucent strokes are what the GPU pays for.
       const glow = (wide: number, core: number, coreCol = '#fff') => {
         ctx.strokeStyle = f.col;
-        ctx.globalAlpha = a * 0.25;
-        ctx.lineWidth = wide;
-        ctx.stroke();
-        ctx.globalAlpha = a * 0.8;
-        ctx.lineWidth = wide * 0.45;
+        ctx.globalAlpha = a * 0.6;
+        ctx.lineWidth = wide * 0.5;
         ctx.stroke();
         ctx.globalAlpha = a;
         ctx.strokeStyle = coreCol;
@@ -1458,7 +1456,6 @@ export class Renderer {
       }
     }
     ctx.globalAlpha = 1;
-    ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
   }
 
@@ -1475,6 +1472,7 @@ export class Renderer {
 
   /** Attack effects still on screen: hits resolve at once, their look lingers for a moment. */
   private fx: Fx[] = [];
+  private fxAt = new WeakMap<Tower, number>(); // when each tower last spawned an effect
   private tiers = new Map<GemDef, number>();
   /** What a tower cost to build: a gem's quality, or the sum over a special's ingredients. */
   private tier(d: GemDef): number {
@@ -1491,12 +1489,17 @@ export class Renderer {
 
   /** Emit cosmetic hit sparks, splash rings and burn embers (call once per sim tick). */
   sparks() {
-    const { combat } = this;
+    const { combat } = this,
+      now = performance.now();
     for (const { from, to } of combat.shots) {
       const a = Math.random() * 7; // cosmetic only, so Math.random is fine
       const y = to.y - (to.def.flying ? FLY_Z : 0);
       const kind = shotKind(combat, from);
-      if (!this.low && this.fx.length < MAX_FX) {
+      // One effect per tower per FX_GAP (a volley in the same tick counts as one): fast towers
+      // and high game speeds would otherwise stack wide translucent strokes and sink the frame rate.
+      const last = this.fxAt.get(from);
+      if (!this.low && this.fx.length < MAX_FX && (last === now || now - (last ?? 0) >= FX_GAP)) {
+        this.fxAt.set(from, now);
         const [style, col] = attackOf(from.def);
         const k = Math.min(1, this.tier(from.def) / 40);
         this.fx.push({
@@ -1512,8 +1515,6 @@ export class Renderer {
           k,
           seed: a,
         });
-        // The dear ones land with a burst.
-        if (k >= 0.5) this.burst(to.x, y, 6 + ((k * 10) | 0), 3 + 3 * k, FX_SPARK[style] ?? 0);
       }
       if (kind === 'frost')
         // Snow: a few flakes that puff out and drift down.
@@ -1998,7 +1999,8 @@ interface Fx {
   k: number; // 0..1: how dear the tower is; scales width, length of stay and extras
   seed: number;
 }
-const MAX_FX = 300;
+const MAX_FX = 120;
+const FX_GAP = 90; // ms between effects from one tower
 // Seconds on screen: [base, extra at the top tier].
 const FX_LIFE: Record<Style, [number, number]> = {
   line: [0.12, 0.05],
@@ -2011,8 +2013,6 @@ const FX_LIFE: Record<Style, [number, number]> = {
   shard: [0.18, 0],
   ray: [0.2, 0.2],
 };
-// Impact burst colour (particle index) for the styles that have their own.
-const FX_SPARK: Partial<Record<Style, number>> = { laguna: 4, zap: 4, finger: 1, beam: 6, ray: 2 };
 // Every special tower's attack: a style and its colour. Width, stay and extras come from its cost.
 const ATTACK: Record<string, [Style, string]> = {
   silver: ['line', '#bfe4ff'],
@@ -2089,13 +2089,5 @@ const TRACERS: [Shot, string, number, string][] = [
   ['beam', 'rgba(225,238,255,0.9)', 0.2, '#bcd8ff'],
   ['lightning', 'rgba(255,215,250,0.95)', 0.07, '#ff7ad9'],
 ];
-// 0 spark, 1 fire, 2 ember, 3 snow, 4 lightning spark, 5 disarm mote, 6 beam spark
-const PARTICLE_COLOR = [
-  '#ffe9a0',
-  '#ff7a1a',
-  '#ffcf40',
-  '#e8f6ff',
-  '#ffc8f4',
-  '#c06aff',
-  '#cfe6ff',
-];
+// 0 spark, 1 fire, 2 ember, 3 snow, 4 lightning spark, 5 disarm mote
+const PARTICLE_COLOR = ['#ffe9a0', '#ff7a1a', '#ffcf40', '#e8f6ff', '#ffc8f4', '#c06aff'];
