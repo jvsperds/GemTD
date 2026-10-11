@@ -11,7 +11,7 @@ import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { newlyDone } from './quests';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
-import { MAPS, newGame, type Difficulty } from './sim/setup';
+import { MAPS, newGame, RULES, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
 import { AIM, AIM_ELITE, AURA, type Tower } from './sim/towers';
@@ -44,6 +44,13 @@ const hud = document.querySelector<HTMLElement>('#hudinfo')!;
 const hintEl = document.querySelector<HTMLElement>('#hint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const stress = location.hash === '#stress';
+/** Show the loading toast with `msg`, and give the browser a moment to paint it. */
+function busy(msg: string) {
+  const el = document.querySelector<HTMLElement>('#loading')!;
+  el.textContent = msg;
+  el.hidden = false;
+  return new Promise((r) => setTimeout(r, 50));
+}
 const settings = await db.get('settings');
 // A fresh start (new game / daily / replay) is handed over the reload in sessionStorage.
 type Start = {
@@ -56,6 +63,7 @@ type Start = {
   builder?: boolean;
   skills?: Loadout; // a replay's hero skills
   hero?: string;
+  rules?: number; // a replay's rule set
 };
 let start: Start | null = null;
 try {
@@ -67,10 +75,12 @@ try {
 const save = stress || start ? null : await db.get('save');
 const cfg = start ??
   save ?? { seed: (Math.random() * 2 ** 31) | 0, difficulty: settings.difficulty };
-const game = newGame(cfg.seed, cfg.difficulty as Difficulty, cfg.mutators, cfg.map);
-const hero = await db.get('hero');
-// A new game takes the picked hero and skills; a resume or replay keeps the ones it started with.
+// A new game takes the picked hero and skills and the current rules; a resume or replay keeps
+// the ones it started with.
 const past = start?.replay ? start : save;
+const rules = past ? (past.rules ?? 1) : RULES;
+const game = newGame(cfg.seed, cfg.difficulty as Difficulty, cfg.mutators, cfg.map, rules);
+const hero = await db.get('hero');
 const pick = HEROES[hero.hero ?? ''] ? hero.hero! : DEFAULT_HERO;
 game.skills = past
   ? (past.skills ?? {})
@@ -81,11 +91,14 @@ game.skills = past
         .map((id) => [id, hero.skills[id]]),
     );
 game.setHero(past ? (past.hero ?? '') : pick);
-// Resume: waves before the last command replay headless. A save the current rules can't replay
-// (corrupt, or left by an older build) is dropped rather than leaving a blank page.
+// Resume from the save's wave-end snapshot; only the commands after it replay (a save without
+// one replays every wave headless). A save that can't be resumed (corrupt, or left by an older
+// build) is dropped rather than leaving a blank page.
 if (save)
   try {
-    game.replay(save.commands);
+    // Resuming blocks the page (for minutes on a long run saved without a snapshot): say so first.
+    await busy(save.snap ? 'Resuming your game…' : 'Replaying your saved game…');
+    game.resume(save.commands, save.snap);
   } catch (e) {
     console.warn('dropping unreadable save', e);
     await db.set('save', null);
@@ -111,6 +124,7 @@ const menu = initMenu(
   (s) => (speed = s),
   sfx.setVolume,
   () => book.save(mazeRows(maze)),
+  !replaying && !builder && !stress,
 );
 let guide: Guide | null = null;
 const showGuide = (g: Guide | null) => {
@@ -191,12 +205,15 @@ const saveNow = (commands = game.log) =>
     mutators: cfg.mutators,
     map: cfg.map,
     commands,
+    snap: game.snap,
+    rules,
     version: db.VERSION,
     skills: game.skills,
     hero: game.hero,
   });
 if (!replaying && !stress && !builder) {
-  game.onCommand = () => saveNow();
+  // An ended run is not saved: its score row replaces the save once it is recorded.
+  game.onCommand = () => game.over || saveNow();
   if (start) saveNow(); // so a reload before the first move resumes this game, not the old one
 }
 function run(cmd: Cmd) {
@@ -342,9 +359,11 @@ function act(a: string) {
   } else if (a === 'stone') removing = !removing;
   // Undo: save the log minus the last placement and resume from it. Gem rolls come from the seeded
   // rng, so the re-placed gem is the same gem: this moves it, it can't reroll it.
-  // ponytail: resumes via reload (replays the whole log); do it in place if late-game undo lags.
+  // ponytail: resumes via reload (the wave-end snapshot plus this round's commands).
   else if (a === 'undo' && canUndo())
-    void saveNow(game.log.slice(0, -1)).then(() => location.reload());
+    void busy('Undoing…')
+      .then(() => saveNow(game.log.slice(0, -1)))
+      .then(() => location.reload());
   else if (a === 'level') run(['level']);
   else if (a === 'skip' && autoSkip) autoSkip = false;
   else if (a === 'skip') run(['skip']);
@@ -515,6 +534,7 @@ async function recordScore() {
     commands: game.log,
     skills: game.skills,
     hero: game.hero,
+    rules,
   });
   await db.set('scores', db.retain(scores));
   await db.set('save', null);
@@ -538,7 +558,8 @@ async function recordScore() {
     shells: h.shells + shells,
     quests: [...(h.quests ?? []), ...quests.map((q) => q.id)],
   });
-  menu.show({ score: score(game), won, shells, summary: summary(), quests });
+  const ended = game.log.at(-1)?.[1][0] === 'end';
+  menu.show({ score: score(game), won, ended, shells, summary: summary(), quests });
 }
 /** Game-over recap: run totals, then the five towers that did the most damage. */
 function summary() {
@@ -1305,6 +1326,7 @@ let frames = 0,
 
 let last = performance.now(),
   acc = 0;
+document.querySelector<HTMLElement>('#loading')!.hidden = true;
 requestAnimationFrame(function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.25);
   acc = Math.min(acc + dt * speed, 0.25 * Math.max(1, speed));

@@ -15,7 +15,7 @@ import {
 import { HEROES, type Perk } from './heroes';
 import { ROCK } from './maze';
 import { DURATION, SKILLS, goldOf, withPassives, type Loadout } from './skills';
-import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL } from './waves';
+import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL, type Rng } from './waves';
 
 export interface LevelDef {
   level: number;
@@ -50,7 +50,8 @@ export type Cmd =
   // Target cell (the tower for tower skills; ignored by castle skills), then an optional picked cell.
   | ['skill', number, number, string, number?, number?]
   | ['level']
-  | ['skip']; // start the wave without keeping a gem (this round's gems become stones)
+  | ['skip'] // start the wave without keeping a gem (this round's gems become stones)
+  | ['end']; // end the run here; it scores like a loss with the castle HP that is left
 /** Logged command with the wave tick it was issued at (commands may land mid-wave). */
 export type LogEntry = [at: number, cmd: Cmd];
 
@@ -60,6 +61,9 @@ export function score(g: Game) {
     g.wavesCleared * (1000 + g.bonusPerWave) + Math.max(0, g.sim.castleHp) * 50 - g.seconds,
   );
 }
+
+/** Snapshot format; a save with another number is resumed by replaying its commands instead. */
+export const SNAPSHOT = 1;
 
 export const GREED = { chance: 0.05, mult: 10 };
 // Tuned with `npm run balance` (8 seeds): a level-buying bot is at level 6–8 by wave ~22.
@@ -100,10 +104,13 @@ export class Game {
   onCommand: (() => void) | null = null;
   goldMult = 1; // Tough mutator
   noMerge = false; // No merges mutator
+  /** State at the end of the last wave, as JSON ('' before the first); see `resume`. */
+  snap = '';
   /** XP needed to reach level L is xpFor[L - 1]. */
   readonly xpFor: number[];
-  private rand: () => number;
+  private rand: Rng;
   private dmg0 = new Map<Tower, number>(); // damage dealt before this wave, for MVP
+  private endedAt: number | null = null; // waves cleared when End run stopped the game
 
   constructor(
     readonly combat: Combat,
@@ -171,9 +178,10 @@ export class Game {
   }
 
   get wavesCleared() {
-    return this.sim.phase === 'build' || this.sim.phase === 'won'
-      ? this.sim.wave
-      : this.sim.wave - 1;
+    return (
+      this.endedAt ??
+      (this.sim.phase === 'build' || this.sim.phase === 'won' ? this.sim.wave : this.sim.wave - 1)
+    );
   }
 
   get over() {
@@ -193,22 +201,24 @@ export class Game {
             ? this.buyLevel()
             : op === 'skip'
               ? this.skip()
-              : op === 'pedal'
-                ? this.layPedal(c, r)
-                : cmd[0] === 'skill'
-                  ? this.cast(String(name), c, r, cmd[4], cmd[5])
-                  : !!t &&
-                    (op === 'aim'
-                      ? this.setAim(t, Number(name))
-                      : op === 'keep'
-                        ? this.keep(t)
-                        : op === 'merge2'
-                          ? this.merge(t, 2)
-                          : op === 'merge4'
-                            ? this.merge(t, 4)
-                            : op === 'down'
-                              ? this.downgrade(t)
-                              : this.combine(t, String(name)));
+              : op === 'end'
+                ? this.end()
+                : op === 'pedal'
+                  ? this.layPedal(c, r)
+                  : cmd[0] === 'skill'
+                    ? this.cast(String(name), c, r, cmd[4], cmd[5])
+                    : !!t &&
+                      (op === 'aim'
+                        ? this.setAim(t, Number(name))
+                        : op === 'keep'
+                          ? this.keep(t)
+                          : op === 'merge2'
+                            ? this.merge(t, 2)
+                            : op === 'merge4'
+                              ? this.merge(t, 4)
+                              : op === 'down'
+                                ? this.downgrade(t)
+                                : this.combine(t, String(name)));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
@@ -222,6 +232,64 @@ export class Game {
       while (this.sim.phase === 'wave' && this.ticks < at) this.tick();
       this.run(cmd);
     }
+  }
+
+  /** Resume a saved game on a fresh one with the same seed: restore its wave-end snapshot, then
+   *  re-run only the commands after it. Without a usable snapshot the whole log is replayed. */
+  resume(log: LogEntry[], snap = '') {
+    if (snap) this.restore(snap, log);
+    this.replay(log.slice(this.log.length));
+  }
+
+  // A wave ends with no creeps or shots on the board, so this is all the state there is. Towers
+  // go by recipe code; targets, auras and copied skills are rebuilt on restore.
+  private state() {
+    const { sim, combat } = this;
+    const { wave, castleHp, guard, evade, revenge, streak, endless, bosses } = sim;
+    const { gold, xp, level, kills, ticks, pray, pedals } = this;
+    return {
+      v: SNAPSHOT,
+      log: this.log.length,
+      game: { gold, xp, level, kills, ticks, pray, pedals },
+      sim: { wave, castleHp, guard, evade, revenge, streak, endless, bosses },
+      rand: [this.rand, sim.rand, combat.rand].map((f) => (f as Rng).s),
+      cells: sim.maze.cells.join(''),
+      towers: combat.towers.map((t) => ({
+        ...t,
+        def: codeOf(t.def),
+        target: null,
+        aura: null,
+        copied: undefined,
+        copiedFrom: undefined,
+      })),
+    };
+  }
+
+  private restore(snap: string, log: LogEntry[]) {
+    const s = JSON.parse(snap) as ReturnType<typeof this.state>;
+    const { sim, combat } = this;
+    // Another build's format, or a tower this build doesn't have: replay the log instead.
+    if (s.v !== SNAPSHOT || s.towers.some((t) => !combat.gems[t.def])) return;
+    Object.assign(this, s.game);
+    Object.assign(sim, s.sim);
+    [this.rand, sim.rand, combat.rand].forEach((f, i) => ((f as Rng).s = s.rand[i]));
+    sim.maze.cells.set([...s.cells].map(Number));
+    combat.towers = s.towers.map((t) => ({
+      ...t,
+      def: combat.gems[t.def],
+      aura: { range: 0, as: 0, dmg: 0, aim: 0, calm: 0, src: [] },
+    }));
+    combat.refreshAuras();
+    this.log = log.slice(0, s.log);
+    this.snap = snap;
+    this.nextEndless();
+  }
+
+  /** Endless: past the last wave there are no build rounds; the next wave follows at once. */
+  private nextEndless() {
+    if (this.endlessBuild || this.sim.wave < this.sim.lastWave) return;
+    this.dmg0 = new Map(this.combat.towers.map((o) => [o, o.damageDealt]));
+    this.sim.startWave();
   }
 
   /** Advance one sim tick; awards the MVP stack when a wave ends. */
@@ -241,11 +309,9 @@ export class Game {
       if (d > best) [mvp, best] = [t, d];
     }
     if (mvp) mvp.mvp++;
-    // Endless: past the last wave there are no build rounds; the next wave follows at once.
-    if (!this.endlessBuild && this.sim.phase === 'build' && this.sim.wave >= this.sim.lastWave) {
-      this.dmg0 = new Map(this.combat.towers.map((o) => [o, o.damageDealt]));
-      this.sim.startWave();
-    }
+    if (this.sim.phase !== 'build') return;
+    this.snap = JSON.stringify(this.state());
+    this.nextEndless();
   }
 
   /** Special towers whose recipe includes `t` and whose other ingredients are on the board. */
@@ -553,6 +619,14 @@ export class Game {
   /** Skip the turn: no gem is kept, the round's gems become stones, the wave starts. */
   skip() {
     return this.sim.phase === 'build' && this.finish(null);
+  }
+
+  /** End the run now, so an endless game the creeps can't finish still gets its score. */
+  end() {
+    if (this.over) return false;
+    this.endedAt = this.wavesCleared; // between waves the last one counts as cleared
+    this.sim.phase = 'lost';
+    return true;
   }
 
   /** Keep `t`; the round's other gems become stones; start the wave. */

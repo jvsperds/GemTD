@@ -22,6 +22,7 @@ export interface ScoreRow {
   commands?: LogEntry[];
   skills?: Loadout; // hero skills the run had, for replays
   hero?: string;
+  rules?: number; // sim/setup RULES the run was played under; 1 when missing
 }
 export interface Save {
   seed: number;
@@ -30,6 +31,8 @@ export interface Save {
   map?: string;
   daily?: string;
   commands: LogEntry[];
+  snap?: string; // Game.snap: resume from here, replaying only the commands after it
+  rules?: number; // as on ScoreRow
   version: number;
   skills?: Loadout;
   hero?: string;

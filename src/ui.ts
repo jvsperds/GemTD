@@ -26,12 +26,14 @@ function startNext(o: {
   builder?: boolean;
   skills?: Loadout;
   hero?: string;
+  rules?: number;
 }) {
   try {
     sessionStorage.setItem('gemtd.start', JSON.stringify(o));
   } catch {
     /* storage blocked: reload still starts a fresh random game */
   }
+  document.getElementById('loading')!.hidden = false;
   location.reload();
 }
 
@@ -46,6 +48,7 @@ export function initMenu(
   setSpeed: (s: number) => void,
   setVolume: (v: number) => void,
   saveMaze: () => Promise<boolean>,
+  live: boolean, // a game being played: not a replay, the maze builder or the stress scene
 ) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const menu = $<HTMLElement>('menu');
@@ -114,6 +117,7 @@ export function initMenu(
               mutators: x.mutators,
               map: x.map,
               replay: x.commands,
+              rules: x.rules,
               skills: x.skills,
               hero: x.hero,
             });
@@ -257,7 +261,12 @@ export function initMenu(
       markDiff();
       saveSettings();
     };
-  const confirmLeave = () => game.over || !game.log.length || confirm('Abandon the current game?');
+  const confirmLeave = () =>
+    game.over ||
+    !game.log.length ||
+    confirm('Abandon the current game? Its score is not recorded (End run records it).');
+  const endRun = $<HTMLButtonElement>('endrun');
+  endRun.onclick = () => confirm('End this run and record its score?') && game.run(['end']);
   const hide = () => {
     menu.hidden = true;
     lastFocus?.focus();
@@ -325,6 +334,7 @@ export function initMenu(
   const show = (result?: {
     score: number;
     won: boolean;
+    ended?: boolean; // by End run, not a fallen castle
     shells: number;
     summary?: {
       lines: string[];
@@ -335,9 +345,10 @@ export function initMenu(
     lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     menu.hidden = false;
     over.hidden = !result;
+    endRun.hidden = !live || game.over || !game.log.length;
     drawShop();
     if (result) {
-      over.innerHTML = `<div>${result.won ? '👑 Victory!' : '💀 The castle has fallen'}</div>
+      over.innerHTML = `<div>${result.won ? '👑 Victory!' : result.ended ? '🏳 Run ended' : '💀 The castle has fallen'}</div>
         <div class="big">${result.score}</div><div>+${result.shells} 🐚 shells</div>${recap(result.summary)}${(result.quests ?? []).map((q) => `<div class="quest">📜 ${q.name} +${q.shells} 🐚</div>`).join('')}
         <div class="dialog-actions"><button>💾 Save maze to library</button><button class="primary">⚔ Play again</button></div>`;
       const [save, again] = over.querySelectorAll('button');

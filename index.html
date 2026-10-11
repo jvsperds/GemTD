@@ -163,6 +163,42 @@
           filter: drop-shadow(0 0 6px var(--accent));
         }
       }
+      /* Shown from the first paint until the game is ready, and again before each reload. */
+      #loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 22px;
+        letter-spacing: 1px;
+        pointer-events: none;
+      }
+      #loading::before {
+        content: '';
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--edge-dim);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      #loading[hidden] {
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #loading::before {
+          animation: none;
+        }
+      }
       #banner {
         position: fixed;
         top: 90px;
@@ -1404,6 +1440,7 @@
     </header>
     <div id="hint" role="status" aria-live="polite"></div>
     <div id="banner" class="glass" hidden></div>
+    <div id="loading" class="glass" role="status" aria-live="polite">Loading…</div>
     <nav id="dock" class="glass">
       <button data-a="guide" title="Maze guide (G)">
         <i data-icon="guide"></i><span>Guide</span>
@@ -1502,7 +1539,12 @@
       </section>
       <section class="dialog-section">
         <h3>Map &amp; mutators</h3>
-        <p><label>Map <select id="mapsel"></select></label></p>
+        <p>
+          <label
+            >Map
+            <select id="mapsel"></select
+          ></label>
+        </p>
         <p id="mutators" title="Optional rule changes, shown on the score"></p>
       </section>
       <section class="loadout-summary">
@@ -1532,6 +1574,7 @@
       <div class="tabs">
         <button data-tab="scores" class="on">Scores</button>
         <button id="opennew">New game</button>
+        <button id="endrun" title="Stop here and record this run's score">End run</button>
         <button data-tab="hero">Hero</button>
         <button data-tab="quests">Quests</button>
         <button data-tab="settings">Settings</button>

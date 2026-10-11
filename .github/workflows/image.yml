@@ -1,7 +1,7 @@
 name: Image
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     tags: ["v*"]
   workflow_dispatch:
     inputs:
@@ -29,6 +29,7 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/gemtd
           tags: |
             type=raw,value=latest,enable=${{ inputs.tag == '' && github.ref == 'refs/heads/main' }}
+            type=raw,value=dev,enable=${{ inputs.tag == '' && github.ref == 'refs/heads/dev' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{version}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
       - uses: docker/build-push-action@v6

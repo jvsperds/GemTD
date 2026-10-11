@@ -66,14 +66,17 @@ export const BOSS_TRICKS: Record<number, string[]> = {
 };
 export const SPLIT = { n: 4, hp: 0.1 };
 
-/** Seeded PRNG (mulberry32) so the sim is deterministic. */
-export function rng(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+/** Seeded PRNG (mulberry32) so the sim is deterministic. `s` is its state, for snapshots. */
+export type Rng = (() => number) & { s: number };
+export function rng(seed: number): Rng {
+  const f = (() => {
+    const s = (f.s = (f.s + 0x6d2b79f5) | 0);
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  }) as Rng;
+  f.s = seed;
+  return f;
 }
 
 export interface Creep {

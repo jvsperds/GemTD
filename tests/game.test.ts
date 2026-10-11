@@ -328,3 +328,23 @@ test('skip starts the wave without keeping a gem', () => {
   expect(g.sim.phase).toBe('wave');
   expect(g.run(['skip'])).toBe(false); // only in a build round
 });
+
+test('End run stops the game where it stands, and a replay of its log ends there too', () => {
+  const g = setup();
+  g.run(['skip']);
+  for (let i = 0; i < 30; i++) g.tick();
+  expect(g.run(['end'])).toBe(true);
+  expect([g.over, g.wavesCleared, g.run(['end']), g.run(['level'])]).toEqual([
+    true,
+    0,
+    false,
+    false,
+  ]);
+  const h = setup();
+  h.replay(g.log);
+  expect([h.over, h.ticks]).toEqual([true, g.ticks]);
+  const b = setup(); // ended between waves: the wave just cleared still counts
+  b.sim.wave = 5;
+  b.run(['end']);
+  expect(b.wavesCleared).toBe(5);
+});

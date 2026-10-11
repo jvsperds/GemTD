@@ -75,11 +75,16 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
   },
 };
 
+/** Rule set of new games. A run records its own, so a save or Watch replay from before a change to
+ *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless. */
+export const RULES = 2;
+
 export function newGame(
   seed: number,
   difficulty: Difficulty = 'normal',
   mutators: string[] = [],
   mapId = 'classic',
+  rules = RULES,
 ) {
   const on = (m: string) => mutators.includes(m);
   const data = (MAPS[mapId] ?? MAPS.classic).data;
@@ -97,6 +102,7 @@ export function newGame(
   if (on('swift')) sim.speedMult = 1.3;
   if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
   g.noMerge = on('nomerge');
+  if (rules < 2) g.combat.endgameLag = 1;
   sim.bossTricks = on('bosses');
   return g;
 }
