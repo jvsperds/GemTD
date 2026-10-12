@@ -2,12 +2,21 @@
 
 ## Unreleased
 
+- **Difficulty:** creeps are much tougher, so a full clear is no longer a given. Creep HP is now ×3
+  on Easy, ×2.3 on Normal and ×3.4 on Hard (was ×0.7 / ×1 / ×1.5); Easy keeps its perks (copies
+  stack, recipe luck, levels past 9), which is why its creeps can carry more HP than Normal's. A
+  headless bot that plays a guide maze with no hero skills clears wave 50 in about 68% of Easy
+  runs, 33% of Normal and 10% of Hard (`npm run balance`, 40 seeds).
+- **Shells:** a run's shells are multiplied by difficulty: ×1 Easy, ×2 Normal, ×3 Hard. Quest
+  rewards are unchanged.
+- **Fix:** on Easy, buying level 12 no longer gives levels 13–18 for free; each must be bought.
 - **Enrage:** a wave that is still running after 3 minutes makes its creeps immune to stuns and
   slows, on every difficulty, so a boss that is locked in place but out-heals your towers walks on
   and the wave ends.
-- **Endless scaling:** Sunder and Soul Harvest now lose 4% per endless wave against creep HP (was
-  2%), halving about every 18 waves, because MVP and kill bonuses kept a maxed board winning past
-  wave 300. Runs and replays started earlier keep the old rate.
+- **Endless scaling:** Sunder and Soul Harvest now lose 10% per endless wave against creep HP (was
+  2%), halving about every 7 waves, because MVP and kill bonuses kept a maxed board winning past
+  wave 300; a strong board now ends around wave 120–140. Runs and replays started earlier keep
+  the rate and creep HP they were played with.
 - **Performance:** late-game runs hold 60 fps (80 special towers on wave 100+, also at ×20). Wave
   starts no longer stall for ~50 ms rebuilding the creep route, the HUD repaints its counters at most
   ten times a second and only re-matches recipes when the board changes, and attack effects are
