@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-10
 
 - **Creeps:** every creep is redrawn after the Dota 2 courier it is named for (boar, yak, panda,
   the four chest-hound Jaws, dragons, imps, and so on) instead of eight shared shapes, with props
