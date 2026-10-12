@@ -21,6 +21,7 @@ export const UNITS_PER_CELL = 128;
 // ponytail: counts/leak damage/castle HP are defaults until the Lua values are known (BUILD.md §6).
 export const CREEPS_PER_WAVE = 10;
 export const SPAWN_INTERVAL = 1; // seconds
+export const HP_RAMP = 15; // wave by which creeps have the difficulty's full HP multiplier
 export const CASTLE_HP = 100;
 export const LEAK_DAMAGE = 1;
 export const BOSS_LEAK_DAMAGE = 10;
@@ -200,6 +201,10 @@ export class WaveSim {
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
   hpMult = 1; // difficulty (and the Tough mutator)
+  /** Share of `hpMult` that wave 1 gets; it grows evenly to all of it by wave `hpRamp`, so the
+   *  first waves play like the original (a Chipped Ruby one-shots wave 1). 1 = no ramp. */
+  hpEase = 1;
+  hpRamp = HP_RAMP;
   speedMult = 1; // Swift mutator
   bossTricks = false; // Cunning bosses mutator
   streak = 0; // waves in a row that ended with no castle damage
@@ -268,7 +273,9 @@ export class WaveSim {
       extra = Math.max(0, this.wave - last);
     this.endless = extra;
     const base = extra ? last - 9 + ((extra - 1) % 10) : this.wave;
-    const mult = this.hpMult * ENDLESS.hp ** extra;
+    const t = this.hpRamp > 1 ? Math.min(1, (this.wave - 1) / (this.hpRamp - 1)) : 1;
+    const ease = this.hpEase + (1 - this.hpEase) * t;
+    const mult = this.hpMult * ease * ENDLESS.hp ** extra;
     const defs = this.waves
       .filter((w) => w.wave === base)
       .map((w) =>

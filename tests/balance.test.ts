@@ -280,6 +280,7 @@ function coverage(g: Game, radius = 4) {
 export interface SkilledOpts {
   maxWave?: number; // stop once this many waves are cleared (default: the last wave)
   hp?: number; // harness knob: overrides sim.hpMult
+  hpRamp?: number; // overrides sim.hpRamp (1 = no ramp: full HP from wave 1)
   ramp?: number; // harness knob: wave w's creep HP is also multiplied by ramp^w
   debug?: boolean;
   magic?: { poisonHp?: number; chainPct?: number }; // overrides of Combat's magic scaling
@@ -290,6 +291,7 @@ export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: S
   const { sim, combat } = g;
   // The two harness knobs: the only sim fields written. Everything else goes through g.run.
   if (opts.hp) sim.hpMult = opts.hp;
+  if (opts.hpRamp) sim.hpRamp = opts.hpRamp;
   Object.assign(combat, opts.magic);
   // Damage per 10 waves: [all, magic, magic of poison towers, magic of chain lightning towers].
   const dmg: number[][] = [];
@@ -492,7 +494,7 @@ test('skilled bot is deterministic and stops at maxWave', () => {
 });
 
 // Sweep knobs (env): DIFF=easy|normal|hard, SEEDS=n (seeds 1000..), HP=creep HP multiplier,
-// RAMP=r (wave w's HP × r^w), MAXWAVE=stop wave, DEBUG=1 for a per-game breakdown,
+// HP_RAMP=wave by which creeps reach the full HP multiplier, RAMP=r (wave w's HP × r^w), MAXWAVE=stop wave, DEBUG=1 for a per-game breakdown,
 // POISON_HP / CHAIN_PCT=overrides of Combat's magic scaling (0 = the old flat numbers).
 test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_200_000 }, () => {
   const env = process.env;
@@ -500,6 +502,7 @@ test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_2
   const diff = (env.DIFF ?? 'normal') as Difficulty;
   const opts: SkilledOpts = {
     hp: env.HP ? Number(env.HP) : undefined,
+    hpRamp: env.HP_RAMP ? Number(env.HP_RAMP) : undefined,
     ramp: env.RAMP ? Number(env.RAMP) : undefined,
     maxWave: env.MAXWAVE ? Number(env.MAXWAVE) : undefined,
     debug: !!env.DEBUG,

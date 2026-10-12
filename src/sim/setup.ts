@@ -84,8 +84,9 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
  *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless.
  *  3: they lag twice as fast (4% per wave), as MVP and kill bonuses kept runs going past wave 300.
  *  4: harder creeps per difficulty, 10% lag, easy's extra levels must be bought.
- *  5: poison takes a share of max HP, chain lightning scales with attack damage, MVP caps at 10. */
-export const RULES = 5;
+ *  5: poison takes a share of max HP, chain lightning scales with attack damage, MVP caps at 10.
+ *  6: the difficulty's creep HP multiplier ramps up from ×1 on wave 1. */
+export const RULES = 6;
 
 export function newGame(
   seed: number,
@@ -98,6 +99,7 @@ export function newGame(
   const data = (MAPS[mapId] ?? MAPS.classic).data;
   const sim = new WaveSim(new Maze(data), waves as WaveEntry[], seed);
   sim.hpMult = rules < 4 ? OLD_HP[difficulty] : DIFFICULTY[difficulty].hp;
+  if (rules >= 6) sim.hpEase = 1 / sim.hpMult;
   const levels = quality.levels as LevelDef[];
   const g = new Game(
     new Combat(sim, DEFS, seed),

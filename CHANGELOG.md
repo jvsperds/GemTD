@@ -23,6 +23,11 @@
   the map at the new size; a gesture now scales the last drawing and redraws once when it rests.
   Runs started before these rule changes replay under their old rules.
 
+- **Early waves:** the difficulty's creep HP multiplier now ramps up instead of applying from wave
+  1. Wave 1 has the original HP (a Chipped Ruby one-shots it again) and the full multiplier is
+  reached at wave 15. Before, Easy tripled wave 1's HP and even the bot leaked whole early waves.
+  Bot win rates over 20 seeds: Easy 65% to 80%, Normal 25% to 30%, Hard unchanged at 10%.
+
 - **Difficulty:** creeps are much tougher, so a full clear is no longer a given. Creep HP is now ×3
   on Easy, ×2.3 on Normal and ×3.4 on Hard (was ×0.7 / ×1 / ×1.5); Easy keeps its perks (copies
   stack, recipe luck, levels past 9), which is why its creeps can carry more HP than Normal's. A
