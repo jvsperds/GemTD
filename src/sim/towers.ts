@@ -125,12 +125,17 @@ export const GAZE = { chance: 0.01, range: 1000, time: 3 };
 // ponytail: Chain Frost damage/slow/bounce range are guesses; the codex only gives chance and bounces.
 export const CHAIN_FROST = { chance: 0.25, bounces: 10, dmg: 300, range: 600, pct: 0.5, time: 3 };
 export const FROST = { pct: 0.5, splash: 300, time: 3 };
-export const LIGHTNING = { chance: 0.3, damage: 150, jumps: 5, radius: 1000 };
+// Each jump deals `damage`, or `pct` of the tower's attack damage if that is more.
+export const LIGHTNING = { chance: 0.3, damage: 150, pct: 0.5, jumps: 5, radius: 1000 };
+/** Poison at the top tier also deals this share of max HP per second (lower tiers in proportion
+ *  to their flat damage; half on bosses; lags in endless like Sunder). */
+export const POISON_HP = 0.01;
 export const FORK = { chance: 0.25, targets: 3 }; // default: 3 bolts of attack damage, magic
 export const MELANCHOLY = { chance: 0.03, time: 5 };
 export const KILL_BONUS = 0.1; // special towers: +10% damage per 10 kills
 export const ZUMURUD = 'Natural Zumurud';
 export const MVP_BONUS = 0.1;
+export const MVP_CAP = 10; // stacks per tower; a capped tower passes the award on
 
 interface EnemyAura {
   range: number;
@@ -171,6 +176,19 @@ export interface Fx {
   maxHp: number; // fraction of target max HP per hit, pure
   souls: number; // fraction of a killed creep's max HP gained as attack damage
 }
+
+const pct = (x: number) => +(x * 100).toFixed(2) + '%';
+/** Tooltips of the abilities whose numbers are no longer the wiki extract's. */
+export const MAGIC_TIPS: [string, string][] = [
+  ...POISON.map((dps, i): [string, string] => [
+    `tower_du${i + 1}`,
+    `Enemies take ${dps} magic damage plus ${pct((POISON_HP * dps) / POISON[5])} of their max HP every second (half on bosses). Lasts ${DEBUFF_TIME} seconds.`,
+  ]),
+  [
+    'tower_shandianlian',
+    `Attacks have a ${pct(LIGHTNING.chance)} chance to spark lightning that jumps across ${LIGHTNING.jumps} enemies for ${LIGHTNING.damage} magic damage, or ${pct(LIGHTNING.pct)} of attack damage if that is more.`,
+  ],
+];
 
 const lvl = (id: string) => +(id.match(/(\d)$/)?.[1] ?? 1);
 
@@ -275,6 +293,10 @@ export class Combat {
   heroAs = 0; // hero passive: +% attack speed for every tower
   heroProc = { execute: 0, luckyCrit: 0, bash: 0 }; // passive skills: per-hit chances
   endgameLag = ENDGAME.lag; // 1 for runs started before Sunder and Soul Harvest lagged (rules 1)
+  // Poison also takes a share of max HP and chain lightning scales with attack damage, so both
+  // keep up with late waves. 0 for runs started before that (rules < 5).
+  poisonHp = POISON_HP;
+  chainPct = LIGHTNING.pct;
   stackCopies = false; // easy mode: identical gems' buffs/debuffs stack too (else Dota rule: distinct types only)
   shots: { from: Tower; to: Creep }[] = [];
   onHeal: (() => void) | null = null;
@@ -516,7 +538,15 @@ export class Combat {
     if (p.execute && !cr.def.boss && this.rand() < p.execute) return this.deal(t, cr, cr.hp);
     if (p.bash && this.rand() < p.bash) cr.stunT = Math.max(cr.stunT, STUN_TIME);
     // Debuffs land before damage so armor reduction counts on this hit. One stack per gem type, timer refreshes.
-    const poison = magicImmune(cr) ? 0 : f.poison * this.damageMult(t);
+    const base = d.damage + d.bonusDamage + t.souls;
+    const poison =
+      !f.poison || magicImmune(cr)
+        ? 0
+        : f.poison * this.damageMult(t) +
+          this.lagged(cr) *
+            this.poisonHp *
+            (f.poison / POISON[5]) *
+            (cr.def.boss ? ENDGAME.bossMaxHp : 1);
     if (f.armor || f.slow || poison) {
       cr.stacks.set(this.stackKey(t), {
         ...NO_DEBUFF,
@@ -559,7 +589,7 @@ export class Combat {
         const next = this.near(at, LIGHTNING.radius).find((o) => !hitSet.has(o));
         if (!next) break;
         hitSet.add(next);
-        this.magic(t, next, LIGHTNING.damage * this.damageMult(t));
+        this.magic(t, next, Math.max(LIGHTNING.damage, base * this.chainPct) * this.damageMult(t));
         at = next;
       }
     }

@@ -14,7 +14,7 @@ import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
 import { DIFFICULTY, MAPS, newGame, RULES, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
-import { AIM, AIM_ELITE, AURA, codeOf, type Tower } from './sim/towers';
+import { AIM, AIM_ELITE, AURA, codeOf, MAGIC_TIPS, MVP_BONUS, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
   BLINK_CHANCE,
@@ -142,6 +142,7 @@ const ABILITY = new Map(
   ),
 );
 for (const [id, a] of [...PEDAL_TIPS, ...ENDGAME_TIPS]) ABILITY.set(id, a);
+for (const [id, tip] of MAGIC_TIPS) ABILITY.set(id, { name: ABILITY.get(id)?.name ?? id, tip });
 const book = initBook({
   towers: () => combat.towers,
   selected: () => sel,
@@ -1098,7 +1099,6 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
     ['⏱ Rate', `${d.attackRate}s`],
     ['◎ Range', String(d.range)],
     ['☠ Kills', String(t.kills)],
-    ['★ MVP', String(t.mvp)],
   ]);
   const skillCards = (src: typeof d, from = '') =>
     src.abilities
@@ -1114,7 +1114,20 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
           `radial-gradient(circle, ${c}88, #0e1115)`,
         );
       });
+  const capped = t.mvp >= game.mvpCap;
+  const mvpCard = card(
+    String(t.mvp),
+    'MVP',
+    `MVP: top damage in ${t.mvp} wave${t.mvp > 1 ? 's' : ''}, +${Math.round(t.mvp * MVP_BONUS * 100)}% damage.` +
+      (capped
+        ? ' At the cap: the award now goes to the next best tower.'
+        : isFinite(game.mvpCap)
+          ? ` Up to ${game.mvpCap} stacks per tower.`
+          : ''),
+    'radial-gradient(circle, #ffd24a88, #0e1115)',
+  );
   cards.replaceChildren(
+    ...(t.mvp ? [mvpCard] : []),
     ...skillCards(d),
     ...(t.copiedFrom ?? []).flatMap((o) => skillCards(o, ` (copied from ${o.name})`)),
   );

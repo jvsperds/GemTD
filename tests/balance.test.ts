@@ -6,6 +6,7 @@ import { DEFS, newGame, type Difficulty } from '../src/sim/setup';
 import {
   armorMult,
   codeOf,
+  LIGHTNING,
   parseFx,
   type GemDef,
   type SpecialDef,
@@ -141,8 +142,10 @@ function stat(d: Def): Stat {
   const crit = f.crit.reduce((m, [c, x]) => m * (1 + c * (x - 1)), 1);
   const aps = (1 + f.as / 100) / d.attackRate;
   const p = dmg * crit * aps * Math.min(f.targets, 8) * (f.cleave ? 1 + f.cleave[0] : 1);
+  // ponytail: poison's max-HP share is not valued (it depends on the wave); the flat part is.
   let m = f.poison * 4 + (f.magicPct ? p : 0);
-  if (f.lightning) m += 225 * aps;
+  if (f.lightning)
+    m += LIGHTNING.chance * LIGHTNING.jumps * Math.max(LIGHTNING.damage, LIGHTNING.pct * dmg) * aps;
   if (f.fork) m += 0.75 * dmg * aps;
   out.armor = 0.4 * f.armor;
   for (const a of f.enemy) {
@@ -279,6 +282,7 @@ export interface SkilledOpts {
   hp?: number; // harness knob: overrides sim.hpMult
   ramp?: number; // harness knob: wave w's creep HP is also multiplied by ramp^w
   debug?: boolean;
+  magic?: { poisonHp?: number; chainPct?: number }; // overrides of Combat's magic scaling
 }
 
 export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: SkilledOpts = {}) {
@@ -286,6 +290,20 @@ export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: S
   const { sim, combat } = g;
   // The two harness knobs: the only sim fields written. Everything else goes through g.run.
   if (opts.hp) sim.hpMult = opts.hp;
+  Object.assign(combat, opts.magic);
+  // Damage per 10 waves: [all, magic, magic of poison towers, magic of chain lightning towers].
+  const dmg: number[][] = [];
+  const sums = () => {
+    const s = [0, 0, 0, 0];
+    for (const t of combat.towers) {
+      const f = combat.tfx(t);
+      s[0] += t.damageDealt;
+      s[1] += t.magicDealt;
+      if (f.poison) s[2] += t.magicDealt;
+      if (f.lightning) s[3] += t.magicDealt;
+    }
+    return s;
+  };
   const baseHp = sim.hpMult;
   const ramp = () => {
     if (opts.ramp) sim.hpMult = baseHp * opts.ramp ** (sim.wave + 1);
@@ -438,7 +456,10 @@ export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: S
     }
     const [wave, hp] = [sim.wave, sim.castleHp];
     ramp(); // for the next wave; this one's creeps are already queued
+    const before = sums();
     while (sim.phase === 'wave' && sim.wave === wave) g.tick();
+    const bucket = (dmg[Math.ceil(wave / 10) - 1] ??= [0, 0, 0, 0]);
+    sums().forEach((x, i) => (bucket[i] += x - before[i]));
     leaks[wave] = hp - sim.castleHp;
   }
   if (opts.debug) {
@@ -459,6 +480,7 @@ export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: S
     hp: sim.castleHp,
     level: g.level,
     seconds: g.seconds,
+    dmg,
   };
 }
 
@@ -470,7 +492,8 @@ test('skilled bot is deterministic and stops at maxWave', () => {
 });
 
 // Sweep knobs (env): DIFF=easy|normal|hard, SEEDS=n (seeds 1000..), HP=creep HP multiplier,
-// RAMP=r (wave w's HP × r^w), MAXWAVE=stop wave, DEBUG=1 for a per-game breakdown.
+// RAMP=r (wave w's HP × r^w), MAXWAVE=stop wave, DEBUG=1 for a per-game breakdown,
+// POISON_HP / CHAIN_PCT=overrides of Combat's magic scaling (0 = the old flat numbers).
 test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_200_000 }, () => {
   const env = process.env;
   const N = Number(env.SEEDS ?? 8);
@@ -480,6 +503,10 @@ test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_2
     ramp: env.RAMP ? Number(env.RAMP) : undefined,
     maxWave: env.MAXWAVE ? Number(env.MAXWAVE) : undefined,
     debug: !!env.DEBUG,
+    magic: {
+      ...(env.POISON_HP && { poisonHp: Number(env.POISON_HP) }),
+      ...(env.CHAIN_PCT && { chainPct: Number(env.CHAIN_PCT) }),
+    },
   };
   const t0 = performance.now();
   const runs = Array.from({ length: N }, (_, i) => skilled(1000 + i, diff, opts));
@@ -497,6 +524,14 @@ test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_2
       ` | winner castle hp median ${hps.length ? hps[hps.length >> 1] : '-'}` +
       ` | ${secs.toFixed(1)} s/game`,
   );
+  // Share of all damage per 10 waves: magic / of that, poison towers / chain lightning towers.
+  const pct = (a: number, b: number) => (b ? Math.round((100 * a) / b) : 0);
+  const rows = Array.from({ length: 5 }, (_, b) => {
+    const s = [0, 0, 0, 0];
+    for (const r of runs) r.dmg[b]?.forEach((x, i) => (s[i] += x));
+    return `w${b * 10 + 1}-${b * 10 + 10} ${pct(s[1], s[0])}/${pct(s[2], s[0])}/${pct(s[3], s[0])}`;
+  });
+  console.log(`magic%/poison%/chain% of damage: ${rows.join(' | ')}`);
 });
 
 // The first, naive bot. Run with OLD=1.

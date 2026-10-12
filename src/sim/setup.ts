@@ -83,8 +83,9 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
 /** Rule set of new games. A run records its own, so a save or Watch replay from before a change to
  *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless.
  *  3: they lag twice as fast (4% per wave), as MVP and kill bonuses kept runs going past wave 300.
- *  4: harder creeps per difficulty, 10% lag, easy's extra levels must be bought. */
-export const RULES = 4;
+ *  4: harder creeps per difficulty, 10% lag, easy's extra levels must be bought.
+ *  5: poison takes a share of max HP, chain lightning scales with attack damage, MVP caps at 10. */
+export const RULES = 5;
 
 export function newGame(
   seed: number,
@@ -112,6 +113,7 @@ export function newGame(
   if (rules < 4) g.combat.endgameLag = rules < 2 ? 1 : rules < 3 ? ENDGAME.lag2 : ENDGAME.lag3;
   // Levels past the XP curve (easy) all shared its last threshold, so buying one gave the rest free.
   else g.xpFor.forEach((x, i) => i && x === g.xpFor[i - 1] && (g.xpFor[i] = Infinity));
+  if (rules < 5) [g.combat.poisonHp, g.combat.chainPct, g.mvpCap] = [0, 0, Infinity];
   sim.bossTricks = on('bosses');
   return g;
 }

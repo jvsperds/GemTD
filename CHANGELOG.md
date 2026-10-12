@@ -12,6 +12,17 @@
   two-tone fills, hard shadows instead of glows, a rounded sans typeface, and outlined skill icons.
   The logo and app icon are a gem with the tower's ward eye.
 
+- **Magic damage:** poison and chain lightning now keep up with late waves. Poison also takes a
+  share of the creep's max HP each second (1% at the top tier, less below, half on bosses), and a
+  chain lightning jump deals 50% of the tower's attack damage when that beats the flat 150. In bot
+  runs the poison towers' share of wave 41-50 damage went from 4% to 9% with the win rate unchanged.
+- **MVP:** a tower holds at most 10 MVP stacks, as in the original; once capped, the wave's award
+  goes to the next best tower. The stack count is an ability card on the tower instead of a stat
+  line. The crown sits on the tower with the most damage dealt and no longer bobs.
+- **Zoom:** pinching or scrolling no longer stutters. Every step used to redraw all sprites and
+  the map at the new size; a gesture now scales the last drawing and redraws once when it rests.
+  Runs started before these rule changes replay under their old rules.
+
 - **Difficulty:** creeps are much tougher, so a full clear is no longer a given. Creep HP is now ×3
   on Easy, ×2.3 on Normal and ×3.4 on Hard (was ×0.7 / ×1 / ×1.5); Easy keeps its perks (copies
   stack, recipe luck, levels past 9), which is why its creeps can carry more HP than Normal's. A

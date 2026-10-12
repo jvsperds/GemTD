@@ -6,7 +6,7 @@ import quality from '../data/quality_levels.json';
 import waves from '../data/waves.json';
 import { DOWNGRADE_COST, Game, GEMS_PER_ROUND, type LevelDef } from '../src/sim/game';
 import { Maze, ROCK, type MapData } from '../src/sim/maze';
-import { Combat, type GemDef } from '../src/sim/towers';
+import { Combat, MVP_CAP, type GemDef } from '../src/sim/towers';
 import { WaveSim, type WaveEntry } from '../src/sim/waves';
 
 const setup = (seed = 1) => {
@@ -348,4 +348,16 @@ test('End run stops the game where it stands, and a replay of its log ends there
   b.sim.wave = 5;
   b.run(['end']);
   expect(b.wavesCleared).toBe(5);
+});
+
+test('MVP stacks cap per tower: a capped top dealer passes the award to the next best', () => {
+  const g = setup();
+  const [a] = placeRound(g);
+  g.keep(a);
+  const b = g.combat.place('D1', 30, 30)!;
+  a.mvp = g.mvpCap;
+  a.damageDealt += 1e9; // this wave: `a` leads, `b` is second
+  b.damageDealt += 1e8;
+  while (g.sim.phase === 'wave') g.tick();
+  expect([a.mvp, b.mvp]).toEqual([MVP_CAP, 1]);
 });

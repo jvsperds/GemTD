@@ -13,6 +13,7 @@ import {
   parseFx,
   type GemDef,
   type SpecialDef,
+  POISON_HP,
 } from '../src/sim/towers';
 import {
   armorOf,
@@ -142,7 +143,7 @@ test('magic immune ignores poison; physical immune ignores attacks', () => {
   const pi = creep(sim, 11.5, 10.5, { abilities: ['enemy_wumian'] });
   ticks(combat, 30 * 3);
   expect(1e6 - pi.hp).toBeGreaterThan(0); // poison only
-  expect(1e6 - pi.hp).toBeLessThan(128 * 3 + 1);
+  expect(1e6 - pi.hp).toBeLessThan((128 + POISON_HP * 1e6) * 3 + 1);
 });
 
 test('refraction shield blocks one hit; reactive armor stacks; high armor adds armor', () => {

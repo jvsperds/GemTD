@@ -1381,8 +1381,17 @@ export function creepIcon(d: { name: string; flying: boolean; boss: boolean }) {
   return url;
 }
 
+/** Zooming draws the last bake scaled until the zoom rests for ZOOM_SETTLE ms or the scale leaves
+ *  REBAKE; then everything is baked once at the new size. */
+const ZOOM_SETTLE = 150;
+const REBAKE = [0.7, 1.4];
+
 export class Renderer {
-  cell = 0; // px per cell at current zoom
+  cell = 0; // px per cell the sprites and layers are baked at
+  /** Px per cell on screen. While a zoom gesture is going it runs ahead of `cell` and the frame
+   * is drawn scaled: re-baking every sprite and the map on each step is what made zooming stutter. */
+  private view = 0;
+  private zoomAt = 0; // time of the last zoom step
   zoom = 1;
   panX = 0;
   panY = 0;
@@ -1493,21 +1502,29 @@ export class Renderer {
       this.panX = Math.floor((this.canvas.width - cell * this.maze.w) / 2);
       this.panY = Math.round(HUD_H * d + FRAME * cell);
     } else {
-      this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
-      this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
+      this.panX = sx - ((sx - this.panX) / (this.view || cell)) * cell;
+      this.panY = sy - ((sy - this.panY) / (this.view || cell)) * cell;
     }
+    this.view = cell;
     this.clamp(cell);
-    if (cell !== this.cell) {
-      this.cell = cell;
-      this.sprites.clear();
-      this.staticDirty = true;
-    }
+    this.zoomAt = performance.now();
+    // Bake at once for a resize, and before the scaled frame gets blurry or its buffer too big.
+    const k = cell / (this.cell || 1);
+    if (recentre || k < REBAKE[0] || k > REBAKE[1]) this.rebake();
+  }
+
+  /** Bake sprites and layers at the on-screen cell size. */
+  private rebake() {
+    if (this.cell === this.view) return;
+    this.cell = this.view;
+    this.sprites.clear();
+    this.staticDirty = true;
   }
 
   pan(dx: number, dy: number) {
     this.panX += dx * this.dpr;
     this.panY += dy * this.dpr;
-    this.clamp(this.cell);
+    this.clamp(this.view);
   }
 
   /** Keep the view inside the world: the board plus WORLD cells of lowland on every side. */
@@ -1523,8 +1540,8 @@ export class Renderer {
 
   /** Live creep drawn under a screen point, nearest first. */
   creepAt(x: number, y: number) {
-    const wx = (x * this.dpr - this.panX) / this.cell,
-      wy = (y * this.dpr - this.panY) / this.cell;
+    const wx = (x * this.dpr - this.panX) / this.view,
+      wy = (y * this.dpr - this.panY) / this.view;
     let best: Creep | null = null,
       bd = 0.6; // cells
     for (const cr of this.sim.creeps) {
@@ -1538,8 +1555,8 @@ export class Renderer {
   screenToCell(x: number, y: number): [number, number] {
     const d = this.dpr;
     return [
-      Math.floor((x * d - this.panX) / this.cell),
-      Math.floor((y * d - this.panY) / this.cell),
+      Math.floor((x * d - this.panX) / this.view),
+      Math.floor((y * d - this.panY) / this.view),
     ];
   }
 
@@ -2212,8 +2229,8 @@ export class Renderer {
   private drawBg() {
     const { cell: s, panX, panY } = this,
       B = this.bg;
-    if (B.width !== this.canvas.width || B.height !== this.canvas.height)
-      [B.width, B.height] = [this.canvas.width, this.canvas.height];
+    const [bw, bh] = this.extent();
+    if (B.width !== bw || B.height !== bh) [B.width, B.height] = [bw, bh];
     const g = B.getContext('2d', { alpha: false })!;
     const tp = this.terrain();
     tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
@@ -2290,15 +2307,34 @@ export class Renderer {
     g.globalCompositeOperation = 'source-over';
   }
 
+  /** Canvas size in baked pixels: larger than the canvas while the frame is drawn scaled down. */
+  private extent() {
+    const k = this.view / this.cell;
+    return [Math.ceil(this.canvas.width / k), Math.ceil(this.canvas.height / k)];
+  }
+
   /** alpha = fraction of the way from the previous tick to the current one; dt = frame seconds. */
   render(alpha: number, dt: number, now: number) {
+    if (performance.now() - this.zoomAt > ZOOM_SETTLE) this.rebake();
+    const k = this.view / this.cell;
+    if (k === 1) return this.paint(alpha, dt, now);
+    // Mid-gesture: paint at the baked size under a scale, with the pan in baked pixels.
+    const { ctx, panX, panY } = this;
+    [this.panX, this.panY] = [panX / k, panY / k];
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    this.paint(alpha, dt, now);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    [this.panX, this.panY] = [panX, panY];
+  }
+
+  private paint(alpha: number, dt: number, now: number) {
     const dimKey = this.pending.join();
     if (dimKey !== this.dimKey) [this.dimKey, this.staticDirty] = [dimKey, true];
     if (this.staticDirty) this.drawStatic();
     const { ctx, cell: s, panX, panY } = this;
     const X = (x: number) => (panX + x * s) | 0;
     const Y = (y: number) => (panY + y * s) | 0;
-    const bgKey = `${panX | 0},${panY | 0},${s},${this.canvas.width},${this.canvas.height},${this.staticVer}`;
+    const bgKey = `${panX | 0},${panY | 0},${s},${this.extent()},${this.staticVer}`;
     if (bgKey !== this.bgKey) {
       this.bgKey = bgKey;
       this.drawBg();
@@ -2461,14 +2497,9 @@ export class Renderer {
       }
       ctx.restore();
     }
-    // Crown floating over the tower with the most MVP awards (ties: more damage dealt).
+    // Crown over the tower that has dealt the most damage.
     let king: Tower | null = null;
-    for (const t of this.combat.towers)
-      if (
-        t.mvp &&
-        (!king || t.mvp > king.mvp || (t.mvp === king.mvp && t.damageDealt > king.damageDealt))
-      )
-        king = t;
+    for (const t of this.combat.towers) if (t.damageDealt > (king?.damageDealt ?? 0)) king = t;
     if (king) {
       const w = s * 0.5;
       const crown = this.sprite(`crown${w}`, w, w * 0.7, (g) => {
@@ -2494,8 +2525,7 @@ export class Renderer {
       });
       // Sits just above the head, whose size depends on the tower.
       const head = king.r - TOWER_H - TALL + HEAD_Y - headSize(king.def.quality);
-      const bob = 0.05 * Math.sin(now / 400);
-      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(head + bob - 0.05) - crown.height);
+      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(head - 0.05) - crown.height);
     }
     // Attack ranges: all towers when Ranges is on, the selected one always.
     const selT =

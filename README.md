@@ -63,7 +63,8 @@ Each round:
 3. The wave starts. Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; leaks damage the castle.
 
 Kills give gold and XP. XP raises your level (better gem odds); **Buy level (L)** spends gold to
-level up early. The top-damage tower each wave earns an MVP stack (+10% damage) and wears a crown.
+level up early. The top-damage tower each wave earns an MVP stack (+10% damage, up to 10 per tower; a capped tower
+passes the award on). The tower with the most damage dealt wears a crown.
 Special towers gain +10% damage per 10 kills. Pedals are 2-gem utility blocks built with Combine
 and laid on open path cells, where they cast a spell on creeps that cross them. Select towers (Ctrl+click or Ctrl+drag for several) to set
 their aim mode on the **Targeting** tab.
