@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
-import { newGame } from '../src/sim/setup';
-import { ENDLESS_BOSS, SPLIT } from '../src/sim/waves';
+import waves from '../data/waves.json';
+import { DIFFICULTY, newGame, type Difficulty } from '../src/sim/setup';
+import { ENDLESS_BOSS, HP_RAMP, SPLIT, type WaveEntry } from '../src/sim/waves';
 
 test('cunning boss at wave 40 splits into smaller creeps on death', () => {
   const { sim } = newGame(1, 'normal', ['bosses']);
@@ -33,4 +34,22 @@ test('deep-endless cunning bosses split into a bounded crowd', () => {
   for (let i = 0; i < 2000 && sim.creeps.length < sim.bosses; i++) sim.tick();
   for (const b of sim.creeps.filter((c) => c.def.boss)) sim.damage(b, b.hp);
   expect(sim.creeps.filter((c) => c.alive)).toHaveLength(ENDLESS_BOSS.max * SPLIT.n);
+});
+
+test('creep HP ramps from the original on wave 1 to the full difficulty multiplier', () => {
+  const hp = (wave: number, diff: Difficulty, mutators: string[] = [], rules?: number) => {
+    const { sim } = newGame(1, diff, mutators, 'classic', rules);
+    sim.wave = wave - 1;
+    sim.startWave();
+    return sim.current!.hp;
+  };
+  const raw = (wave: number) => (waves as WaveEntry[]).find((w) => w.wave === wave)!.hp;
+  for (const d of ['easy', 'normal', 'hard'] as const) {
+    expect(hp(1, d)).toBeCloseTo(raw(1)); // 3 HP: a Chipped Ruby (4 damage) one-shots it
+    expect(hp(HP_RAMP, d)).toBeCloseTo(raw(HP_RAMP) * DIFFICULTY[d].hp);
+    expect(hp(40, d)).toBeCloseTo(raw(40) * DIFFICULTY[d].hp);
+  }
+  expect(hp(8, 'easy')).toBeCloseTo(raw(8) * 2); // halfway up easy's ×3
+  expect(hp(1, 'easy', ['tough'])).toBeCloseTo(raw(1) * 2); // Tough still doubles
+  expect(hp(1, 'easy', [], 5)).toBeCloseTo(raw(1) * DIFFICULTY.easy.hp); // older runs: no ramp
 });

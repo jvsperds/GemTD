@@ -97,7 +97,10 @@ test('difficulty scales creep HP and the score bonus; daily seed is stable per d
   const { newGame: ng, dailySeed, DIFFICULTY } = await import('../src/sim/setup');
   const hard = ng(1, 'hard');
   const easy = ng(1, 'easy');
-  for (const g of [hard, easy]) g.sim.startWave();
+  for (const g of [hard, easy]) {
+    g.sim.wave = 20; // past the ramp, where the full multiplier applies
+    g.sim.startWave();
+  }
   hard.sim.tick();
   easy.sim.tick();
   expect(hard.sim.creeps[0].hp / easy.sim.creeps[0].hp).toBeCloseTo(
