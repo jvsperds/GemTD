@@ -1379,6 +1379,263 @@
         font-size: 36px;
         text-shadow: 0 0 16px #f0c86066;
       }
+      /* ---- Cartoon theme, after the creep and tower models: ink outlines, flat two-tone fills,
+         chunky rounded shapes, hard drop shadows instead of glows ---- */
+      :root {
+        --ink: #241c1c;
+        --panel: #37323f;
+        --panel-lo: #2b2732;
+        --two-tone: linear-gradient(180deg, #5a5366 0 50%, #4a4456 50%);
+        --two-tone-gold: linear-gradient(180deg, #ffd95a 0 50%, #f2c52e 50%);
+        --glass: linear-gradient(180deg, #463f52 0 5px, var(--panel) 5px);
+        --edge: var(--ink);
+        --edge-dim: #1d171f;
+        --accent: #f5d76a;
+        --gold: #f2c52e;
+        --text: #f4efe4;
+        --muted: #b3aa9c;
+        --serif: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+        --bevel: 0 5px 0 #0007;
+        accent-color: var(--gold);
+        scrollbar-color: #5a5366 var(--panel-lo);
+      }
+      .glass {
+        border: 3px solid var(--ink);
+        border-radius: 14px;
+      }
+      button {
+        background: var(--two-tone);
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        box-shadow: 0 3px 0 var(--ink);
+        font-weight: bold;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        filter: brightness(1.18);
+      }
+      button:active:not(:disabled) {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 var(--ink);
+      }
+      #dock button.on,
+      #combos button.on,
+      #actions button.on,
+      #actions #aim button.on,
+      .cards button.on,
+      .shopitem .bring.on,
+      #dmg header button.on {
+        background: var(--two-tone-gold);
+        border-color: var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        color: var(--ink);
+      }
+      .cards button.on small {
+        color: #5a4a20;
+      }
+      .herocard.on,
+      .maze.on,
+      .recipe.on {
+        box-shadow:
+          0 0 0 2px var(--rarity, var(--gold)),
+          0 3px 0 2px var(--ink);
+      }
+      kbd {
+        border-color: var(--ink);
+        background: #0004;
+      }
+      /* Headings and the logo: gold lettering with an ink outline and a hard shadow. */
+      #logo,
+      #menu h2,
+      .dialog-head h2,
+      #banner b,
+      #gameover .big {
+        font-weight: 900;
+        color: var(--gold);
+        -webkit-text-stroke: 4px var(--ink);
+        paint-order: stroke fill;
+        text-shadow: 0 3px 0 var(--ink);
+      }
+      #logo {
+        letter-spacing: 2px;
+      }
+      #logo svg {
+        width: 28px;
+        height: 28px;
+        filter: none;
+      }
+      #hud {
+        border-width: 0 0 3px;
+        background: var(--panel);
+      }
+      #menubtn {
+        border-width: 0 0 0 3px;
+        border-color: var(--ink);
+        box-shadow: none;
+        color: var(--text);
+      }
+      #menubtn:active:not(:disabled) {
+        transform: none;
+      }
+      /* Moss: rounded tufts hang off the top bar and grow up the bottom panel's top edge. */
+      #hud::after,
+      #panel::before {
+        height: 12px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='12'%3E%3Cpath d='M0-3h64v6q-4 6-8 0q-3 9-9 0q-4 5-7 0q-5 8-10 0q-3 4-6 0q-6 9-11 0q-3 5-6 0q-3 6-7 0z' fill='%234a9a3a' stroke='%23241c1c' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M0 0h64v2H0z' fill='%236fc04a'/%3E%3C/svg%3E")
+          repeat-x;
+        image-rendering: auto;
+      }
+      #hud::after {
+        top: calc(100% + 1px);
+      }
+      .tag {
+        border: 2px solid var(--ink);
+        background: var(--two-tone-gold);
+        color: var(--ink);
+        font-weight: bold;
+      }
+      .bar,
+      #bar {
+        border: 2px solid var(--ink);
+        border-radius: 8px;
+        background: var(--panel-lo);
+        box-shadow: none;
+      }
+      .bar {
+        height: 9px;
+      }
+      .hp > i {
+        background: linear-gradient(180deg, #ff7a6a 0 50%, var(--ruby) 50%);
+      }
+      .xp > i {
+        background: linear-gradient(180deg, #7ab8f0 0 50%, #4a8ad0 50%);
+      }
+      #bar i {
+        background: var(--two-tone-gold);
+      }
+      #panel[data-view='creep'] #bar i,
+      #panel[data-view='tower'] #bar i {
+        background: linear-gradient(180deg, #7fe06a 0 50%, #4fb840 50%);
+      }
+      #bar span {
+        font-weight: bold;
+        text-shadow:
+          0 1px 0 var(--ink),
+          0 -1px 0 var(--ink),
+          1px 0 0 var(--ink),
+          -1px 0 0 var(--ink);
+      }
+      #hint {
+        font-style: normal;
+        font-weight: bold;
+        text-shadow:
+          0 2px 0 var(--ink),
+          0 -1px 0 var(--ink),
+          1px 0 0 var(--ink),
+          -1px 0 0 var(--ink);
+      }
+      #portrait {
+        border: 3px solid var(--ink);
+        border-radius: 12px;
+        box-shadow: 0 3px 0 var(--ink);
+        background: linear-gradient(180deg, #5f5872 0 60%, #453f52 60%);
+      }
+      .card,
+      .slot {
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        box-shadow: 0 3px 0 var(--ink);
+        background: var(--two-tone);
+      }
+      .slot.on,
+      button.skillcard.on {
+        border-color: var(--ink);
+        box-shadow:
+          0 0 0 3px var(--gold),
+          0 3px 0 3px var(--ink);
+      }
+      .slot kbd {
+        color: var(--ink);
+        background: var(--gold);
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      #status span {
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        background: var(--panel);
+        box-shadow: 0 2px 0 var(--ink);
+      }
+      #status span.bad {
+        border-color: var(--ink);
+        background: #7a3ab0;
+      }
+      .oddsrow .odds,
+      .loadout-summary,
+      .recipe,
+      .maze {
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        background: var(--panel-lo);
+      }
+      #panel[data-view='tower'] #actions {
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        background: var(--panel-lo);
+      }
+      #actions #tabs button,
+      #actions #tabs button:hover:not(:disabled) {
+        box-shadow: none;
+      }
+      #actions #tabs button.on,
+      .tabs button.on {
+        color: var(--gold);
+        border-bottom: 3px solid var(--gold);
+        text-shadow: none;
+      }
+      .tabs {
+        background: var(--panel-lo);
+        border-bottom: 3px solid var(--ink);
+      }
+      .tabs button:active:not(:disabled) {
+        transform: none;
+      }
+      #newdlg,
+      #menu {
+        background: var(--panel);
+      }
+      .dialog-head,
+      #menu h2 {
+        background: #463f52;
+        border-bottom: 3px solid var(--ink);
+      }
+      .dialog-actions {
+        border-top: 3px solid var(--ink);
+        background: var(--panel-lo);
+      }
+      .dialog-actions .primary {
+        background: linear-gradient(180deg, #7fe06a 0 50%, #4fb840 50%);
+        border-color: var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        color: var(--ink);
+      }
+      .cards button,
+      .herocard,
+      .shopitem > button:first-child {
+        background: var(--two-tone);
+        box-shadow: 0 3px 0 var(--ink);
+      }
+      #menu select,
+      #menu input:not([type='range']) {
+        border: 2px solid var(--ink);
+        border-radius: 8px;
+        background: var(--panel-lo);
+      }
+      #menu h3 {
+        font-weight: bold;
+        border-bottom: 2px solid var(--ink);
+      }
       @media (max-width: 760px) {
         #dock button {
           width: 48px;
@@ -1461,11 +1718,22 @@
     ></canvas>
     <header id="hud" class="glass">
       <div id="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <polygon points="12,1 23,12 12,23 1,12" fill="#b8913f" />
-          <polygon points="12,1 12,12 1,12" fill="#f6d77e" />
-          <polygon points="12,1 23,12 12,12" fill="#e2b85a" />
-          <polygon points="1,12 12,12 12,23" fill="#8a6a2c" />
+        <svg viewBox="0 0 32 32">
+          <polygon
+            points="16,2 29,12 16,30 3,12"
+            fill="#3a6bff"
+            stroke="#241c1c"
+            stroke-width="3"
+            stroke-linejoin="round"
+          />
+          <polygon points="16,2 3,12 16,12" fill="#8fb0ff" />
+          <polygon points="16,2 29,12 16,12" fill="#5a82ff" />
+          <polygon points="29,12 16,12 16,30" fill="#2a4fc0" />
+          <circle cx="16" cy="13" r="6.4" fill="#241c1c" />
+          <circle cx="16" cy="13" r="5" fill="#f7d23a" />
+          <circle cx="16" cy="13" r="3.1" fill="#e0701e" />
+          <circle cx="16" cy="13" r="1.6" fill="#0a0808" />
+          <circle cx="14.2" cy="11.2" r="1" fill="#fff" />
         </svg>
         <span>GEM TD</span>
       </div>
