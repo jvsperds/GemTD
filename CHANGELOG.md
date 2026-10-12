@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Creeps:** every creep is redrawn after the Dota 2 courier it is named for (boar, yak, panda,
+  the four chest-hound Jaws, dragons, imps, and so on) instead of eight shared shapes, with props
+  such as balloons, a skateboard, a boat and a flying carpet. Portraits show wings and boss crowns.
+- **Towers:** tower heads are redrawn in the same style, with shaded, rounded forms. Towers and
+  creeps get a dark outline so they read on any tile. Gem tower shafts take the gem's colour (they
+  were black). Models are still baked once per zoom, so the frame cost is unchanged.
+- **Interface:** the HUD, menu, dialogs and buttons follow the same style: ink borders, flat
+  two-tone fills, hard shadows instead of glows, a rounded sans typeface, and outlined skill icons.
+  The logo and app icon are a gem with the tower's ward eye.
+
 - **Difficulty:** creeps are much tougher, so a full clear is no longer a given. Creep HP is now ×3
   on Easy, ×2.3 on Normal and ×3.4 on Hard (was ×0.7 / ×1 / ×1.5); Easy keeps its perks (copies
   stack, recipe luck, levels past 9), which is why its creeps can carry more HP than Normal's. A

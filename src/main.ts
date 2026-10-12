@@ -626,7 +626,7 @@ function showBanner() {
   ]
     .filter(Boolean)
     .join(' · ');
-  banner.innerHTML = `<img alt="" src="${creepIcon(d.name)}"><div><b>WAVE ${sim.wave}</b><span></span></div>`;
+  banner.innerHTML = `<img alt="" src="${creepIcon(d)}"><div><b>WAVE ${sim.wave}</b><span></span></div>`;
   banner.querySelector('span')!.textContent = d.name + (tags ? ` · ${tags}` : '');
   banner.hidden = true;
   void banner.offsetWidth; // restart the animation
@@ -860,7 +860,7 @@ Wave has run over ${ENRAGE_TIME / 60} minutes: immune to stuns and slows`,
 /** Selected creep: portrait, health, defences, ability cards. */
 function drawCreep(cr: Creep) {
   const d = cr.def;
-  setPortrait(creepIcon(d.name), '●');
+  setPortrait(creepIcon(d), '●');
   nameEl.textContent = (d.giant ? 'Giant ' : '') + d.name + (d.boss ? ' (boss)' : '');
   const armor = armorOf(cr);
   setAttrs([

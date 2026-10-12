@@ -1,5 +1,7 @@
 // Original skill icons drawn on a canvas: one simple glyph per ability family, lit from the
 // top-left like the tower models. Cached as data URLs for the panel's ability cards.
+import { outline } from './render';
+
 type Kind =
   | 'fire'
   | 'frost'
@@ -250,6 +252,7 @@ export function skillIcon(id: string) {
         '#ff7ad9',
       );
   }
+  outline(g, S * 0.04);
   url = c.toDataURL();
   cache.set(kind, url);
   return url;
