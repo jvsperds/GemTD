@@ -11,7 +11,7 @@ import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { newlyDone } from './quests';
 import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
-import { MAPS, newGame, RULES, type Difficulty } from './sim/setup';
+import { DIFFICULTY, MAPS, newGame, RULES, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
 import { AIM, AIM_ELITE, AURA, codeOf, type Tower } from './sim/towers';
@@ -571,7 +571,8 @@ async function recordScore() {
     },
     h.quests,
   );
-  const shells = shellsFor(game.wavesCleared, won) + quests.reduce((n, q) => n + q.shells, 0);
+  const rate = DIFFICULTY[cfg.difficulty as Difficulty]?.shells ?? 1;
+  const shells = shellsFor(game.wavesCleared, won, rate) + quests.reduce((n, q) => n + q.shells, 0);
   await db.set('hero', {
     ...h,
     shells: h.shells + shells,

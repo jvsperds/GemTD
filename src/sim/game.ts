@@ -612,7 +612,8 @@ export class Game {
     if (cost === null || this.gold < cost) return false;
     this.gold -= cost;
     this.level++;
-    this.xp = Math.max(this.xp, this.xpFor[this.level - 1]);
+    const xp = this.xpFor[this.level - 1];
+    if (isFinite(xp)) this.xp = Math.max(this.xp, xp); // bought-only levels (easy) have no XP mark
     return true;
   }
 

@@ -347,8 +347,8 @@ export const goldOf = (id: string, lvl: number) => {
   return typeof g === 'number' ? g : g[Math.max(1, lvl) - 1];
 };
 export type Loadout = Record<string, number>; // skill id -> level 1..4
-/** Shells for a finished game. ponytail: flat rate until playtests. */
-export const shellsFor = (wavesCleared: number, won: boolean) =>
-  Math.floor(wavesCleared / 3) + (won ? 4 : 0); // full clear: 16 + 4; endless keeps adding 1 per 3 waves
+/** Shells for a finished game, times the difficulty's `shells` rate (setup.ts DIFFICULTY). */
+export const shellsFor = (wavesCleared: number, won: boolean, mult = 1) =>
+  Math.floor((Math.floor(wavesCleared / 3) + (won ? 4 : 0)) * mult); // full clear: 16 + 4; endless keeps adding 1 per 3 waves
 export const skillTip = (id: string, lvl: number) =>
   SKILLS[id].tip.replace('{v}', String(SKILLS[id].value[Math.max(1, lvl) - 1]));

@@ -8,8 +8,17 @@ import type { GemDef, SpecialDef } from './towers';
 
 /** Ability values: `endgame_maxhp` % of max HP per hit (half on bosses), `endgame_souls` % of a
  *  killed creep's max HP added to the tower's attack damage for good. Each endless wave divides
- *  both by `lag`: at 1.04 they halve about every 18 waves. `lag2` is the rate of rules-2 runs. */
-export const ENDGAME = { maxHp: 0.02, bossMaxHp: 0.5, souls: 0.01, lag: 1.04, lag2: 1.02 };
+ *  both by `lag`: at 1.1 they halve about every 7 waves. Measured with tests/endless.test.ts on a
+ *  strong 37-tower board: 1.02 ran to wave ~300, 1.08 to ~140, 1.12 to ~120. `lag2` and `lag3`
+ *  are the rates of runs under rules 2 and 3. */
+export const ENDGAME = {
+  maxHp: 0.02,
+  bossMaxHp: 0.5,
+  souls: 0.01,
+  lag: 1.1,
+  lag2: 1.02,
+  lag3: 1.04,
+};
 const LAG = `${Math.round((ENDGAME.lag - 1) * 100)}% weaker per endless wave`;
 
 export function ancientGems(gems: Record<string, GemDef>) {

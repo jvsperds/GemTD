@@ -237,6 +237,7 @@ test('shells: 1 per 3 waves, +4 for a win, never more than 20', () => {
   expect(shellsFor(10, false)).toBe(3);
   expect(shellsFor(50, true)).toBe(20);
   expect(shellsFor(200, true)).toBe(70); // endless keeps accumulating
+  expect(shellsFor(50, true, 3)).toBe(60); // hard pays triple
 });
 
 test('passive skills stack onto the hero perk', () => {
