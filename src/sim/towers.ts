@@ -705,7 +705,7 @@ export class Combat {
   }
 
   /** Invisible creeps can only be targeted inside some tower's True Sight (its attack range). */
-  private visible(cr: Creep) {
+  visible(cr: Creep) {
     if (!hasAbility(cr, 'riki_permanent_invisibility')) return true;
     return this.towers.some((o) => this.tfx(o).trueSight && this.dist(o, cr) <= this.range(o));
   }

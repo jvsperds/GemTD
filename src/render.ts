@@ -2610,7 +2610,9 @@ export class Renderer {
       const sh = this.shadow(cr.def.boss || !!cr.def.giant);
       const x = cr.px + (cr.x - cr.px) * alpha,
         y = cr.py + (cr.y - cr.py) * alpha;
+      ctx.globalAlpha = this.combat.visible(cr) ? 1 : 0.35;
       ctx.drawImage(sh, X(x) - sh.width / 2, Y(y) - sh.height / 2);
+      ctx.globalAlpha = 1;
     }
     for (const cr of order) {
       // Face the way it last moved sideways; purely vertical steps keep the old facing.
@@ -2653,7 +2655,9 @@ export class Renderer {
         ctx.ellipse(X(x), Y(y + bob + 0.3), sp.width * 0.35, sp.width * 0.13, 0, 0, 7);
         ctx.stroke();
       }
+      ctx.globalAlpha = this.combat.visible(cr) ? 1 : 0.35;
       ctx.drawImage(sp, X(x) - sp.width / 2, Y(y) - sp.height / 2);
+      ctx.globalAlpha = 1;
       // Health bar once damaged (always for the selected creep).
       if (cr.hp < cr.def.hp || cr === this.creep) {
         const w = sp.width * 0.7,

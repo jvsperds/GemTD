@@ -113,11 +113,16 @@ test('invisible creeps need a True Sight tower in range', () => {
   const { sim, combat } = setup();
   combat.place('D1', 10, 10);
   const cr = creep(sim, 11.5, 10.5, { abilities: ['riki_permanent_invisibility'] });
+  expect(combat.visible(cr)).toBe(false);
+  expect(combat.visible(creep(sim, 11.5, 10.5))).toBe(true);
   ticks(combat, 30);
   expect(cr.hp).toBe(1e6);
   combat.place('E1', 10, 12);
+  expect(combat.visible(cr)).toBe(true);
   ticks(combat, 30);
   expect(cr.hp).toBeLessThan(1e6);
+  cr.x = 25.5;
+  expect(combat.visible(cr)).toBe(false);
 });
 
 test('evasion dodges about half', () => {
