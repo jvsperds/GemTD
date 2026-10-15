@@ -1,3 +1,24 @@
+/* Event offers occupy their own row above the regular controls on every screen. */
+#cards:has(.event-card) {
+  flex-wrap: wrap;
+}
+.event-card {
+  flex: 1 0 100%;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.event-card b,
+.event-card small {
+  flex-basis: 100%;
+  line-height: 1.4;
+}
+.event-card button {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
 /* Keep controls readable and touchable without spending most of a phone on chrome. */
 @media (max-width: 760px), (pointer: coarse) {
   body {

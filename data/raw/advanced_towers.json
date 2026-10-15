@@ -1094,6 +1094,38 @@
     ]
   },
   {
+    "code": "gemtd_skyhunter",
+    "name": "Skyhunter / SH",
+    "damage": 85.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.65,
+    "range": 750.0,
+    "recipe": "B2 + R2 + Y2",
+    "abilities": [
+      {
+        "id": "tower_skyhunter",
+        "Name": "Sky Hunt",
+        "Tooltip": "Deals 150% physical damage to flying enemies and 65% to ground enemies."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_skyhunterascended",
+    "name": "Skyhunter Ascended / SHA",
+    "damage": 180.0,
+    "bonusDamage": 0.0,
+    "attackRate": 0.55,
+    "range": 850.0,
+    "recipe": "Skyhunter + B4 + R4",
+    "abilities": [
+      {
+        "id": "tower_skyhunter2",
+        "Name": "Sky Hunt II",
+        "Tooltip": "Deals 200% physical damage to flying enemies and 60% to ground enemies."
+      }
+    ]
+  },
+  {
     "code": "gemtd_zhenjiazhishi",
     "name": "The Great Stone / TGS",
     "damage": 1369.0,

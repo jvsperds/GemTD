@@ -44,6 +44,7 @@ const KINDS: [RegExp, Kind][] = [
   [/shandian/, 'bolt'],
   [/aura|guanghuan|maoyan|jingzhun|tanlan/, 'aura'],
   [/jianjia|jin|bixi|zheyi/, 'pierce'],
+  [/skyhunter/, 'aim'],
   [/speed/, 'speed'],
   [/fenlie/, 'split'],
   [/yun|shihua/, 'stun'],
