@@ -1482,25 +1482,57 @@ export class Renderer {
     return this.low ? 0 : 1;
   }
 
-  /** Fit the map to the window and recentre. */
-  resize() {
+  /** Resize the backing surface; a changing touch HUD preserves a zoomed camera. */
+  resize(preserve = false, dx = 0, dy = 0) {
+    const cssCell = this.view / this.dpr;
+    const panX = this.panX / this.dpr + dx;
+    const panY = this.panY / this.dpr + dy;
+    const bounds = this.canvas.getBoundingClientRect();
     this.dpr = Math.min(devicePixelRatio || 1, this.low ? 1 : 1.5); // phones report 3: 4x the pixels for little visible gain
-    this.canvas.width = Math.round(innerWidth * this.dpr);
-    this.canvas.height = Math.round(innerHeight * this.dpr);
-    this.setZoom(this.zoom, innerWidth / 2, innerHeight / 2, true);
+    this.canvas.width = Math.round(bounds.width * this.dpr);
+    this.canvas.height = Math.round(bounds.height * this.dpr);
+    const zoomed = preserve && this.zoom > 1 && cssCell > 0;
+    if (zoomed) {
+      this.panX = panX * this.dpr;
+      this.panY = panY * this.dpr;
+      this.view = cssCell * this.dpr;
+    }
+    this.setZoom(
+      zoomed ? (cssCell * this.dpr) / this.fitCell(bounds) : this.zoom,
+      bounds.left + bounds.width / 2,
+      bounds.top + bounds.height / 2,
+      !zoomed,
+    );
+  }
+
+  private fitCell(bounds: DOMRect) {
+    return (
+      (Math.max(
+        1,
+        Math.min(
+          bounds.width,
+          bounds.height - (this.canvas.dataset.contained === '1' ? 0 : HUD_H + PANEL_H),
+        ),
+      ) *
+        this.dpr) /
+      (this.maze.w + 2 * FRAME)
+    );
   }
 
   /** Zoom keeping the CSS-pixel point (sx, sy) fixed. */
   setZoom(zoom: number, sx: number, sy: number, recentre = false) {
     const d = this.dpr;
-    [sx, sy] = [sx * d, sy * d];
-    const base =
-      (Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) * d) / (this.maze.w + 2 * FRAME);
-    const cell = Math.max(4, Math.floor(base * Math.min(4, Math.max(1, zoom))));
-    this.zoom = cell / base;
+    const bounds = this.canvas.getBoundingClientRect();
+    const contained = this.canvas.dataset.contained === '1';
+    [sx, sy] = [(sx - bounds.left) * d, (sy - bounds.top) * d];
+    const base = this.fitCell(bounds);
+    this.zoom = Math.min(contained ? 8 : 4, Math.max(1, zoom));
+    const cell = Math.max(contained ? 1 : 4, Math.floor(base * this.zoom));
     if (recentre) {
       this.panX = Math.floor((this.canvas.width - cell * this.maze.w) / 2);
-      this.panY = Math.round(HUD_H * d + FRAME * cell);
+      this.panY = contained
+        ? Math.floor((this.canvas.height - cell * this.maze.h) / 2)
+        : Math.round(HUD_H * d + FRAME * cell);
     } else {
       this.panX = sx - ((sx - this.panX) / (this.view || cell)) * cell;
       this.panY = sy - ((sy - this.panY) / (this.view || cell)) * cell;
@@ -1532,7 +1564,8 @@ export class Renderer {
     const fit = (pan: number, size: number, n: number) => {
       const a = size - (n + WORLD) * cell,
         b = WORLD * cell;
-      return Math.min(Math.max(pan, Math.min(a, b)), Math.max(a, b));
+      const centre = (size - n * cell) / 2;
+      return Math.min(Math.max(pan, Math.min(a, b, centre)), Math.max(a, b, centre));
     };
     this.panX = fit(this.panX, this.canvas.width, this.maze.w);
     this.panY = fit(this.panY, this.canvas.height, this.maze.h);
@@ -1540,6 +1573,9 @@ export class Renderer {
 
   /** Live creep drawn under a screen point, nearest first. */
   creepAt(x: number, y: number) {
+    const bounds = this.canvas.getBoundingClientRect();
+    x -= bounds.left;
+    y -= bounds.top;
     const wx = (x * this.dpr - this.panX) / this.view,
       wy = (y * this.dpr - this.panY) / this.view;
     let best: Creep | null = null,
@@ -1553,6 +1589,9 @@ export class Renderer {
   }
 
   screenToCell(x: number, y: number): [number, number] {
+    const bounds = this.canvas.getBoundingClientRect();
+    x -= bounds.left;
+    y -= bounds.top;
     const d = this.dpr;
     return [
       Math.floor((x * d - this.panX) / this.view),
