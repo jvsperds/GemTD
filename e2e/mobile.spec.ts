@@ -41,6 +41,38 @@ async function tile(page: Page, c: number, r: number) {
   );
 }
 
+async function zoomFromSettings(page: Page, name: string) {
+  await page.locator('#menubtn').tap();
+  await page.getByRole('tab', { name: 'Settings', exact: true }).tap();
+  await page.getByRole('button', { name, exact: true }).tap();
+  await page.locator('#close').tap();
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+}
+
+test('mobile HUD groups resources and keeps zoom controls in Settings', async ({ page }) => {
+  await expect(page.locator('#boardtools [data-zoom]')).toHaveCount(0);
+  await expect(page.locator('#pane-settings [data-zoom]')).toHaveCount(3);
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const stats = await page
+      .locator('.hud-resources')
+      .evaluate((group) =>
+        ['hp', 'gold', 'clock'].map(
+          (id) => group.querySelector(`#${id}`)!.getBoundingClientRect().top,
+        ),
+      );
+    expect(Math.max(...stats) - Math.min(...stats)).toBeLessThan(3);
+    const panel = (await page.locator('#panel').boundingBox())!;
+    const place = (await page.locator('#place-touch').boundingBox())!;
+    expect(place.x).toBeGreaterThanOrEqual(panel.x);
+    expect(place.x + place.width).toBeLessThanOrEqual(panel.x + panel.width);
+    expect(place.y).toBeGreaterThanOrEqual(panel.y);
+    expect(place.y + place.height).toBeLessThanOrEqual(panel.y + panel.height);
+  }
+});
+
 test('keyboard movement clears a touch preview and announces the new cell', async ({ page }) => {
   const point = await tile(page, 10, 16);
   await page.touchscreen.tap(point.x, point.y);
@@ -62,13 +94,13 @@ test('touch previews a tile and confirms placement once, including after zoom', 
   await page.locator('#place-touch').tap();
   await expect.poll(() => placed(page)).toEqual([[10, 16]]);
   await expect(page.locator('#place-touch')).toBeDisabled();
-  await page.getByRole('button', { name: 'Zoom board in', exact: true }).tap();
+  await zoomFromSettings(page, 'Zoom board in');
   // A tapped tile remains the confirmation target when the camera moves.
   await page.touchscreen.tap(200, 250);
   await expect(page.locator('#place-touch')).toBeEnabled();
   const label = await page.locator('#place-touch').textContent();
   const [c, r] = label!.match(/\d+/g)!.map(Number);
-  await page.getByRole('button', { name: 'Zoom board out', exact: true }).tap();
+  await zoomFromSettings(page, 'Zoom board out');
   await page.locator('#place-touch').tap();
   await expect
     .poll(() => placed(page))
@@ -88,7 +120,7 @@ test('double tap zooms the board while the page and HUD stay fixed', async ({ pa
   await page.touchscreen.tap(p.x + 54, p.y);
   await expect(page.locator('#place-touch')).toBeEnabled();
   const zoomed = await page.locator('#place-touch').textContent();
-  await page.getByRole('button', { name: 'Fit board', exact: true }).tap();
+  await zoomFromSettings(page, 'Fit board');
   await page.touchscreen.tap(p.x + 54, p.y);
   await expect(page.locator('#place-touch')).not.toHaveText(zoomed!);
   expect(await page.evaluate(() => window.visualViewport!.scale)).toBe(1);
@@ -181,7 +213,7 @@ test('native two-finger pinch enlarges board tiles without zooming the page', as
   await page.touchscreen.tap(245, 330);
   await expect(page.locator('#place-touch')).toBeEnabled();
   const zoomed = await page.locator('#place-touch').textContent();
-  await page.getByRole('button', { name: 'Fit board', exact: true }).tap();
+  await zoomFromSettings(page, 'Fit board');
   await page.touchscreen.tap(245, 330);
   await expect(page.locator('#place-touch')).not.toHaveText(zoomed!);
   expect(await placed(page)).toEqual([]);
@@ -270,8 +302,8 @@ for (const viewport of [
 test('a zoomed and panned tile stays under the finger when the HUD changes height', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: 'Zoom board in', exact: true }).tap();
-  await page.getByRole('button', { name: 'Zoom board in', exact: true }).tap();
+  await zoomFromSettings(page, 'Zoom board in');
+  await zoomFromSettings(page, 'Zoom board in');
   const box = (await page.locator('#game').boundingBox())!;
   const point = { x: box.x + box.width * 0.4, y: box.y + box.height * 0.4 };
   await page.mouse.move(point.x, point.y);

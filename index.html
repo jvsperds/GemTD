@@ -844,6 +844,13 @@
         align-items: center;
         gap: 4px 16px;
       }
+      .hud-run,
+      .hud-resources {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+      }
       #hudinfo .chip {
         text-shadow: 0 1px 2px #000;
       }
@@ -1383,11 +1390,8 @@
       </button>
     </nav>
     <div id="panel" class="glass" data-view="hero">
-      <div id="boardtools" class="glass" role="group" aria-label="Board controls">
+      <div id="boardtools" role="group" aria-label="Gem placement">
         <button id="place-touch" disabled>Tap a tile</button>
-        <button data-zoom="0.8" aria-label="Zoom board out">−</button>
-        <button data-zoom="fit" aria-label="Fit board">Fit</button>
-        <button data-zoom="1.25" aria-label="Zoom board in">+</button>
       </div>
       <div id="status"></div>
       <div id="who">
@@ -1739,6 +1743,17 @@
             <legend>Display</legend>
             <label><input id="lowgfx" type="checkbox" /> Low graphics</label
             ><label><input id="showdock" type="checkbox" /> Side bar</label>
+          </fieldset>
+          <fieldset class="settings-group">
+            <legend>Board zoom</legend>
+            <div class="zoom-controls" role="group" aria-label="Board zoom">
+              <button data-zoom="0.8" aria-label="Zoom board out">− Zoom out</button>
+              <button data-zoom="fit" aria-label="Fit board">Fit board</button>
+              <button data-zoom="1.25" aria-label="Zoom board in">+ Zoom in</button>
+            </div>
+            <p class="menu-note">
+              Fit resets zoom and pan. On touchscreens, pinch or double-tap the board to zoom.
+            </p>
           </fieldset>
           <details class="how-to">
             <summary>Keyboard &amp; mouse controls</summary>

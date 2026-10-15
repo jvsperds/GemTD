@@ -355,9 +355,9 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-zoom]')
     else view.setZoom(view.zoom * Number(button.dataset.zoom), x, y);
   });
 function act(a: string) {
-  touchCell = null;
   lastTap = null;
   if (a === 'menu') return menu.toggle();
+  touchCell = null;
   if (a === 'guide') {
     // cycle: off -> each guide (built-in, then library) -> off
     const all = book.guides();
@@ -1340,10 +1340,15 @@ function updateHud() {
     !builder && cfg.difficulty,
   ].filter(Boolean);
   const s =
+    '<div class="hud-run">' +
     tags.map((t) => `<span class="tag">${t}</span>`).join('') +
     (builder
       ? ''
-      : `<span class="chip"><b>Wave</b> ${sim.wave > sim.lastWave ? `${sim.wave} ∞` : `${sim.wave}/${sim.lastWave}`}</span>` +
+      : `<span class="chip"><b>Wave</b> ${sim.wave > sim.lastWave ? `${sim.wave} ∞` : `${sim.wave}/${sim.lastWave}`}</span>`) +
+    '</div>' +
+    (builder
+      ? ''
+      : '<div class="hud-resources">' +
         `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
         (game.pray
           ? `<span class="chip" title="Pray: ${game.pray.chance}% chance for the next gem">🙏 ${game.pray.chance}%</span>`
@@ -1359,7 +1364,7 @@ function updateHud() {
           ? `<span class="chip" title="Evade: ${sim.evade.v}% dodge">💨 ${Math.ceil(sim.evade.t)}s</span>`
           : '') +
         `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
-        `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`);
+        `<span class="chip" id="clock"><b>Time</b> ${Math.floor(game.seconds)}s</span></div>`);
   const live = sel && combat.towers.includes(sel) ? sel : null;
   if (!live) sel = null;
   const creep = selCreep?.alive ? selCreep : null;
