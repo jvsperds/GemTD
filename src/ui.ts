@@ -1,6 +1,7 @@
 // Menu overlay: leaderboards (3 boards + difficulty filter; global on the server), settings, new game.
 import * as db from './persist';
 import * as sfx from './sfx';
+import { initBranding } from './branding';
 import type { Game, LogEntry } from './sim/game';
 import { MAPS, MUTATORS, dailySeed } from './sim/setup';
 import { QUESTS, type Quest } from './quests';
@@ -62,7 +63,7 @@ export function initMenu(
   const over = $<HTMLElement>('gameover');
   const dlg = $<HTMLDialogElement>('newdlg');
   let lastFocus: HTMLElement | null = null;
-  $('build').textContent = __BUILD__ + (import.meta.env.DEV ? ' (dev)' : '');
+  $('build').textContent = initBranding();
   speed.value = String(settings.speed);
   volume.value = String(settings.volume);
   const markDiff = () =>
