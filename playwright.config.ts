@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-const smoke = /offline|loop|scores|server/;
+const smoke = /offline|loop|scores|server|menu|mobile/;
 // Smoke across Chromium / Firefox / Edge; perf budgets run last, alone, so nothing competes for CPU.
 export default defineConfig({
   testDir: 'e2e',
@@ -9,11 +9,12 @@ export default defineConfig({
     { name: 'chromium', testMatch: smoke, use: { browserName: 'chromium' } },
     { name: 'firefox', testMatch: smoke, use: { browserName: 'firefox' } },
     { name: 'edge', testMatch: smoke, use: { browserName: 'chromium', channel: 'msedge' } },
+    { name: 'webkit-mobile', testMatch: /mobile/, use: { browserName: 'webkit' } },
     {
       name: 'perf',
       testMatch: /stress/,
       use: { browserName: 'chromium' },
-      dependencies: ['chromium', 'firefox', 'edge'],
+      dependencies: ['chromium', 'firefox', 'edge', 'webkit-mobile'],
     },
   ],
 });

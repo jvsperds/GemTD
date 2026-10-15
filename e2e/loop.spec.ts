@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 
 test('place 5 gems, keep one, wave starts', async ({ page }) => {
   await page.goto(pathToFileURL(resolve('dist/index.html')).href);
-  await expect(page.locator('#newdlg')).toBeVisible(); // fresh visit: new-game dialog
+  await page.locator('#opennew').click();
+  await expect(page.locator('#newdlg')).toBeVisible();
   await page.locator('#newgame').click();
   await expect(page.locator('#newdlg')).toBeHidden();
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
@@ -24,6 +25,7 @@ test('place 5 gems, keep one, wave starts', async ({ page }) => {
 test('mid-game reload resumes from the saved command log', async ({ page }) => {
   await page.goto(pathToFileURL(resolve('dist/index.html')).href);
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
+  await page.locator('#close').click();
   type G = { run(c: unknown[]): boolean; combat: { towers: unknown[] }; gold: number };
   const before = await page.evaluate(() => {
     const g = (window as unknown as { gemtd: G }).gemtd;

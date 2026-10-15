@@ -6,14 +6,14 @@ import { PEDAL_TIPS } from './sim/pedals';
 import { ENDGAME_TIPS } from './sim/endgame';
 import { skillIcon } from './icons';
 import { BLURB } from './blurbs';
-import { fillIcons, icon } from './hud';
+import { fillIcons, icon, initHelpToast } from './hud';
 import { GEM_COLOR, Renderer, creepIcon, towerIcon } from './render';
 import * as sfx from './sfx';
 import { newlyDone } from './quests';
-import { DOWNGRADE_COST, score, type Cmd, type LogEntry } from './sim/game';
+import { DOWNGRADE_COST, score, type Cmd } from './sim/game';
 import { DIFFICULTY, MAPS, newGame, RULES, type Difficulty } from './sim/setup';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
-import { SKILLS, bringLimit, shellsFor, skillTip, type Loadout } from './sim/skills';
+import { SKILLS, bringLimit, shellsFor, skillTip } from './sim/skills';
 import { AIM, AIM_ELITE, AURA, codeOf, MAGIC_TIPS, MVP_BONUS, type Tower } from './sim/towers';
 import {
   BLINK_CELLS,
@@ -39,10 +39,15 @@ import {
 import { initBook, mazeRows, measure, pinGlow, type Guide } from './book';
 import { initDmgChart, short } from './dmgchart';
 import { initMenu } from './ui';
+import type { Start } from './menu/start';
+import './help.css';
+import './mobile.css';
+import { initBoardLayout } from './board-layout';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')!;
 const hud = document.querySelector<HTMLElement>('#hudinfo')!;
-const hintEl = document.querySelector<HTMLElement>('#hint')!;
+const boardStatus = document.querySelector<HTMLElement>('#boardstatus')!;
+const actionHintEl = document.querySelector<HTMLElement>('#actionhint')!;
 const debug = document.querySelector<HTMLElement>('#debug')!;
 const bench = location.hash === '#bench'; // late-game frame-rate benchmark, see below
 const stress = bench || location.hash === '#stress';
@@ -55,18 +60,6 @@ function busy(msg: string) {
 }
 const settings = await db.get('settings');
 // A fresh start (new game / daily / replay) is handed over the reload in sessionStorage.
-type Start = {
-  seed: number;
-  difficulty: string;
-  daily?: string;
-  mutators?: string[];
-  map?: string;
-  replay?: LogEntry[];
-  builder?: boolean;
-  skills?: Loadout; // a replay's hero skills
-  hero?: string;
-  rules?: number; // a replay's rule set
-};
 let start: Start | null = null;
 try {
   start = JSON.parse(sessionStorage.getItem('gemtd.start') ?? 'null');
@@ -171,8 +164,9 @@ const book = initBook({
     : undefined,
 });
 let mazeVer = 0; // bumped on every builder edit
-if (!save && !start && !stress) menu.newGame(); // fresh visit: pick a trial first
+if (!save && !start && !stress) menu.show(); // fresh visit: lead with the Play hub
 fillIcons();
+const showGuideToast = initHelpToast();
 initDmgChart(() => combat.towers, canvas);
 // Last on/off state of the map toggles, per browser.
 const toggles: Record<string, boolean> = (() => {
@@ -233,16 +227,23 @@ function run(cmd: Cmd) {
 sfx.setVolume(settings.volume);
 sfx.setMusic(settings.music ?? 0.3);
 addEventListener('pointerdown', sfx.unlock);
-// iOS Safari ignores user-scalable=no; its pinch arrives as gesture events.
-addEventListener('gesturestart', (e) => e.preventDefault());
+// Safari also emits gesture events. Root listeners must explicitly be non-passive.
+for (const type of ['gesturestart', 'gesturechange', 'gestureend'])
+  addEventListener(type, (e) => e.preventDefault(), { passive: false });
+// Keep native scrolling/zoom and compatibility clicks out of the board on mobile Safari.
+for (const type of ['touchstart', 'touchmove', 'touchend'] as const)
+  canvas.addEventListener(type, (e) => e.preventDefault(), { passive: false });
 addEventListener('keydown', sfx.unlock);
 
 let lastClick = [-1, -1, 0]; // cell and time of the last board click
+let touchCell: [number, number] | null = null;
+const placeTouch = document.querySelector<HTMLButtonElement>('#place-touch')!;
+document.body.dataset.touch = matchMedia('(any-pointer: coarse)').matches ? '1' : '0';
 let boardCursor = -1;
 const setBoardCursor = (c: number, r: number) => {
   boardCursor = maze.idx(c, r);
   view.cursor = boardCursor;
-  hintEl.textContent = `Board cursor: column ${c + 1}, row ${r + 1}. Press Enter to act.`;
+  boardStatus.textContent = `Board cursor: column ${c + 1}, row ${r + 1}. Press Enter to act.`;
   view.invalidate();
 };
 // Extra towers selected with Ctrl+click or Ctrl+drag, so one aim mode can be set on all of them.
@@ -264,6 +265,7 @@ canvas.addEventListener('pointerup', (e) => {
   view.invalidate();
 });
 const selectCell = (c: number, r: number, dbl: boolean, x?: number, y?: number) => {
+  touchCell = null;
   if (replaying || c < 0 || r < 0 || c >= maze.w || r >= maze.h) return;
   setBoardCursor(c, r);
   multi = new Set();
@@ -328,7 +330,33 @@ canvas.addEventListener('click', (e) => {
   lastClick = dbl ? [-1, -1, 0] : [c, r, now];
   selectCell(c, r, dbl, e.clientX, e.clientY);
 });
+placeTouch.addEventListener('click', () => {
+  if (
+    touchCell &&
+    !replaying &&
+    !builder &&
+    !picking &&
+    !removing &&
+    !game.pedals.length &&
+    game.step === 'place'
+  ) {
+    selectCell(...touchCell, true);
+    lastTap = null;
+  }
+});
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-zoom]'))
+  button.addEventListener('click', () => {
+    lastClick = [-1, -1, 0];
+    lastTap = null;
+    const bounds = canvas.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2;
+    const y = bounds.top + bounds.height / 2;
+    if (button.dataset.zoom === 'fit') view.setZoom(1, x, y, true);
+    else view.setZoom(view.zoom * Number(button.dataset.zoom), x, y);
+  });
 function act(a: string) {
+  touchCell = null;
+  lastTap = null;
   if (a === 'menu') return menu.toggle();
   if (a === 'guide') {
     // cycle: off -> each guide (built-in, then library) -> off
@@ -443,6 +471,8 @@ canvas.addEventListener('pointermove', (e) => {
 // Touch or left mouse: one-finger drag pans, two-finger pinch zooms. A drag swallows the click it ends with.
 const touches = new Map<number, [number, number]>();
 let dragged = false;
+let suppressClickUntil = 0;
+let lastTap: [number, number, number] | null = null;
 let pinch = [0, 1]; // [finger distance, zoom] when the second finger landed
 const spread = () => {
   const [a, b] = [...touches.values()];
@@ -451,29 +481,97 @@ const spread = () => {
 canvas.addEventListener('pointerdown', (e) => {
   if (e.pointerType !== 'touch' && (e.button !== 0 || e.ctrlKey || e.metaKey)) return; // Ctrl+drag box-selects
   canvas.setPointerCapture(e.pointerId);
+  if (e.pointerType === 'touch') {
+    document.body.dataset.touch = '1';
+    suppressClickUntil = performance.now() + 800;
+    touchCell = null;
+  }
   touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 1) dragged = false;
-  if (touches.size === 2) pinch = [spread(), view.zoom];
+  if (touches.size >= 2) {
+    dragged = true; // even a stationary pinch must never become a placement or a double tap
+    lastClick = [-1, -1, 0];
+    lastTap = null;
+    pinch = [spread(), view.zoom];
+  }
 });
 canvas.addEventListener('pointermove', (e) => {
   const prev = touches.get(e.pointerId);
   if (!prev) return;
+  const previous = [...touches.values()];
   touches.set(e.pointerId, [e.clientX, e.clientY]);
   if (touches.size === 1) {
     if (!dragged && Math.hypot(e.clientX - prev[0], e.clientY - prev[1]) < 8) {
       return touches.set(e.pointerId, prev); // under the slop: keep origin so a tap stays a tap
     }
     dragged = true;
+    lastClick = [-1, -1, 0];
+    lastTap = null;
     view.pan(e.clientX - prev[0], e.clientY - prev[1]);
   } else if (touches.size === 2) {
     dragged = true;
     const [c, d] = [...touches.values()];
+    view.pan(
+      (c[0] + d[0] - previous[0][0] - previous[1][0]) / 2,
+      (c[1] + d[1] - previous[0][1] - previous[1][1]) / 2,
+    );
     view.setZoom((pinch[1] * spread()) / pinch[0], (c[0] + d[0]) / 2, (c[1] + d[1]) / 2);
   }
 });
-for (const t of ['pointerup', 'pointercancel'] as const)
-  canvas.addEventListener(t, (e) => touches.delete(e.pointerId));
-canvas.addEventListener('click', (e) => dragged && e.stopImmediatePropagation(), { capture: true });
+const releasePointer = (e: PointerEvent) => {
+  if (!touches.has(e.pointerId)) return;
+  if (e.pointerType === 'touch') {
+    suppressClickUntil = performance.now() + 800;
+    if (e.type === 'pointerup' && !dragged && touches.size === 1) {
+      const now = performance.now();
+      const [c, r] = view.screenToCell(e.clientX, e.clientY);
+      if (
+        lastTap &&
+        now - lastTap[2] < 400 &&
+        Math.hypot(e.clientX - lastTap[0], e.clientY - lastTap[1]) < 24
+      ) {
+        view.setZoom(view.zoom < 1.5 ? 2.5 : 1, e.clientX, e.clientY);
+        lastTap = null;
+      } else {
+        lastTap = [e.clientX, e.clientY, now];
+        if (
+          !replaying &&
+          !builder &&
+          !picking &&
+          !removing &&
+          !game.pedals.length &&
+          game.step === 'place' &&
+          c >= 0 &&
+          r >= 0 &&
+          c < maze.w &&
+          r < maze.h &&
+          !combat.towerAt(c, r)
+        ) {
+          sel = null;
+          selCreep = null;
+          touchCell = [c, r];
+          setBoardCursor(c, r);
+        } else selectCell(c, r, false, e.clientX, e.clientY);
+      }
+    }
+  }
+  if (e.type !== 'pointerup') {
+    dragged = true;
+    lastClick = [-1, -1, 0];
+    lastTap = null;
+  }
+  touches.delete(e.pointerId);
+};
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const)
+  canvas.addEventListener(type, releasePointer);
+canvas.addEventListener(
+  'click',
+  (e) => {
+    if (e.detail !== 0 && (dragged || performance.now() < suppressClickUntil))
+      e.stopImmediatePropagation();
+  },
+  { capture: true },
+);
 canvas.addEventListener('focus', () => {
   if (boardCursor < 0) setBoardCursor((maze.w / 2) | 0, (maze.h / 2) | 0);
 });
@@ -487,6 +585,7 @@ canvas.addEventListener('keydown', (e) => {
   };
   if (move[e.key]) {
     e.preventDefault();
+    touchCell = null;
     const [dc, dr] = move[e.key];
     setBoardCursor(
       Math.max(0, Math.min(maze.w - 1, c + dc)),
@@ -497,12 +596,16 @@ canvas.addEventListener('keydown', (e) => {
     selectCell(c, r, true);
   }
 });
-addEventListener('resize', () => view.resize());
+addEventListener('resize', () => {
+  if (canvas.dataset.contained !== '1') view.resize();
+});
 addEventListener('keydown', (e) => {
   if (e.key === 'F3') {
     e.preventDefault();
     debug.hidden = !debug.hidden;
-  } else if (e.target instanceof HTMLInputElement) return;
+  } else if (menu.open) {
+    return; // Native dialogs own Escape and menu keyboard input.
+  } else if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   else if (/^[1-5]$/.test(e.key)) speed = settings.speed = [1, 2, 4, 10, 20][+e.key - 1];
   else if (keys[e.key]) {
     e.preventDefault();
@@ -976,8 +1079,10 @@ function teach() {
   const step = game.step;
   if (step === 'place')
     return game.placed.length
-      ? `Gem ${game.placed.length + 1} of 5 · Gems block creeps like walls: stretch the path between the numbered checkpoints. Misplaced? U undoes.`
-      : 'Welcome! Double-click an empty tile to place a gem (5 per round). Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; make that walk long.';
+      ? 'Gems block creeps like walls: stretch the path between the numbered checkpoints. Undo takes back your last placement.'
+      : document.body.dataset.touch === '1'
+        ? 'Tap a tile to preview a gem, then tap Place gem to confirm. Place 5 gems each round. Pinch or double-tap to zoom; drag to pan.'
+        : 'Welcome! Double-click an empty tile to place a gem (5 per round). Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; make that walk long.';
   if (step === 'choose')
     return !sel
       ? 'Click the gem you want to keep. The other four become stones and stay in your maze.'
@@ -1191,34 +1296,38 @@ function updateHud() {
     view.invalidate();
   }
   const step = game.step;
-  const hint = builder
-    ? 'Maze builder: click to add or remove stones · 📖 Book → Maze helpers to load or compare'
+  const touchPlacement =
+    document.body.dataset.touch === '1' &&
+    !replaying &&
+    !builder &&
+    !picking &&
+    !removing &&
+    !game.pedals.length &&
+    step === 'place';
+  if (!touchPlacement) touchCell = null;
+  placeTouch.hidden = !touchPlacement;
+  placeTouch.disabled = !touchCell;
+  placeTouch.textContent = touchCell
+    ? `Place gem · ${touchCell[0] + 1}, ${touchCell[1] + 1}`
+    : 'Tap a tile';
+  if (tutorial && game.wavesCleared >= 3) {
+    tutorial = false;
+    settings.tutorial = true;
+    void db.set('settings', settings);
+  }
+  const actionHint = builder
+    ? 'Maze builder: click to edit stones. Open Book → Maze helpers to load a route.'
     : picking
       ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
       : removing
         ? 'Click a stone to shatter it'
         : game.pedals.length
           ? `Lay your ${game.pedals[0]} on the path: creeps set it off by stepping on it`
-          : teach()
-            ? teach()
-            : step === 'place'
-              ? `Place gem ${game.placed.length + 1} of 5`
-              : step === 'choose'
-                ? sel
-                  ? `Selected ${sel.def.name}: keep, merge or combine it`
-                  : 'Click one of this round’s gems to select it'
-                : step === 'won'
-                  ? `You win! Score ${score(game)}`
-                  : step === 'lost'
-                    ? `Game over. Score ${score(game)}`
-                    : speed
-                      ? `Wave in progress ×${speed}`
-                      : 'Paused (Space)';
-  if (tutorial && game.wavesCleared >= 3) {
-    tutorial = false;
-    settings.tutorial = true;
-    void db.set('settings', settings);
-  }
+          : '';
+  const hint = tutorial ? teach() : '';
+  showGuideToast(hint, tutorial && !game.over, menu.open || !!actionHint);
+  if (actionHintEl.textContent !== actionHint) actionHintEl.textContent = actionHint;
+  actionHintEl.hidden = !actionHint;
   const lvlFrom = game.xpFor[game.level - 1] ?? 0,
     lvlTo = game.xpFor[game.level];
   const xpPct = lvlTo ? ((game.xp - lvlFrom) / (lvlTo - lvlFrom)) * 100 : 100;
@@ -1270,6 +1379,7 @@ function updateHud() {
     (creep ? `${Math.ceil(creep.hp)}` + sim.speed(creep) : '');
   const key =
     hint +
+    actionHint +
     speed +
     autoSkip +
     removing +
@@ -1294,7 +1404,6 @@ function updateHud() {
   if (key !== lastHud || (counters !== lastCounters && nowMs - hudAt >= HUD_MS)) {
     [lastHud, lastCounters, hudAt] = [key, counters, nowMs];
     hud.innerHTML = s;
-    hintEl.textContent = hint;
     if (game.gold > prevGold) flashEl('gold', 'pop');
     if (hp < prevHp) flashEl('hp', 'hit');
     [prevGold, prevHp] = [game.gold, hp];
@@ -1412,12 +1521,12 @@ requestAnimationFrame(function frame(now) {
   acc = Math.min(acc + dt * speed, 0.25 * Math.max(1, speed));
   last = now;
   let ticked = false;
-  if (replaying && sim.phase === 'build' && replaying[ri] && now >= nextCmdAt) {
+  if (!menu.open && replaying && sim.phase === 'build' && replaying[ri] && now >= nextCmdAt) {
     run(replaying[ri++][1]);
     nextCmdAt = now + 250 / Math.max(1, speed);
   }
-  if (builder) acc = 0; // nothing runs in the builder
-  if (autoSkip && !replaying && sim.phase === 'build') run(['skip']);
+  if (builder || menu.open) acc = 0; // Menus pause without changing the selected speed.
+  if (!menu.open && autoSkip && !replaying && sim.phase === 'build') run(['skip']);
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
     // Replay: mid-wave commands (level buys) land on the tick they were issued.
@@ -1467,3 +1576,4 @@ requestAnimationFrame(function frame(now) {
 if (import.meta.env.PROD && location.protocol.startsWith('http') && 'serviceWorker' in navigator)
   navigator.serviceWorker.register('sw.js').catch(() => {});
 document.body.dataset.ready = '1';
+initBoardLayout(canvas, view);
