@@ -24,11 +24,37 @@ const PATHS: Record<string, string> = {
 
 export const icon = (name: string) =>
   name in PATHS
-    ? `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name]}</svg>`
+    ? `<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name]}</svg>`
     : '';
 
 /** Fill every `<i data-icon="name">` in the page. */
 export function fillIcons(root: ParentNode = document) {
   for (const i of root.querySelectorAll<HTMLElement>('[data-icon]'))
     i.innerHTML = icon(i.dataset.icon!);
+}
+
+/** Keep floating help below the HUD even when its stats wrap onto another line. */
+export function initHelpToast() {
+  const header = document.getElementById('hud')!;
+  const hint = document.getElementById('hint')!;
+  const position = () =>
+    hint.style.setProperty('--header-bottom', `${header.getBoundingClientRect().bottom}px`);
+  new ResizeObserver(position).observe(header);
+  position();
+  const seen = new Set<string>();
+  let current = '';
+  let until = 0;
+  return (message: string, enabled: boolean, blocked: boolean) => {
+    if (!enabled || !message || blocked) {
+      hint.hidden = true;
+      return;
+    }
+    if (message !== current) {
+      current = message;
+      until = seen.has(message) ? 0 : performance.now() + 8000;
+      seen.add(message);
+      hint.textContent = message;
+    }
+    hint.hidden = performance.now() >= until;
+  };
 }

@@ -2,6 +2,47 @@
 
 ## 0.5.0 — 2026-10-10
 
+- **Creeps:** every creep is redrawn after the Dota 2 courier it is named for (boar, yak, panda,
+  the four chest-hound Jaws, dragons, imps, and so on) instead of eight shared shapes, with props
+  such as balloons, a skateboard, a boat and a flying carpet. Portraits show wings and boss crowns.
+- **Towers:** tower heads are redrawn in the same style, with shaded, rounded forms. Towers and
+  creeps get a dark outline so they read on any tile. Gem tower shafts take the gem's colour (they
+  were black). Models are still baked once per zoom, so the frame cost is unchanged.
+- **Interface:** the HUD, menu, dialogs and buttons follow the same style: ink borders, flat
+  two-tone fills, hard shadows instead of glows, a rounded sans typeface, and outlined skill icons.
+  The logo and app icon are a gem with the tower's ward eye.
+
+- **Magic damage:** poison and chain lightning now keep up with late waves. Poison also takes a
+  share of the creep's max HP each second (1% at the top tier, less below, half on bosses), and a
+  chain lightning jump deals 50% of the tower's attack damage when that beats the flat 150. In bot
+  runs the poison towers' share of wave 41-50 damage went from 4% to 9% with the win rate unchanged.
+- **MVP:** a tower holds at most 10 MVP stacks, as in the original; once capped, the wave's award
+  goes to the next best tower. The stack count is an ability card on the tower instead of a stat
+  line. The crown sits on the tower with the most damage dealt and no longer bobs.
+- **Zoom:** pinching or scrolling no longer stutters. Every step used to redraw all sprites and
+  the map at the new size; a gesture now scales the last drawing and redraws once when it rests.
+  Runs started before these rule changes replay under their old rules.
+
+- **Early waves:** the difficulty's creep HP multiplier now ramps up instead of applying from wave
+  1. Wave 1 has the original HP (a Chipped Ruby one-shots it again) and the full multiplier is
+  reached at wave 15. Before, Easy tripled wave 1's HP and even the bot leaked whole early waves.
+  Bot win rates over 20 seeds: Easy 65% to 80%, Normal 25% to 30%, Hard unchanged at 10%.
+
+- **Difficulty:** creeps are much tougher, so a full clear is no longer a given. Creep HP is now ×3
+  on Easy, ×2.3 on Normal and ×3.4 on Hard (was ×0.7 / ×1 / ×1.5); Easy keeps its perks (copies
+  stack, recipe luck, levels past 9), which is why its creeps can carry more HP than Normal's. A
+  headless bot that plays a guide maze with no hero skills clears wave 50 in about 68% of Easy
+  runs, 33% of Normal and 10% of Hard (`npm run balance`, 40 seeds).
+- **Shells:** a run's shells are multiplied by difficulty: ×1 Easy, ×2 Normal, ×3 Hard. Quest
+  rewards are unchanged.
+- **Fix:** on Easy, buying level 12 no longer gives levels 13–18 for free; each must be bought.
+- **Enrage:** a wave that is still running after 3 minutes makes its creeps immune to stuns and
+  slows, on every difficulty, so a boss that is locked in place but out-heals your towers walks on
+  and the wave ends.
+- **Endless scaling:** Sunder and Soul Harvest now lose 10% per endless wave against creep HP (was
+  2%), halving about every 7 waves, because MVP and kill bonuses kept a maxed board winning past
+  wave 300; a strong board now ends around wave 120–140. Runs and replays started earlier keep
+  the rate and creep HP they were played with.
 - **Performance:** late-game runs hold 60 fps (80 special towers on wave 100+, also at ×20). Wave
   starts no longer stall for ~50 ms rebuilding the creep route, the HUD repaints its counters at most
   ten times a second and only re-matches recipes when the board changes, and attack effects are

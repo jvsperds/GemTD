@@ -82,6 +82,28 @@ function bake(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void)
   return c;
 }
 
+const BONE = '#f4efe4';
+const INK = '#241c1c';
+const dk = (col: string, t: number) => mix(col, '#000000', t);
+const lt = (col: string, t: number) => mix(col, '#ffffff', t);
+
+/** Dark outline: the drawing's silhouette stamped behind itself in a ring of width w, so models
+ *  read on any tile. */
+export function outline(g: CanvasRenderingContext2D, w: number) {
+  const { width, height } = g.canvas;
+  const sil = bake(width, height, (h) => {
+    h.drawImage(g.canvas, 0, 0);
+    h.globalCompositeOperation = 'source-in';
+    h.fillStyle = INK;
+    h.fillRect(0, 0, width, height);
+  });
+  g.save();
+  g.resetTransform();
+  g.globalCompositeOperation = 'destination-over';
+  for (let i = 0; i < 8; i++) g.drawImage(sil, Math.cos(i * 0.785) * w, Math.sin(i * 0.785) * w);
+  g.restore();
+}
+
 // Original special-tower models: every GemTD tower is a ward with a big eye, so each one is a
 // body archetype + body/accent colours + eye colour. Silhouettes loosely follow the Dota renders;
 // nothing is traced from them.
@@ -220,46 +242,99 @@ function towerModel(g: CanvasRenderingContext2D, key: string, mx: number, my: nu
     }
     return true;
   }
+  // Rounded part in flat two-tone: a shadow disc with the lit one set up-left, and a glint.
+  const ball = (x: number, y: number, rr: number, col: string) => {
+    disc(x, y, rr, dk(col, 0.35));
+    disc(x - rr * 0.08, y - rr * 0.1, rr * 0.88, col);
+    disc(x - rr * 0.42, y - rr * 0.48, rr * 0.16, lt(col, 0.4));
+  };
   let ey = -0.1; // eye centre y
   let er = 0.3; // eye radius
   switch (body) {
     case 'orb':
-      disc(0, 0.05, 0.85, shade(c, 0.6));
-      disc(-0.08, -0.02, 0.75, c);
       for (let i = 0; i < 8; i++) {
         const t = (i / 8) * 6.283;
         const p = (k: number, d: number) => [Math.cos(t + k) * d, Math.sin(t + k) * d];
-        poly([...p(0, 0.7), ...p(0.3, 0.98), ...p(0.5, 0.7)], a);
+        poly([...p(0, 0.66), ...p(0.25, 1), ...p(0.25, 0.66)], lt(a, 0.2));
+        poly([...p(0.25, 0.66), ...p(0.25, 1), ...p(0.5, 0.66)], dk(a, 0.25));
       }
+      ball(0, 0.03, 0.8, c);
       er = 0.36;
+      disc(0, ey, er + 0.1, dk(c, 0.5));
       break;
     case 'pillar':
-      poly([-0.55, 0.9, 0.55, 0.9, 0.45, -0.3, -0.45, -0.3], shade(c, 0.7));
-      poly([-0.55, 0.9, 0, 0.9, 0, -0.3, -0.45, -0.3], c);
-      for (const y of [0.1, 0.5]) poly([-0.6, y, 0.6, y, 0.6, y + 0.14, -0.6, y + 0.14], a);
+      poly([-0.7, 0.95, 0.7, 0.95, 0.55, 0.75, -0.55, 0.75], dk(a, 0.3));
+      poly([-0.5, 0.8, 0.5, 0.8, 0.42, -0.2, -0.42, -0.2], dk(c, 0.3));
+      poly([-0.5, 0.8, 0.05, 0.8, 0.05, -0.2, -0.42, -0.2], c);
+      poly([-0.5, 0.8, -0.38, 0.8, -0.32, -0.2, -0.42, -0.2], lt(c, 0.3));
+      for (const y of [0.12, 0.5]) {
+        poly([-0.58, y, 0.58, y, 0.58, y + 0.14, -0.58, y + 0.14], dk(a, 0.3));
+        poly([-0.58, y, 0.05, y, 0.05, y + 0.14, -0.58, y + 0.14], a);
+      }
       ey = -0.45;
+      poly([-0.14, -0.8, 0, -1, 0.14, -0.8], a);
+      ball(0, ey, 0.46, c);
       break;
     case 'house':
-      poly([-0.6, 0.9, 0.6, 0.9, 0.6, 0, -0.6, 0], shade(c, 0.8));
-      poly([-0.8, 0.05, 0, -0.85, 0.8, 0.05], a);
-      poly([-0.8, 0.05, 0, -0.85, 0, 0.05], shade(a, 1.3));
-      poly([-0.15, 0.9, 0.15, 0.9, 0.15, 0.5, -0.15, 0.5], '#1a1410');
+      poly([0.36, -0.8, 0.6, -0.8, 0.6, -0.2, 0.36, -0.4], dk(c, 0.2));
+      poly([-0.6, 0.92, 0.6, 0.92, 0.6, 0, -0.6, 0], dk(c, 0.3));
+      poly([-0.6, 0.92, 0.1, 0.92, 0.1, 0, -0.6, 0], c);
+      poly([-0.6, 0.05, 0.6, 0.05, 0.6, 0.2, -0.6, 0.2], dk(c, 0.5));
+      poly([-0.16, 0.92, 0.16, 0.92, 0.16, 0.56, -0.16, 0.56], '#1a1410');
+      disc(0, 0.56, 0.16, '#1a1410');
+      poly([-0.5, 0.74, -0.32, 0.74, -0.32, 0.5, -0.5, 0.5], '#f7d23a');
+      poly([-0.88, 0.1, 0, -0.92, 0.88, 0.1], dk(a, 0.3));
+      poly([-0.88, 0.1, 0, -0.92, 0, 0.1], a);
+      poly([-0.88, 0.1, 0, -0.92, 0.05, -0.82, -0.74, 0.1], lt(a, 0.3));
       ey = -0.2;
       er = 0.26;
       break;
     case 'mech':
-      poly([-0.35, -0.95, -0.2, -0.95, -0.2, -0.4, -0.35, -0.4], a);
-      poly([0.2, -0.95, 0.35, -0.95, 0.35, -0.4, 0.2, -0.4], a);
-      poly([-0.8, -0.5, 0.8, -0.5, 0.65, 0.75, -0.65, 0.75], shade(c, 0.7));
-      poly([-0.8, -0.5, 0.8, -0.5, 0.75, -0.2, -0.75, -0.2], c);
+      for (const x of [-0.28, 0.28]) {
+        poly([x - 0.07, -0.9, x + 0.07, -0.9, x + 0.07, -0.4, x - 0.07, -0.4], dk(a, 0.2));
+        disc(x, -0.9, 0.11, lt(a, 0.3));
+      }
+      poly([-0.8, -0.5, 0.8, -0.5, 0.65, 0.75, -0.65, 0.75], dk(c, 0.3));
+      poly([-0.8, -0.5, 0.1, -0.5, 0.08, 0.75, -0.65, 0.75], c);
+      poly([-0.84, -0.56, 0.84, -0.56, 0.78, -0.3, -0.78, -0.3], c);
+      poly([-0.84, -0.56, 0.1, -0.56, 0.1, -0.3, -0.78, -0.3], lt(c, 0.25));
+      for (const [x, y] of [
+        [-0.64, -0.43],
+        [0.64, -0.43],
+        [-0.5, 0.6],
+        [0.5, 0.6],
+      ])
+        disc(x, y, 0.06, dk(c, 0.55));
       poly([-0.15, 0.75, 0.15, 0.75, 0.1, 0.98, -0.1, 0.98], a);
       ey = 0.15;
+      disc(0, ey, er + 0.1, dk(c, 0.55));
       break;
     case 'bird':
-      poly([-0.2, -0.1, -0.98, -0.5, -0.8, 0.2, -0.95, 0.55, -0.2, 0.4], a);
-      poly([0.2, -0.1, 0.98, -0.5, 0.8, 0.2, 0.95, 0.55, 0.2, 0.4], shade(a, 0.75));
-      disc(0, 0.2, 0.5, c);
-      poly([-0.3, -0.35, -0.2, -0.85, 0, -0.45, 0.2, -0.85, 0.3, -0.35], shade(c, 0.8));
+      for (const s of [-1, 1])
+        [
+          [-1, -0.55],
+          [-0.98, -0.05],
+          [-0.85, 0.45],
+        ].forEach(([tx, ty], i) =>
+          poly(
+            [
+              s * -0.15,
+              -0.15 + i * 0.15,
+              s * tx,
+              ty,
+              s * (tx + 0.12),
+              ty + 0.22,
+              s * -0.15,
+              0.2 + i * 0.12,
+            ],
+            dk(lt(a, 0.2), i * 0.18 + (s > 0 ? 0.2 : 0)),
+          ),
+        );
+      poly([-0.2, 0.6, 0, 0.98, 0.2, 0.6], dk(a, 0.3));
+      poly([-0.3, -0.3, -0.22, -0.82, 0, -0.42, 0.22, -0.82, 0.3, -0.3], dk(c, 0.2));
+      poly([-0.1, -0.4, 0, -0.98, 0.1, -0.4], a);
+      ball(0, 0.2, 0.52, c);
+      poly([-0.12, 0.42, 0.12, 0.42, 0, 0.68], '#f2b530');
       ey = 0.05;
       break;
     case 'plant':
@@ -267,30 +342,41 @@ function towerModel(g: CanvasRenderingContext2D, key: string, mx: number, my: nu
         const t = -2.8 + i * 0.7;
         const x = Math.cos(t);
         const y = Math.sin(t);
-        const q = [x * 0.95 - y * 0.25, y * 0.95 + x * 0.25, x * 0.95, y * 0.95];
-        poly(
-          [x * 0.2, 0.2 + y * 0.2, ...q, x * 0.95 + y * 0.25, y * 0.95 - x * 0.25],
-          i % 2 ? a : shade(a, 1.3),
-        );
+        const base = [x * 0.2, 0.2 + y * 0.2],
+          tip = [x * 0.98, y * 0.98];
+        poly([...base, x * 0.7 - y * 0.3, y * 0.7 + x * 0.3, ...tip], dk(a, 0.25));
+        poly([...base, x * 0.7 + y * 0.3, y * 0.7 - x * 0.3, ...tip], lt(a, 0.15));
       }
-      poly([-0.12, 0.95, 0.12, 0.95, 0.08, 0.1, -0.08, 0.1], shade(c, 0.6));
-      disc(0, 0, 0.45, c);
+      poly([-0.12, 0.95, 0.12, 0.95, 0.08, 0.1, -0.08, 0.1], dk(c, 0.4));
+      ball(0, 0, 0.48, c);
       break;
     case 'crystal':
-      poly([-0.7, 0.9, -0.85, -0.2, -0.45, 0.2], shade(c, 0.7));
-      poly([0.7, 0.9, 0.9, -0.3, 0.45, 0.2], shade(c, 0.8));
+      poly([-0.7, 0.9, -0.85, -0.2, -0.45, 0.2], c);
+      poly([-0.7, 0.9, -0.85, -0.2, -0.78, 0.9], lt(c, 0.3));
+      poly([0.7, 0.9, 0.9, -0.3, 0.45, 0.2], dk(c, 0.35));
       poly([-0.5, 0.9, -0.35, -0.95, 0, -0.6, 0.35, -0.95, 0.5, 0.9], c);
-      poly([0, -0.6, 0.35, -0.95, 0.5, 0.9, 0, 0.9], shade(c, 0.75));
-      poly([-0.25, 0.9, 0, 0.5, 0.25, 0.9], a);
+      poly([-0.5, 0.9, -0.35, -0.95, -0.2, -0.8, -0.3, 0.9], lt(c, 0.35));
+      poly([0, -0.6, 0.35, -0.95, 0.5, 0.9, 0, 0.9], dk(c, 0.3));
+      poly([0.25, -0.85, 0.35, -0.95, 0.5, 0.9, 0.36, 0.9], dk(c, 0.5));
+      poly([-0.3, 0.9, 0, 0.45, 0.3, 0.9], a);
+      poly([0, 0.9, 0, 0.45, 0.3, 0.9], dk(a, 0.3));
       ey = 0.05;
       break;
     case 'beast':
-      poly([-0.75, -0.2, -0.65, -0.95, -0.25, -0.55], a);
-      poly([0.75, -0.2, 0.65, -0.95, 0.25, -0.55], a);
-      disc(0, 0.1, 0.8, shade(c, 0.75));
-      disc(-0.05, 0.05, 0.7, c);
-      disc(-0.4, 0.45, 0.18, a);
-      disc(0.4, 0.45, 0.18, a);
+      for (const s of [-1, 1]) {
+        poly([s * 0.78, -0.2, s * 0.66, -0.98, s * 0.22, -0.55], s < 0 ? a : dk(a, 0.25));
+        poly([s * 0.66, -0.3, s * 0.62, -0.75, s * 0.38, -0.5], lt(a, 0.45));
+        poly([s * 0.75, 0, s * 1, 0.3, s * 0.68, 0.42], s < 0 ? c : dk(c, 0.3));
+      }
+      ball(0, 0.1, 0.8, c);
+      g.fillStyle = lt(c, 0.55);
+      g.beginPath();
+      g.ellipse(mx, my + 0.58 * r, 0.36 * r, 0.24 * r, 0, 0, 7);
+      g.fill();
+      poly([-0.1, 0.42, 0.1, 0.42, 0, 0.54], INK);
+      for (const x of [-0.2, 0.12]) poly([x, 0.66, x + 0.04, 0.84, x + 0.08, 0.66], BONE);
+      disc(-0.52, 0.42, 0.13, a);
+      disc(0.52, 0.42, 0.13, a);
       er = 0.34;
   }
   drawEye(g, mx, my + ey * r, er * r, eye === 'b');
@@ -492,7 +578,7 @@ function gemBody(g: CanvasRenderingContext2D, gem: string, c: string, m: number,
 
 const HEAD_Y = 0.48; // head centre below the tower sprite's top, in cells
 /** Head radius in cells: gems grow with quality, special towers are biggest. */
-const headSize = (quality: number) => (quality ? 0.24 + 0.035 * quality : 0.46);
+const headSize = (quality: number) => (quality ? 0.24 + 0.035 * quality : 0.44);
 
 /** Standing tower into an s × s(1 + TOWER_H + TALL) canvas: gem-cut stone, plinth, shaft, head. */
 function drawTower(
@@ -503,7 +589,7 @@ function drawTower(
   quality: number,
 ) {
   const T = s * TALL;
-  const [, c, a] = quality ? ['', shade(GEM_COLOR[gem], 0.5), GEM_COLOR[gem]] : MODELS[key];
+  const [, c, a] = quality ? ['', dk(GEM_COLOR[gem], 0.5), GEM_COLOR[gem]] : MODELS[key];
   // Gem-cut stone: dark gem-tinted block, top face cut into four lit facets around a
   // table.
   const st = mix(a, '#6b6b6b', 0.55);
@@ -524,46 +610,52 @@ function drawTower(
   const cx = s / 2,
     foot = T + s * 0.62,
     head = s * headSize(quality);
-  // Soft contact shadow, then a two-step drum plinth in the accent colour.
+  // Soft contact shadow.
   g.fillStyle = 'rgba(0,0,0,0.35)';
   g.beginPath();
   g.ellipse(cx + s * 0.04, foot + s * 0.04, s * 0.4, s * 0.16, 0, 0, 7);
   g.fill();
-  const drum = (w: number, y0: number, h: number, col: string) => {
-    const gr = g.createLinearGradient(cx - w, 0, cx + w, 0);
-    gr.addColorStop(0, shade(col, 1.25));
-    gr.addColorStop(0.45, col);
-    gr.addColorStop(1, shade(col, 0.45));
-    g.fillStyle = gr;
-    g.beginPath();
-    g.ellipse(cx, y0, w, w * 0.38, 0, 0, Math.PI);
-    g.lineTo(cx - w, y0 - h);
-    g.ellipse(cx, y0 - h, w, w * 0.38, 0, Math.PI, 0, true);
-    g.fill();
-    g.fillStyle = shade(col, 1.1);
-    g.beginPath();
-    g.ellipse(cx, y0 - h, w, w * 0.38, 0, 0, 7);
-    g.fill();
-  };
-  drum(s * 0.36, foot, s * 0.1, shade(a, 0.8));
-  drum(s * 0.26, foot - s * 0.1, s * 0.08, a);
-  // Shaft up to the head: a rounded column, lit from the left.
-  const top = s * HEAD_Y;
-  drum(s * 0.12, foot - s * 0.18, foot - s * 0.18 - top, shade(c, 0.85));
-  // Head on its own canvas so the rounding wash only touches the head's pixels.
-  const hd = bake(head * 2 + 2, head * 2 + 2, (h) => {
-    const o = head + 1;
-    if (quality) gemCut(h, gem, GEM_COLOR[gem], o, head);
-    else towerModel(h, key, o, o, head);
-    const gl = h.createRadialGradient(o - head * 0.4, o - head * 0.5, 0, o, o, head * 1.1);
-    gl.addColorStop(0, 'rgba(255,255,255,0.18)');
-    gl.addColorStop(0.6, 'rgba(255,255,255,0)');
-    gl.addColorStop(1, 'rgba(0,0,0,0.3)');
-    h.globalCompositeOperation = 'source-atop';
-    h.fillStyle = gl;
-    h.fillRect(0, 0, o * 2, o * 2);
+  // Plinth, shaft and head on their own layer, so the outline rings the model and not the stone.
+  const fig = bake(s, g.canvas.height, (g) => {
+    const drum = (w: number, y0: number, h: number, col: string) => {
+      const gr = g.createLinearGradient(cx - w, 0, cx + w, 0);
+      gr.addColorStop(0, shade(col, 1.25));
+      gr.addColorStop(0.45, col);
+      gr.addColorStop(1, shade(col, 0.45));
+      g.fillStyle = gr;
+      g.beginPath();
+      g.ellipse(cx, y0, w, w * 0.38, 0, 0, Math.PI);
+      g.lineTo(cx - w, y0 - h);
+      g.ellipse(cx, y0 - h, w, w * 0.38, 0, Math.PI, 0, true);
+      g.fill();
+      g.fillStyle = shade(col, 1.1);
+      g.beginPath();
+      g.ellipse(cx, y0 - h, w, w * 0.38, 0, 0, 7);
+      g.fill();
+    };
+    // A two-step drum plinth in the accent colour, then the shaft up to the head: a rounded
+    // column, lit from the left.
+    drum(s * 0.36, foot, s * 0.1, dk(a, 0.2));
+    drum(s * 0.26, foot - s * 0.1, s * 0.08, a);
+    const top = s * HEAD_Y;
+    drum(s * 0.12, foot - s * 0.18, foot - s * 0.18 - top, dk(c, 0.15));
+    // Head on its own canvas so the rounding wash only touches the head's pixels.
+    const hd = bake(head * 2 + 2, head * 2 + 2, (h) => {
+      const o = head + 1;
+      if (quality) gemCut(h, gem, GEM_COLOR[gem], o, head);
+      else towerModel(h, key, o, o, head);
+      const gl = h.createRadialGradient(o - head * 0.4, o - head * 0.5, 0, o, o, head * 1.1);
+      gl.addColorStop(0, 'rgba(255,255,255,0.18)');
+      gl.addColorStop(0.6, 'rgba(255,255,255,0)');
+      gl.addColorStop(1, 'rgba(0,0,0,0.3)');
+      h.globalCompositeOperation = 'source-atop';
+      h.fillStyle = gl;
+      h.fillRect(0, 0, o * 2, o * 2);
+    });
+    g.drawImage(hd, cx - head - 1, top - head - 1);
+    outline(g, Math.max(1, s * 0.028));
   });
-  g.drawImage(hd, cx - head - 1, top - head - 1);
+  g.drawImage(fig, 0, 0);
 }
 
 const icons = new Map<string, string>();
@@ -582,81 +674,83 @@ export function towerIcon(d: { name: string; type: string; quality: number }) {
   return url;
 }
 
-// Original creep models: a body archetype + body/accent colours, drawn facing right and lit
-// from the top-left like the towers. Every wave creep needs an entry (tests check it).
-type Shape = 'hog' | 'blob' | 'bird' | 'fish' | 'wyrm' | 'bot' | 'spook' | 'crab';
-const CREEPS: Record<string, [Shape, string, string]> = {
-  'frenzied-pig': ['hog', '#e89a9a', '#7a3a3a'],
-  'swift-frog': ['blob', '#5ab04a', '#e8e060'],
-  'sturdy-yak': ['hog', '#6a4a3a', '#e8e0d0'],
+// Original creep models, each drawn after the Dota 2 courier it is named for: a body archetype,
+// body/accent colours and a list of features (ears, tail, props). Drawn facing right and lit from
+// the top-left like the towers. Every wave creep needs an entry (tests check it).
+type Shape =
+  'beast' | 'blob' | 'bird' | 'fish' | 'wyrm' | 'bot' | 'spook' | 'crab' | 'chest' | 'imp';
+const CREEPS: Record<string, [Shape, string, string, string?]> = {
+  'frenzied-pig': ['beast', '#8f6048', '#5a3424', 'e-pig pig tusks spikes curl'],
+  'swift-frog': ['blob', '#5ab04a', '#e8e060', 'frog'],
+  'sturdy-yak': ['beast', '#6a4a3a', '#e8e0d0', 'horns shag muzzle pack thin'],
   'smart-robot': ['bot', '#9aa0a8', '#3fb0ff'],
-  'baby-panda': ['hog', '#f0f0f0', '#2a2a2a'],
-  'balloon-badger': ['hog', '#6a6a70', '#e84a4a'],
-  'tardy-stump': ['blob', '#7a5a3a', '#5a9a3a'],
-  'satisfied-lizard': ['hog', '#7ab04a', '#e0c040'],
-  'invisible-spider': ['crab', '#3a3040', '#c04ae0'],
-  dusky: ['bird', '#4a3a6a', '#e0a040'],
-  'invincible-dog': ['hog', '#c89050', '#3a2a20'],
-  sheep: ['blob', '#f0ece0', '#3a3030'],
-  'funny-alpaca': ['hog', '#e8d8b0', '#c06a8a'],
-  'pig-princess': ['hog', '#f0a8c0', '#f2c52e'],
-  bulldog: ['hog', '#b08050', '#e8e0d0'],
-  'cat-dog': ['hog', '#e0a040', '#6a6a70'],
-  'bamboo-addict': ['hog', '#e8e8e8', '#2fbf5a'],
-  'young-demon': ['spook', '#c03a3a', '#f2c52e'],
-  'belted-chicken': ['bird', '#f0ece0', '#e03a3a'],
-  bajie: ['hog', '#f0a8b0', '#3a6bff'],
-  'exquisite-rabbit': ['hog', '#f4f0f4', '#ff7ad9'],
-  'donkey-trio': ['hog', '#8a8a90', '#3a3030'],
-  shakbag: ['blob', '#b09060', '#e05a20'],
-  ripper: ['bot', '#8a5a3a', '#d8dde6'],
-  crab: ['crab', '#e0603a', '#f0d0a0'],
-  lockjaw: ['fish', '#4a8a9a', '#f0e0d0'],
-  flopjaw: ['fish', '#5a9a4a', '#f0e0d0'],
-  trapjaw: ['fish', '#8a5a8a', '#f0e0d0'],
-  'mech-donkey': ['bot', '#b08a40', '#555555'],
-  machjaw: ['fish', '#7a7a88', '#e0a020'],
-  demolisher: ['bot', '#6a5a4a', '#e05a20'],
-  corsair: ['spook', '#3a4a6a', '#e0b040'],
-  'skateboard-flamingo': ['bird', '#ff8ab0', '#3a3030'],
-  'lgd-goldfish': ['fish', '#f0a020', '#fff0c0'],
-  jellyfish: ['spook', '#b08ae0', '#ff7ad9'],
+  'baby-panda': ['beast', '#f0f0f0', '#2a2a2a', 'e-round socks patch muzzle stub big'],
+  'balloon-badger': ['beast', '#6a6a70', '#e84a4a', 'e-round mask muzzle bushy balloon'],
+  'tardy-stump': ['blob', '#7a5a3a', '#5a9a3a', 'stump'],
+  'satisfied-lizard': ['beast', '#7ab04a', '#e0c040', 'thick spikes longface'],
+  'invisible-spider': ['crab', '#3a3040', '#c04ae0', 'spider'],
+  dusky: ['blob', '#5a4a80', '#e0a040', 'e-point batwing'],
+  'invincible-dog': ['beast', '#c89050', '#8a8f9a', 'e-point muzzle armor collar thin'],
+  sheep: ['beast', '#f0ece0', '#3a3030', 'wool darkface e-droop stub'],
+  'funny-alpaca': ['beast', '#e8d8b0', '#c06a8a', 'neck wool e-point longface collar stub'],
+  'pig-princess': ['beast', '#f0a8c0', '#f2c52e', 'e-pig pig curl tiara'],
+  bulldog: ['beast', '#b08050', '#c03a3a', 'e-droop muzzle fangs collar stub big'],
+  'cat-dog': ['beast', '#e0a040', '#8a5a20', 'e-point muzzle stripes thin'],
+  'bamboo-addict': ['beast', '#e8e8e8', '#2a2a2a', 'e-round socks patch muzzle stub big bamboo'],
+  'young-demon': ['imp', '#c03a3a', '#f2c52e', 'horns tailspade'],
+  'belted-chicken': ['bird', '#f0ece0', '#e03a3a', 'comb belt'],
+  bajie: ['beast', '#f0a8b0', '#3a6bff', 'e-pig pig curl armor big'],
+  'exquisite-rabbit': ['beast', '#f4f0f4', '#ff7ad9', 'e-long muzzle puff collar'],
+  'donkey-trio': ['beast', '#8a8a90', '#a05a30', 'e-long longface thin pack'],
+  shakbag: ['blob', '#8a6a44', '#e05a20', 'stump arms'],
+  ripper: ['beast', '#6a4a3a', '#d8dde6', 'e-point darkface ribs fangs spikes thin'],
+  crab: ['crab', '#e0603a', '#f0a070'],
+  lockjaw: ['chest', '#8a5a34', '#e8b83a'],
+  flopjaw: ['chest', '#4a8a6a', '#e8b83a', 'tongue'],
+  trapjaw: ['chest', '#5a5560', '#c03a3a', 'jaws'],
+  'mech-donkey': ['beast', '#b08a40', '#555560', 'e-long longface bolts armor thin'],
+  machjaw: ['chest', '#7a7a88', '#e0a020', 'bolts'],
+  demolisher: ['bot', '#6a5a4a', '#e05a20', 'prop'],
+  corsair: ['spook', '#3a4a6a', '#e0b040', 'hat'],
+  'skateboard-flamingo': ['bird', '#ff8ab0', '#3a6bff', 'tall board'],
+  'lgd-goldfish': ['fish', '#f0a020', '#fff0c0', 'fan'],
+  jellyfish: ['spook', '#b08ae0', '#ff7ad9', 'jelly'],
   'ig-dragon': ['wyrm', '#e03a3a', '#f2c52e'],
-  timbersaw: ['bot', '#8a6a3a', '#d8dde6'],
-  'vg-fox': ['hog', '#e07030', '#f0ece0'],
-  'parrot-boatman': ['bird', '#2fbf5a', '#e03a3a'],
-  'carpet-rider': ['spook', '#8a3ab0', '#f2c52e'],
-  bookwyrm: ['wyrm', '#8a5a3a', '#e0d0a0'],
-  'otter-dragon': ['wyrm', '#8a6a4a', '#4fa0e0'],
-  'rechargeable-shark': ['fish', '#6a8aa8', '#3fb0ff'],
-  'ribboned-zombie': ['spook', '#7a9a6a', '#e84a8a'],
-  'baby-dp': ['spook', '#3a3a50', '#4fe0d8'],
-  'baby-bloody': ['spook', '#8a2020', '#e8e0d0'],
-  'bounty-apprentice': ['hog', '#c09040', '#f2c52e'],
-  'black-and-white-fox': ['hog', '#f0f0f0', '#2a2a2a'],
-  jumo: ['blob', '#6a4ab0', '#f2c52e'],
-  baekho: ['hog', '#f0f0f0', '#3a6bff'],
-  lilnova: ['spook', '#f2c52e', '#ff7ad9'],
-  'mermaid-rider': ['fish', '#3ab0a0', '#ff7ad9'],
-  newt: ['hog', '#e08040', '#3a3030'],
+  timbersaw: ['bot', '#8a6a3a', '#d8dde6', 'saw prop'],
+  'vg-fox': ['beast', '#e07030', '#f0ece0', 'e-point muzzle bushy'],
+  'parrot-boatman': ['bird', '#2fbf5a', '#e03a3a', 'crest boat'],
+  'carpet-rider': ['imp', '#8a3ab0', '#f2c52e', 'horns carpet'],
+  bookwyrm: ['wyrm', '#8a5a3a', '#e0d0a0', 'book'],
+  'otter-dragon': ['wyrm', '#8a6a4a', '#4fa0e0', 'muzzle'],
+  'rechargeable-shark': ['fish', '#6a8aa8', '#ffe040', 'shark legs bolt'],
+  'ribboned-zombie': ['imp', '#7a9a6a', '#e84a8a', 'talisman robe'],
+  'baby-dp': ['spook', '#3a3a50', '#4fe0d8', 'hair'],
+  'baby-bloody': ['imp', '#8a2020', '#e8e0d0', 'blades'],
+  'bounty-apprentice': ['imp', '#c09040', '#5a3a6a', 'hood'],
+  'black-and-white-fox': ['beast', '#f0f0f0', '#2a2a2a', 'e-point socks muzzle bushy'],
+  jumo: ['blob', '#6a4ab0', '#f2c52e', 'horns spots'],
+  baekho: ['beast', '#f0f0f0', '#3a6bff', 'e-round muzzle stripes thin big'],
+  lilnova: ['bird', '#f2c52e', '#ff6a3a', 'crest flame'],
+  'mermaid-rider': ['fish', '#3ab0a0', '#ff7ad9', 'fan hair'],
+  newt: ['beast', '#e08040', '#3a3030', 'thick spots longface'],
   'thrilling-ghost': ['spook', '#d8e0f0', '#4fe0d8'],
   'jade-dragon': ['wyrm', '#2fbf5a', '#e0b040'],
   azuremir: ['wyrm', '#3a6bff', '#e8f4ff'],
-  kupu: ['blob', '#e0a0c0', '#3a3030'],
-  'furry-fish': ['fish', '#e0c080', '#3a6bff'],
-  shroomy: ['blob', '#e03a3a', '#f0ece0'],
-  chirpy: ['bird', '#f2c52e', '#e05a20'],
+  kupu: ['blob', '#e0a0c0', '#8a5ad0', 'antenna'],
+  'furry-fish': ['fish', '#e0c080', '#3a6bff', 'fur legs'],
+  shroomy: ['blob', '#e03a3a', '#f0ece0', 'cap'],
+  chirpy: ['bird', '#f2c52e', '#e05a20', 'crest'],
   boooofus: ['spook', '#9a6a4a', '#e8e0d0'],
-  'swift-donkey': ['hog', '#9a9098', '#e8e0d0'],
-  crummy: ['blob', '#c08a4a', '#6a3a20'],
-  wabbit: ['hog', '#e8e0d8', '#ff7ad9'],
-  'g1-courier': ['bot', '#3a4a6a', '#f0a030'],
-  drodo: ['bird', '#8a8a70', '#e0a040'],
-  'baby-roshan': ['hog', '#6a5a4a', '#e05a20'],
+  'swift-donkey': ['beast', '#9a9098', '#3a6bff', 'e-long longface thin collar'],
+  crummy: ['blob', '#c08a4a', '#6a3a20', 'spots'],
+  wabbit: ['beast', '#e8e0d8', '#ff7ad9', 'e-long muzzle puff'],
+  'g1-courier': ['bot', '#3a4a6a', '#f0a030', 'prop'],
+  drodo: ['bird', '#8a8a70', '#e0a040', 'bigbeak'],
+  'baby-roshan': ['beast', '#6a5a4a', '#e05a20', 'horns spikes fangs muzzle thick big batwing'],
 };
 export const hasCreepModel = (key: string) => key in CREEPS;
 
-/** Draw a creep centred at (m, m), body radius r, facing right. */
+/** Draw a creep centred at (m, m) on a 2m-square canvas, body radius r, facing right. */
 function drawCreep(
   g: CanvasRenderingContext2D,
   key: string,
@@ -665,18 +759,19 @@ function drawCreep(
   flying: boolean,
   boss: boolean,
 ) {
-  const [shape, c, a] = CREEPS[key] ?? ['blob', '#e08040', '#3a3030'];
+  const [shape, c, a, feats = ''] = CREEPS[key] ?? ['blob', '#e08040', '#3a3030'];
+  const has = (f: string) => ` ${feats} `.includes(` ${f} `);
   const P = (x: number, y: number) => [m + x * r, m + y * r] as const;
-  // Body part in the towers' flat two-tone: a shadow ellipse with the lit one set up-left.
-  const part = (x: number, y: number, rx: number, ry: number, col: string) => {
-    g.fillStyle = shade(col, 0.7);
-    g.beginPath();
-    g.ellipse(...P(x, y), rx * r, ry * r, 0, 0, 7);
-    g.fill();
+  const oval = (x: number, y: number, rx: number, ry: number, col: string, rot = 0) => {
     g.fillStyle = col;
     g.beginPath();
-    g.ellipse(...P(x - rx * 0.08, y - ry * 0.1), rx * r * 0.88, ry * r * 0.86, 0, 0, 7);
+    g.ellipse(...P(x, y), rx * r, ry * r, rot, 0, 7);
     g.fill();
+  };
+  // Body part in the towers' flat two-tone: a shadow ellipse with the lit one set up-left.
+  const part = (x: number, y: number, rx: number, ry: number, col: string, rot = 0) => {
+    oval(x, y, rx, ry, dk(col, 0.3), rot);
+    oval(x - rx * 0.08, y - ry * 0.1, rx * 0.88, ry * 0.86, col, rot);
   };
   const poly = (pts: number[], col: string) => {
     g.fillStyle = col;
@@ -684,141 +779,585 @@ function drawCreep(
     for (let i = 0; i < pts.length; i += 2) g.lineTo(...P(pts[i], pts[i + 1]));
     g.fill();
   };
-  // Same build as the tower eye (dark rim, iris, pupil, glint), in creature colours.
-  const eye = (x: number, y: number, k = 1) => {
-    const er = r * 0.12 * k;
-    const disc = (dx: number, dy: number, rr: number, fill: string) => {
-      g.fillStyle = fill;
-      g.beginPath();
-      g.arc(...(P(x, y).map((v, i) => v + (i ? dy : dx)) as [number, number]), rr, 0, 7);
-      g.fill();
-    };
-    disc(0, 0, er * 1.2, '#1a1410');
-    disc(0, 0, er, '#f4efe4');
-    disc(er * 0.2, 0, er * 0.6, shade(a, 0.9));
-    disc(er * 0.25, 0, er * 0.3, '#0a0808');
-    disc(-er * 0.2, -er * 0.35, er * 0.2, '#fff');
-  };
-  // Inlaid faceted gem in the accent colour, like the gems set into the tower stones.
-  const gem = (x: number, y: number, k = 0.16) => gemFacets(g, a, ...P(x, y), r * k);
-  const legs = (xs: number[], y: number, len: number, col: string) => {
+  const line = (pts: number[], col: string, w: number) => {
     g.strokeStyle = col;
-    g.lineWidth = Math.max(1, r * 0.14);
-    g.lineCap = 'round';
+    g.lineWidth = Math.max(1, r * w);
+    g.lineCap = g.lineJoin = 'round';
     g.beginPath();
-    for (const x of xs) {
-      g.moveTo(...P(x, y));
-      g.lineTo(...P(x, y + len));
-    }
+    for (let i = 0; i < pts.length; i += 2) g.lineTo(...P(pts[i], pts[i + 1]));
     g.stroke();
   };
-  // Flyers without their own wings get a pair of accent wings behind the body.
-  if (flying && !['bird', 'wyrm', 'spook'].includes(shape)) {
-    part(-0.35, -0.55, 0.45, 0.22, mix(a, '#ffffff', 0.4));
-    part(0.05, -0.65, 0.4, 0.2, mix(a, '#ffffff', 0.2));
+  // Big courier eyes: white, a dark pupil looking ahead, one catchlight.
+  const eye = (x: number, y: number, k = 1) => {
+    oval(x, y, 0.16 * k, 0.17 * k, BONE);
+    oval(x + 0.04 * k, y + 0.01 * k, 0.11 * k, 0.13 * k, INK);
+    oval(x, y - 0.06 * k, 0.045 * k, 0.045 * k, '#ffffff');
+  };
+  const legs = (xs: number[], y: number, col: string, w = 0.15) => {
+    for (const x of xs) line([x, y, x, 0.74], col, w);
+  };
+  let hd: [number, number] = [0, -0.7]; // top of the head, for hats and crowns
+
+  // Lift, behind the body: a balloon, or wings for flyers that have nothing else to fly with.
+  if (has('balloon')) {
+    line([-0.15, -0.2, -0.5, -0.6], BONE, 0.04);
+    part(-0.55, -0.85, 0.3, 0.33, a);
+    poly([-0.55, -0.52, -0.62, -0.44, -0.46, -0.44], dk(a, 0.3));
+  } else if (has('batwing')) {
+    poly([-0.1, -0.2, -0.45, -1.05, -0.6, -0.6, -0.95, -0.7, -0.75, -0.3, -1.0, -0.1, -0.4, 0], a);
+    line([-0.1, -0.2, -0.45, -1.05], dk(a, 0.35), 0.07);
+  } else if (
+    flying &&
+    !['bird', 'wyrm', 'spook'].includes(shape) &&
+    !has('prop') &&
+    !has('carpet')
+  ) {
+    part(-0.4, -0.5, 0.46, 0.2, lt(a, 0.45), 0.5);
+    part(-0.2, -0.62, 0.36, 0.16, lt(a, 0.7), 0.8);
   }
+
   switch (shape) {
-    case 'hog':
-      legs([-0.45, -0.2, 0.2, 0.45], 0.3, 0.45, shade(c, 0.5));
-      part(-0.1, 0.15, 0.7, 0.45, c);
-      part(0.4, -0.5, 0.1, 0.18, a);
-      part(0.55, -0.2, 0.38, 0.35, c);
-      part(0.88, -0.08, 0.16, 0.12, mix(c, a, 0.5));
-      eye(0.62, -0.28);
-      gem(-0.15, 0.05);
+    case 'beast': {
+      const up = has('neck');
+      const hr = has('big') ? 0.42 : 0.36;
+      const hx = 0.5,
+        hy = up ? -0.6 : -0.2;
+      const face = has('darkface') ? a : c;
+      const limb = has('socks') ? a : dk(c, 0.35);
+      const ear = has('socks') ? a : face;
+      // Top of the back at x, for stripes and spikes.
+      const top = (x: number) => 0.12 - 0.44 * Math.sqrt(Math.max(0, 1 - ((x + 0.1) / 0.68) ** 2));
+      if (has('curl')) line([-0.72, 0, -0.98, -0.08, -0.95, -0.3, -0.8, -0.2], dk(c, 0.2), 0.09);
+      if (has('thin')) {
+        line([-0.7, 0, -1, -0.2, -1.05, -0.5], dk(c, 0.3), 0.08);
+        oval(-1.05, -0.56, 0.1, 0.13, dk(c, 0.5));
+      }
+      if (has('bushy')) {
+        part(-0.88, -0.12, 0.36, 0.2, c, 0.6);
+        oval(-1.08, -0.3, 0.14, 0.12, has('socks') ? a : BONE, 0.6);
+      }
+      if (has('thick')) poly([-0.5, -0.2, -1.2, 0.55, -0.45, 0.48], c);
+      if (has('puff')) oval(-0.8, 0, 0.17, 0.17, BONE);
+      if (has('stub')) oval(-0.78, -0.02, 0.12, 0.1, ear);
+      legs([-0.36, 0.3], 0.3, dk(limb, 0.35));
+      if (up) line([0.3, 0.05, 0.48, -0.45], c, 0.36);
+      part(-0.1, 0.12, 0.68, 0.44, c);
+      if (has('wool')) {
+        for (let i = 0; i < 9; i++)
+          part(-0.1 + 0.55 * Math.cos(i * 0.7), 0.1 + 0.32 * Math.sin(i * 0.7), 0.2, 0.19, c);
+        oval(-0.12, 0.08, 0.5, 0.3, c);
+      } else oval(-0.08, 0.36, 0.42, 0.14, lt(c, 0.25));
+      if (has('stripes'))
+        for (const x of [-0.5, -0.25, 0])
+          line([x, top(x) + 0.04, x + 0.06, top(x) + 0.34], a, 0.07);
+      if (has('spots'))
+        for (const [x, y] of [-0.45, 0, -0.15, -0.12, -0.2, 0.25, 0.15, 0.1].reduce<number[][]>(
+          (o, v, i, s) => (i % 2 ? o : [...o, [v, s[i + 1]]]),
+          [],
+        ))
+          oval(x, y, 0.09, 0.08, a);
+      if (has('shag'))
+        poly(
+          [
+            -0.72, 0.2, -0.6, 0.62, -0.45, 0.4, -0.3, 0.66, -0.12, 0.42, 0.05, 0.66, 0.2, 0.4, 0.35,
+            0.6, 0.45, 0.2,
+          ],
+          dk(c, 0.2),
+        );
+      if (has('ribs')) for (const x of [-0.42, -0.22, -0.02]) line([x, 0, x - 0.05, 0.36], a, 0.06);
+      if (has('armor')) part(-0.12, -0.08, 0.5, 0.25, a);
+      if (has('pack')) {
+        line([-0.15, -0.3, -0.15, 0.45], dk(a, 0.45), 0.07);
+        part(-0.15, 0.08, 0.24, 0.22, a);
+      }
+      if (has('bolts')) for (const x of [-0.45, -0.12, 0.2]) oval(x, 0.3, 0.06, 0.06, a);
+      if (has('spikes'))
+        for (const x of [-0.55, -0.3, -0.05])
+          poly([x - 0.12, top(x) + 0.06, x - 0.04, top(x) - 0.26, x + 0.12, top(x) + 0.06], a);
+      legs([-0.52, 0.14], 0.35, limb, 0.16);
+      if (has('collar')) line(up ? [0.3, -0.38, 0.62, -0.32] : [0.2, -0.3, 0.32, 0.28], a, 0.1);
+      // Ears and horns behind the head.
+      const eh = up ? 0.42 : 0.64;
+      if (has('e-point')) {
+        poly([hx, hy - 0.2, hx + 0.16, hy - eh, hx + 0.28, hy - 0.15], dk(ear, 0.35));
+        poly([hx - 0.32, hy - 0.12, hx - 0.2, hy - eh, hx + 0.02, hy - 0.24], ear);
+      }
+      if (has('e-long')) {
+        part(hx + 0.1, hy - 0.52, 0.1, 0.32, dk(ear, 0.3), 0.25);
+        part(hx - 0.2, hy - 0.54, 0.11, 0.34, ear, -0.2);
+        oval(hx - 0.2, hy - 0.54, 0.045, 0.22, mix(ear, '#ff8fb0', 0.5), -0.2);
+      }
+      if (has('e-round')) {
+        oval(hx + hr * 0.45, hy - hr * 0.9, 0.14, 0.14, dk(ear, 0.3));
+        part(hx - hr * 0.65, hy - hr * 0.85, 0.16, 0.16, ear);
+      }
+      if (has('e-pig'))
+        poly([hx - 0.26, hy - 0.16, hx - 0.1, hy - 0.6, hx + 0.1, hy - 0.26], dk(face, 0.25));
+      if (has('horns'))
+        poly(
+          [
+            hx - 0.1,
+            hy - 0.25,
+            hx - 0.42,
+            hy - 0.5,
+            hx - 0.3,
+            hy - 0.85,
+            hx - 0.26,
+            hy - 0.55,
+            hx + 0.05,
+            hy - 0.32,
+          ],
+          a,
+        );
+      part(hx, hy, hr, hr * 0.92, face);
+      if (has('mask')) oval(hx + 0.12, hy - 0.16, hr * 0.85, 0.08, BONE, 0.45);
+      if (has('patch')) oval(hx + 0.08, hy - 0.05, 0.15, 0.19, a, 0.4);
+      const sx = hx + hr * 0.75;
+      if (has('pig')) {
+        part(sx + 0.08, hy + 0.08, 0.16, 0.14, mix(face, '#ff9aa8', 0.55));
+        oval(sx + 0.08, hy + 0.06, 0.03, 0.045, dk(face, 0.6));
+        oval(sx + 0.17, hy + 0.06, 0.03, 0.045, dk(face, 0.6));
+      }
+      if (has('muzzle')) {
+        oval(sx - 0.02, hy + 0.12, 0.22, 0.16, lt(face, 0.65));
+        oval(sx + 0.16, hy + 0.04, 0.075, 0.06, INK);
+      }
+      if (has('longface')) {
+        part(sx + 0.02, hy + 0.14, 0.27, 0.19, lt(face, 0.4), 0.3);
+        oval(sx + 0.2, hy + 0.14, 0.035, 0.05, INK);
+      }
+      if (has('tusks'))
+        poly([sx - 0.02, hy + 0.22, sx + 0.04, hy - 0.1, sx + 0.12, hy + 0.22], BONE);
+      if (has('fangs'))
+        poly(
+          [
+            sx - 0.1,
+            hy + 0.2,
+            sx - 0.04,
+            hy + 0.42,
+            sx + 0.02,
+            hy + 0.2,
+            sx + 0.08,
+            hy + 0.4,
+            sx + 0.14,
+            hy + 0.2,
+          ],
+          BONE,
+        );
+      eye(hx + 0.06, hy - 0.08);
+      if (has('e-droop')) part(hx - 0.26, hy + 0.04, 0.12, 0.24, dk(ear, 0.3), 0.3);
+      hd = [hx - 0.02, hy - hr * 0.8];
       break;
+    }
     case 'blob':
-      part(0, 0.15, 0.8, 0.65, c);
-      part(-0.3, -0.25, 0.14, 0.1, a);
-      part(0.05, -0.4, 0.1, 0.08, a);
-      eye(0.2, -0.05);
-      eye(0.52, -0.02);
-      gem(0.35, 0.35, 0.14);
+      if (has('stump')) {
+        for (const x of [-0.6, 0, 0.6]) line([x * 0.8, 0.5, x * 1.3, 0.76], dk(c, 0.3), 0.16);
+        if (has('arms'))
+          for (const s of [-1, 1]) {
+            line([s * 0.5, 0, s * 0.95, -0.3, s * 1.02, -0.6], dk(c, 0.15), 0.13);
+            oval(s * 1.02, -0.72, 0.16, 0.12, a);
+          }
+        poly([-0.55, -0.4, -0.64, 0.6, 0.64, 0.6, 0.55, -0.4], c);
+        poly([0.2, -0.4, 0.25, 0.6, 0.64, 0.6, 0.55, -0.4], dk(c, 0.2));
+        for (const x of [-0.35, -0.1]) line([x, -0.1, x - 0.03, 0.45], dk(c, 0.35), 0.05);
+        part(0, -0.4, 0.55, 0.2, lt(c, 0.4));
+        oval(0, -0.4, 0.3, 0.1, lt(c, 0.2));
+        line([0.1, -0.45, 0.2, -0.82], '#4a7a2a', 0.06);
+        oval(0.38, -0.88, 0.2, 0.1, a, -0.4);
+        oval(0.02, -0.9, 0.18, 0.09, lt(a, 0.2), 0.4);
+        eye(0.1, 0.05, 1.1);
+        eye(0.42, 0.07, 1.1);
+        hd = [0, -0.55];
+      } else if (has('cap')) {
+        for (const x of [-0.25, 0.25]) oval(x, 0.72, 0.2, 0.09, dk('#f0e6d2', 0.35));
+        part(0, 0.3, 0.42, 0.42, '#f0e6d2');
+        g.fillStyle = c;
+        g.beginPath();
+        g.ellipse(...P(0, -0.05), r * 0.9, r * 0.75, 0, Math.PI, 0);
+        g.fill();
+        oval(0, -0.05, 0.9, 0.14, dk(c, 0.35));
+        for (const [x, y, k] of [
+          [-0.45, -0.38, 0.14],
+          [0.05, -0.55, 0.17],
+          [0.52, -0.3, 0.12],
+        ])
+          oval(x, y, k, k * 0.8, a);
+        eye(0.05, 0.26);
+        eye(0.34, 0.27);
+        hd = [0, -0.72];
+      } else {
+        const frog = has('frog');
+        if (has('e-point')) {
+          poly([-0.5, -0.25, -0.55, -0.9, -0.1, -0.45], c);
+          poly([0.2, -0.45, 0.5, -0.92, 0.6, -0.3], dk(c, 0.2));
+        }
+        if (has('antenna'))
+          for (const x of [-0.1, 0.3]) {
+            line([x, -0.4, x + 0.1, -0.9], dk(c, 0.4), 0.05);
+            oval(x + 0.1, -0.95, 0.09, 0.09, a);
+          }
+        if (has('horns'))
+          for (const x of [-0.35, 0.35]) poly([x - 0.14, -0.38, x, -0.9, x + 0.14, -0.38], a);
+        for (const x of [-0.3, 0.35]) oval(x, 0.7, 0.24, 0.1, dk(c, 0.4));
+        if (frog) part(-0.55, 0.42, 0.32, 0.22, dk(c, 0.12), -0.4);
+        part(0, frog ? 0.2 : 0.1, 0.72, frog ? 0.48 : 0.6, c);
+        oval(0.12, 0.34, 0.42, 0.24, lt(c, 0.3));
+        if (has('spots'))
+          for (const [x, y] of [
+            [-0.4, -0.15],
+            [-0.15, 0.3],
+            [-0.5, 0.25],
+            [0.3, 0.42],
+          ])
+            oval(x, y, 0.09, 0.08, a);
+        if (frog) {
+          part(-0.02, -0.3, 0.22, 0.22, c);
+          part(0.44, -0.28, 0.22, 0.22, c);
+          eye(0, -0.32, 1.1);
+          eye(0.46, -0.3, 1.1);
+          line([0.05, 0.2, 0.4, 0.28, 0.68, 0.16], dk(c, 0.5), 0.05);
+          part(-0.2, 0.2, 0.2, 0.17, a);
+        } else {
+          eye(0.12, -0.08, 1.2);
+          eye(0.5, -0.06, 1.2);
+          line([0.22, 0.2, 0.36, 0.25, 0.5, 0.2], dk(c, 0.5), 0.05);
+        }
+        hd = [0.05, -0.48];
+      }
       break;
-    case 'bird':
-      poly([-0.5, 0, -0.95, -0.2, -0.85, 0.25], shade(a, 0.8));
-      legs([-0.1, 0.15], 0.45, 0.35, a);
-      part(-0.1, 0.1, 0.55, 0.45, c);
-      part(-0.15, 0.1, 0.35, 0.22, shade(c, 0.8));
-      part(0.4, -0.38, 0.3, 0.28, c);
-      poly([0.62, -0.45, 0.95, -0.32, 0.62, -0.25], a);
-      eye(0.48, -0.45);
-      gem(0.1, 0.25, 0.13);
+    case 'bird': {
+      const tall = has('tall');
+      const hx = tall ? 0.42 : 0.4,
+        hy = tall ? -0.78 : -0.38;
+      const leg = tall ? dk(c, 0.25) : '#e8a83a';
+      if (has('flame'))
+        poly([-0.4, 0.1, -1.1, -0.5, -0.8, -0.05, -1.15, 0.1, -0.75, 0.2, -1, 0.5, -0.4, 0.3], a);
+      else poly([-0.5, -0.05, -1, -0.3, -0.92, 0, -1, 0.28, -0.5, 0.25], dk(c, 0.25));
+      if (flying && !has('boat')) part(-0.3, -0.38, 0.42, 0.2, dk(c, 0.12), 0.6);
+      for (const x of [-0.08, 0.14])
+        line([x, 0.4, x, 0.75, x + 0.14, 0.75], leg, tall ? 0.06 : 0.09);
+      if (tall) {
+        part(-0.1, 0.12, 0.48, 0.34, c);
+        line([0.2, 0, 0.52, -0.25, 0.3, -0.52, 0.4, -0.72], c, 0.15);
+      } else part(-0.1, 0.1, 0.56, 0.46, c);
+      part(-0.2, 0.1, 0.36, 0.22, dk(c, 0.15), 0.2);
+      if (has('belt')) {
+        line([-0.5, 0.3, -0.05, 0.45, 0.38, 0.3], '#5a3a24', 0.1);
+        oval(0.02, 0.44, 0.08, 0.08, '#f2c52e');
+      }
+      if (has('comb')) {
+        for (const x of [-0.14, 0.02, 0.16]) oval(hx + x, hy - 0.28 - (x ? 0 : 0.06), 0.1, 0.11, a);
+        oval(hx + 0.26, hy + 0.2, 0.07, 0.1, a);
+      }
+      if (has('crest'))
+        poly(
+          [
+            hx - 0.1,
+            hy - 0.2,
+            hx - 0.45,
+            hy - 0.55,
+            hx - 0.15,
+            hy - 0.42,
+            hx - 0.2,
+            hy - 0.72,
+            hx + 0.08,
+            hy - 0.26,
+          ],
+          a,
+        );
+      part(hx, hy, tall ? 0.24 : 0.3, tall ? 0.22 : 0.28, c);
+      const b = has('bigbeak') ? 1.6 : 1;
+      poly(
+        [hx + 0.2, hy - 0.1 * b, hx + 0.2 + 0.35 * b, hy + 0.04 * b, hx + 0.2, hy + 0.14 * b],
+        tall ? INK : '#f2b530',
+      );
+      eye(hx + 0.04, hy - 0.06, 0.9);
+      hd = [hx - 0.02, hy - 0.26];
       break;
-    case 'fish':
-      poly([-0.6, 0, -1.05, -0.45, -1.05, 0.45], a);
-      poly([-0.2, -0.35, 0.15, -0.75, 0.3, -0.35], shade(c, 0.75));
+    }
+    case 'fish': {
+      const shark = has('shark');
+      if (has('fan'))
+        poly([-0.55, 0, -1.15, -0.6, -0.92, -0.12, -1.15, 0, -0.92, 0.12, -1.15, 0.6], lt(a, 0.2));
+      else poly([-0.6, 0, -1.1, -0.5, -0.95, 0, -1.1, 0.5], shark ? dk(c, 0.2) : a);
+      if (shark) poly([-0.3, -0.3, -0.1, -0.95, 0.3, -0.3], dk(c, 0.2));
+      else poly([-0.3, -0.35, 0.05, -0.78, 0.3, -0.35], mix(c, a, 0.5));
+      if (has('hair')) poly([0.35, -0.4, 0.1, -0.85, -0.2, -0.6, -0.55, -0.7, -0.5, -0.2], a);
+      if (has('legs'))
+        for (const x of [-0.25, 0.2]) line([x, 0.35, x, 0.74, x + 0.13, 0.74], dk(c, 0.4), 0.13);
       part(0, 0, 0.8, 0.48, c);
-      g.strokeStyle = shade(c, 0.45);
-      g.lineWidth = Math.max(1, r * 0.06);
-      g.beginPath();
-      g.moveTo(...P(0.8, 0.1));
-      g.lineTo(...P(0.45, 0.18));
-      g.stroke();
+      oval(0.05, 0.22, 0.6, 0.2, shark ? '#eef2f4' : lt(c, 0.35));
+      if (has('fur'))
+        poly(
+          [
+            -0.6, -0.25, -0.5, -0.6, -0.35, -0.38, -0.2, -0.68, -0.05, -0.42, 0.1, -0.66, 0.25,
+            -0.4,
+          ],
+          dk(c, 0.15),
+        );
+      poly([0.05, 0.12, -0.3, 0.5, 0.2, 0.32], shark ? dk(c, 0.25) : a);
+      if (shark) {
+        poly([0.78, 0.05, 0.3, 0.12, 0.72, 0.3], '#5a1a20');
+        poly(
+          [0.35, 0.12, 0.42, 0.24, 0.49, 0.11, 0.56, 0.22, 0.63, 0.09, 0.7, 0.18, 0.76, 0.06],
+          BONE,
+        );
+      } else line([0.78, 0.1, 0.52, 0.18], dk(c, 0.5), 0.05);
+      if (has('bolt'))
+        poly(
+          [-0.25, -0.28, 0, -0.28, -0.12, -0.05, 0.05, -0.05, -0.3, 0.32, -0.18, 0.05, -0.36, 0.05],
+          a,
+        );
       eye(0.45, -0.12);
-      gem(-0.1, 0.05);
+      hd = [0.3, -0.5];
       break;
+    }
     case 'wyrm':
-      poly([-0.2, -0.2, -0.75, -0.95, 0.05, -0.35], mix(a, c, 0.3));
-      part(-0.75, 0.35, 0.22, 0.2, c);
-      part(-0.4, 0.2, 0.32, 0.28, c);
-      part(0.05, 0.05, 0.42, 0.36, c);
-      poly([0.45, -0.45, 0.35, -0.9, 0.6, -0.5], a);
-      part(0.55, -0.2, 0.36, 0.3, c);
-      eye(0.68, -0.28);
-      gem(0.05, 0.05, 0.14);
+      line([-0.4, 0.3, -0.8, 0.5, -1.05, 0.3, -1, 0.02], c, 0.2);
+      poly([-1.12, 0.08, -1, -0.25, -0.86, 0.06], a);
+      if (has('book')) {
+        poly([-0.6, -0.3, -0.2, -0.62, 0.02, -0.3, -0.38, 0], dk(c, 0.45));
+        poly([-0.55, -0.32, -0.2, -0.56, -0.03, -0.32, -0.38, -0.08], a);
+      } else {
+        poly([-0.05, -0.15, -0.35, -1.05, -0.55, -0.6, -0.9, -0.72, -0.65, -0.15], mix(a, c, 0.35));
+        line([-0.05, -0.15, -0.35, -1.05], dk(c, 0.3), 0.07);
+      }
+      legs([-0.3, 0.15], 0.4, dk(c, 0.35));
+      line([0.3, 0.1, 0.5, -0.2], c, 0.32);
+      part(-0.1, 0.2, 0.58, 0.4, c);
+      oval(0, 0.38, 0.42, 0.14, mix(c, '#fff0c0', 0.55));
+      for (const x of [-0.4, -0.15, 0.1]) poly([x - 0.1, -0.12, x, -0.36, x + 0.1, -0.12], a);
+      poly([0.4, -0.45, 0.22, -0.92, 0.58, -0.52], a);
+      part(0.55, -0.25, 0.36, 0.3, c);
+      part(0.86, -0.14, 0.2, 0.16, has('muzzle') ? mix(c, '#fff0c0', 0.6) : c);
+      oval(0.98, -0.18, 0.03, 0.04, INK);
+      eye(0.6, -0.32);
+      hd = [0.5, -0.5];
       break;
     case 'bot':
-      g.fillStyle = '#222';
-      for (const x of [-0.4, 0.4]) {
-        g.beginPath();
-        g.arc(...P(x, 0.62), r * 0.2, 0, 7);
-        g.fill();
-      }
+      if (flying) line([-0.5, 0.72, 0.5, 0.72], dk(c, 0.5), 0.1);
+      else
+        for (const x of [-0.4, 0.4]) {
+          oval(x, 0.6, 0.2, 0.2, INK);
+          oval(x, 0.6, 0.08, 0.08, '#8a8a92');
+        }
+      line([0.3, 0.2, 0.75, 0.35], dk(c, 0.4), 0.12);
       part(0, 0.2, 0.68, 0.45, c);
-      part(0.15, -0.4, 0.42, 0.3, shade(c, 1.1));
-      poly([0.2, -0.5, 0.55, -0.5, 0.55, -0.32, 0.2, -0.32], a);
-      legs([0], -0.95, 0.25, shade(c, 0.6));
-      gem(0, -0.95, 0.12);
-      gem(-0.1, 0.25);
+      line([-0.55, 0.3, 0.5, 0.3], dk(c, 0.4), 0.05);
+      gemFacets(g, a, ...P(-0.15, 0.08), r * 0.14);
+      if (has('saw')) {
+        g.fillStyle = a;
+        g.beginPath();
+        for (let i = 0; i < 16; i++) {
+          const k = i % 2 ? 0.26 : 0.38;
+          g.lineTo(...P(0.82 + Math.cos(i * 0.393) * k, 0.3 + Math.sin(i * 0.393) * k));
+        }
+        g.fill();
+        oval(0.82, 0.3, 0.1, 0.1, dk(a, 0.5));
+      }
+      part(0.15, -0.4, 0.42, 0.3, lt(c, 0.15));
+      poly([0.18, -0.54, 0.56, -0.5, 0.56, -0.3, 0.18, -0.28], INK);
+      oval(0.4, -0.4, 0.11, 0.08, a);
+      oval(0.37, -0.43, 0.04, 0.03, '#ffffff');
+      if (!has('prop')) {
+        line([0, -0.65, 0, -0.95], dk(c, 0.4), 0.06);
+        oval(0, -0.98, 0.09, 0.09, a);
+      }
+      hd = [0.12, -0.68];
       break;
     case 'spook':
+      if (has('jelly')) {
+        for (const x of [-0.45, -0.15, 0.15, 0.45])
+          line([x, 0.1, x - 0.1, 0.4, x + 0.08, 0.65, x - 0.05, 0.95], a, 0.09);
+        g.fillStyle = c;
+        g.beginPath();
+        g.ellipse(...P(0, 0.1), r * 0.8, r * 0.85, 0, Math.PI, 0);
+        g.fill();
+        oval(0, 0.1, 0.8, 0.15, dk(c, 0.3));
+        oval(-0.25, -0.4, 0.3, 0.2, lt(c, 0.4), -0.4);
+        eye(0.1, -0.15, 1.1);
+        eye(0.45, -0.13, 1.1);
+        hd = [0, -0.72];
+        break;
+      }
+      if (has('hair'))
+        poly([0.2, -0.75, -0.6, -0.7, -1.05, -0.1, -0.7, -0.2, -0.9, 0.3, -0.45, 0], a);
+      for (const s of [-1, 1]) part(s * 0.7, 0.05, 0.2, 0.13, c, s * 0.5);
       g.fillStyle = c;
       g.beginPath();
       g.arc(...P(0, -0.1), r * 0.7, Math.PI, 0);
-      for (let i = 0; i <= 6; i++) g.lineTo(...P(0.7 - (i * 1.4) / 6, 0.55 + (i % 2) * 0.25));
+      for (let i = 0; i <= 6; i++) g.lineTo(...P(0.7 - (i * 1.4) / 6, 0.6 + (i % 2) * 0.25));
       g.fill();
-      part(-0.15, -0.3, 0.3, 0.22, mix(c, '#ffffff', 0.25));
-      part(0, 0.3, 0.55, 0.12, shade(a, 0.9));
-      eye(0.15, -0.15, 1.2);
-      eye(0.45, -0.12, 1.2);
-      gem(0, 0.3, 0.14);
+      poly([0.7, 0.3, 0.7, 0.6, 0.47, 0.85, 0.23, 0.6, 0.3, 0.3], dk(c, 0.2));
+      oval(-0.2, -0.38, 0.3, 0.22, lt(c, 0.3), -0.4);
+      line([-0.6, 0.22, 0, 0.32, 0.62, 0.22], a, 0.12);
+      poly([-0.55, 0.2, -0.95, 0.35, -0.8, 0.5, -0.5, 0.32], a);
+      eye(0.12, -0.15, 1.3);
+      eye(0.48, -0.12, 1.3);
+      oval(0.32, 0.1, 0.07, 0.05, INK);
+      hd = [0.02, -0.76];
       break;
-    case 'crab':
-      g.strokeStyle = shade(c, 0.6);
+    case 'crab': {
+      const spider = has('spider');
+      g.strokeStyle = dk(c, 0.35);
       g.lineWidth = Math.max(1, r * 0.1);
+      g.lineCap = g.lineJoin = 'round';
       g.beginPath();
       for (const s of [-1, 1])
-        for (const k of [0, 1, 2]) {
-          g.moveTo(...P(s * 0.3, 0.15 + k * 0.1));
-          g.lineTo(...P(s * (0.8 + k * 0.1), 0.35 + k * 0.2));
-          g.lineTo(...P(s * (0.9 + k * 0.1), 0.7));
+        for (let k = 0; k < (spider ? 4 : 3); k++) {
+          g.moveTo(...P(s * 0.3, 0.1 + k * 0.08));
+          g.lineTo(...P(s * (0.75 + k * 0.1), (spider ? -0.25 : 0.3) + k * 0.22));
+          g.lineTo(...P(s * (0.9 + k * 0.1), 0.72));
         }
       g.stroke();
-      part(0, 0.15, 0.7, 0.42, c);
-      part(-0.75, -0.25, 0.22, 0.2, a);
-      part(0.75, -0.25, 0.22, 0.2, a);
-      legs([-0.18, 0.18], -0.55, 0.35, shade(c, 0.7));
-      eye(-0.18, -0.55);
-      eye(0.18, -0.55);
-      gem(0, 0.1);
+      if (spider) {
+        part(0, 0.1, 0.55, 0.52, c);
+        poly([-0.12, -0.2, 0.12, -0.2, 0, 0, 0.12, 0.2, -0.12, 0.2, 0, 0], a);
+        poly([-0.2, 0.42, -0.12, 0.66, -0.04, 0.44], BONE);
+        poly([0.2, 0.42, 0.12, 0.66, 0.04, 0.44], BONE);
+        for (const s of [-1, 1]) {
+          eye(s * 0.2, 0.28, 1.1);
+          oval(s * 0.38, 0.05, 0.06, 0.06, a);
+        }
+        hd = [0, -0.4];
+      } else {
+        for (const s of [-1, 1]) {
+          line([s * 0.45, 0, s * 0.8, -0.25], dk(c, 0.2), 0.12);
+          part(s * 0.82, -0.35, 0.26, 0.22, c);
+          poly([s * 0.82, -0.35, s * 1.1, -0.62, s * 0.7, -0.62], INK);
+          line([s * 0.18, -0.2, s * 0.18, -0.55], dk(c, 0.2), 0.08);
+        }
+        part(0, 0.15, 0.7, 0.42, c);
+        oval(0, 0.3, 0.45, 0.16, a);
+        eye(-0.18, -0.58);
+        eye(0.18, -0.58);
+        hd = [0, -0.72];
+      }
+      break;
+    }
+    case 'chest': {
+      const tooth = has('jaws') ? '#d8dde6' : BONE;
+      line([-0.6, 0.2, -0.92, 0, -0.88, -0.22], dk(c, 0.2), 0.1);
+      legs([-0.32, 0.38], 0.45, dk(c, 0.55));
+      poly([-0.62, 0, 0.62, 0, 0.58, 0.55, -0.58, 0.55], c);
+      poly([-0.6, 0.36, 0.6, 0.36, 0.58, 0.55, -0.58, 0.55], dk(c, 0.25));
+      poly([-0.62, 0, -0.6, -0.14, 0.68, -0.42, 0.62, 0], '#3a1218');
+      if (has('tongue')) line([0.25, -0.08, 0.78, -0.02, 0.9, 0.36], '#e86a8a', 0.2);
+      for (const x of [0.02, 0.22, 0.42]) poly([x, 0, x + 0.08, -0.2, x + 0.16, 0], tooth);
+      for (const x of [-0.3, 0.3]) line([x, 0.03, x, 0.52], a, 0.08);
+      line([-0.6, 0.02, 0.6, 0.02], a, 0.07);
+      poly([-0.62, -0.14, -0.52, -0.6, 0.5, -0.9, 0.7, -0.42], lt(c, 0.12));
+      poly([-0.52, -0.6, 0.5, -0.9, 0.56, -0.76, -0.55, -0.46], lt(c, 0.3));
+      for (const t of [0.25, 0.7])
+        line([-0.6 + 1.3 * t, -0.16 - 0.27 * t, -0.52 + 1.04 * t, -0.58 - 0.3 * t], a, 0.08);
+      line([-0.62, -0.14, 0.7, -0.42], a, 0.07);
+      for (const t of [0.58, 0.76, 0.93]) {
+        const x = -0.62 + 1.32 * t,
+          y = -0.14 - 0.28 * t;
+        poly([x - 0.08, y + 0.02, x, y + 0.22, x + 0.08, y - 0.02], tooth);
+      }
+      eye(0.3, -0.58, 1.1);
+      part(0, 0.26, 0.13, 0.15, a);
+      oval(0, 0.26, 0.04, 0.07, INK);
+      if (has('bolts')) {
+        for (const x of [-0.48, 0.48]) oval(x, 0.42, 0.05, 0.05, a);
+        line([-0.3, -0.6, -0.4, -0.95], dk(c, 0.4), 0.05);
+        oval(-0.4, -0.98, 0.08, 0.08, a);
+      }
+      legs([-0.48, 0.22], 0.5, dk(c, 0.35), 0.16);
+      hd = [0, -0.8];
+      break;
+    }
+    case 'imp':
+      if (has('tailspade')) {
+        line([-0.3, 0.4, -0.8, 0.5, -0.95, 0.15], dk(c, 0.2), 0.08);
+        poly([-0.95, -0.12, -1.12, 0.2, -0.8, 0.2], a);
+      }
+      if (has('hood')) oval(0.02, -0.28, 0.6, 0.54, dk(a, 0.3));
+      for (const x of [-0.15, 0.15]) line([x, 0.5, x, 0.75, x + 0.13, 0.75], dk(c, 0.4), 0.14);
+      line([-0.15, 0.2, -0.45, 0.42], dk(c, 0.3), 0.12);
+      part(0, 0.32, 0.36, 0.34, has('robe') || has('hood') ? a : c);
+      line([0.12, 0.22, 0.42, 0.42], dk(c, 0.15), 0.12);
+      if (!has('hood')) {
+        poly([-0.3, -0.35, -0.8, -0.5, -0.35, -0.1], dk(c, 0.15));
+        poly([0.45, -0.35, 0.92, -0.55, 0.5, -0.1], dk(c, 0.3));
+      }
+      if (has('horns')) {
+        poly([-0.25, -0.58, -0.32, -1, -0.02, -0.66], a);
+        poly([0.28, -0.64, 0.5, -1, 0.52, -0.56], a);
+      }
+      if (has('blades')) {
+        poly([-0.1, -0.6, -0.75, -1.05, -0.45, -0.5], a);
+        poly([0.2, -0.65, -0.3, -1.15, 0.0, -0.62], dk(a, 0.15));
+      }
+      part(0.08, -0.25, 0.5, 0.44, c);
+      if (has('hood')) poly([-0.4, -0.1, 0.58, -0.06, 0.5, 0.15, 0.1, 0.22, -0.3, 0.12], a);
+      eye(0.12, -0.24, 1.2);
+      eye(0.46, -0.22, 1.2);
+      if (!has('hood')) {
+        line([0.15, 0, 0.3, 0.05, 0.45, 0], dk(c, 0.55), 0.05);
+        poly([0.36, 0.03, 0.4, 0.14, 0.44, 0.02], BONE);
+      }
+      if (has('talisman')) {
+        poly([0.2, -0.62, 0.42, -0.62, 0.42, 0.02, 0.2, 0.02], '#f2e08a');
+        line([0.31, -0.5, 0.27, -0.3, 0.35, -0.2, 0.31, -0.08], '#c03a3a', 0.04);
+        poly([-0.35, -0.55, -0.2, -0.95, 0.4, -0.95, 0.55, -0.55], dk(a, 0.55));
+        line([-0.35, -0.57, 0.55, -0.57], a, 0.08);
+      }
+      hd = [0.08, -0.66];
       break;
   }
-  if (boss)
+
+  // Props, set on the head or under the feet.
+  const [tx, ty] = hd;
+  if (has('hat')) {
     poly(
-      [-0.3, -0.75, -0.3, -1.1, -0.15, -0.9, 0, -1.15, 0.15, -0.9, 0.3, -1.1, 0.3, -0.75],
+      [tx - 0.55, ty + 0.1, tx - 0.25, ty - 0.32, tx + 0.3, ty - 0.32, tx + 0.6, ty + 0.1],
+      '#2a2a3a',
+    );
+    line([tx - 0.5, ty + 0.08, tx + 0.55, ty + 0.08], a, 0.08);
+  }
+  if (has('tiara') || boss) {
+    const k = boss ? 1 : 0.7;
+    const pts = [-0.3, 0.05, -0.3, -0.3, -0.15, -0.1, 0, -0.35, 0.15, -0.1, 0.3, -0.3, 0.3, 0.05];
+    poly(
+      pts.map((v, i) => (i % 2 ? ty : tx) + v * k),
       '#f2c52e',
     );
+    gemFacets(g, boss ? '#e03a3a' : '#ff7ad9', ...P(tx, ty - 0.07 * k), r * 0.08 * k);
+  }
+  if (has('prop')) {
+    line([tx, ty + 0.05, tx, ty - 0.2], dk(c, 0.4), 0.07);
+    oval(tx, ty - 0.22, 0.62, 0.07, '#d8dde6');
+    oval(tx, ty - 0.22, 0.08, 0.08, a);
+  }
+  if (has('bamboo')) {
+    line([0.72, 0.6, 0.95, -0.7], '#5aa83a', 0.1);
+    for (const t of [0.3, 0.65])
+      line([0.67 + 0.23 * t, 0.6 - 1.3 * t, 0.77 + 0.23 * t, 0.62 - 1.3 * t], '#3a7a2a', 0.04);
+    oval(0.78, -0.75, 0.18, 0.07, '#5aa83a', 0.5);
+  }
+  if (has('board')) {
+    line([-0.75, 0.84, 0.75, 0.84], a, 0.1);
+    for (const x of [-0.45, 0.45]) oval(x, 0.98, 0.1, 0.1, INK);
+  }
+  if (has('boat')) {
+    poly([-0.95, 0.25, 1, 0.25, 0.7, 0.85, -0.7, 0.85], '#8a5a34');
+    poly([-0.82, 0.55, 0.85, 0.55, 0.7, 0.85, -0.7, 0.85], dk('#8a5a34', 0.25));
+    line([-0.95, 0.25, 1, 0.25], a, 0.08);
+  }
+  if (has('carpet')) {
+    poly(
+      [
+        -1.05, 0.62, -0.5, 0.52, 0, 0.64, 0.5, 0.52, 1.05, 0.62, 1.05, 0.84, 0.5, 0.74, 0, 0.86,
+        -0.5, 0.74, -1.05, 0.84,
+      ],
+      dk(c, 0.3),
+    );
+    line([-1.02, 0.66, -0.5, 0.56, 0, 0.68, 0.5, 0.56, 1.02, 0.66], a, 0.06);
+    line([-1.02, 0.8, -0.5, 0.7, 0, 0.82, 0.5, 0.7, 1.02, 0.8], a, 0.06);
+  }
+
   // Rounding wash over the whole creep, as on the tower heads.
   const gl = g.createRadialGradient(...P(-0.4, -0.5), 0, ...P(0, 0), r * 1.2);
   gl.addColorStop(0, 'rgba(255,255,255,0.18)');
@@ -828,21 +1367,31 @@ function drawCreep(
   g.fillStyle = gl;
   g.fillRect(0, 0, m * 2, m * 2);
   g.globalCompositeOperation = 'source-over';
+  outline(g, Math.max(1, r * 0.07));
 }
 
 /** Creep portrait for the panel, as a cached data URL. */
-export function creepIcon(name: string) {
-  const key = 'creep' + name;
+export function creepIcon(d: { name: string; flying: boolean; boss: boolean }) {
+  const key = 'creep' + d.name;
   let url = icons.get(key);
   if (!url) {
-    url = bake(96, 96, (g) => drawCreep(g, slug(name), 48, 36, false, false)).toDataURL();
+    url = bake(96, 96, (g) => drawCreep(g, slug(d.name), 48, 36, d.flying, d.boss)).toDataURL();
     icons.set(key, url);
   }
   return url;
 }
 
+/** Zooming draws the last bake scaled until the zoom rests for ZOOM_SETTLE ms or the scale leaves
+ *  REBAKE; then everything is baked once at the new size. */
+const ZOOM_SETTLE = 150;
+const REBAKE = [0.7, 1.4];
+
 export class Renderer {
-  cell = 0; // px per cell at current zoom
+  cell = 0; // px per cell the sprites and layers are baked at
+  /** Px per cell on screen. While a zoom gesture is going it runs ahead of `cell` and the frame
+   * is drawn scaled: re-baking every sprite and the map on each step is what made zooming stutter. */
+  private view = 0;
+  private zoomAt = 0; // time of the last zoom step
   zoom = 1;
   panX = 0;
   panY = 0;
@@ -933,41 +1482,81 @@ export class Renderer {
     return this.low ? 0 : 1;
   }
 
-  /** Fit the map to the window and recentre. */
-  resize() {
+  /** Resize the backing surface; a changing touch HUD preserves a zoomed camera. */
+  resize(preserve = false, dx = 0, dy = 0) {
+    const cssCell = this.view / this.dpr;
+    const panX = this.panX / this.dpr + dx;
+    const panY = this.panY / this.dpr + dy;
+    const bounds = this.canvas.getBoundingClientRect();
     this.dpr = Math.min(devicePixelRatio || 1, this.low ? 1 : 1.5); // phones report 3: 4x the pixels for little visible gain
-    this.canvas.width = Math.round(innerWidth * this.dpr);
-    this.canvas.height = Math.round(innerHeight * this.dpr);
-    this.setZoom(this.zoom, innerWidth / 2, innerHeight / 2, true);
+    this.canvas.width = Math.round(bounds.width * this.dpr);
+    this.canvas.height = Math.round(bounds.height * this.dpr);
+    const zoomed = preserve && this.zoom > 1 && cssCell > 0;
+    if (zoomed) {
+      this.panX = panX * this.dpr;
+      this.panY = panY * this.dpr;
+      this.view = cssCell * this.dpr;
+    }
+    this.setZoom(
+      zoomed ? (cssCell * this.dpr) / this.fitCell(bounds) : this.zoom,
+      bounds.left + bounds.width / 2,
+      bounds.top + bounds.height / 2,
+      !zoomed,
+    );
+  }
+
+  private fitCell(bounds: DOMRect) {
+    return (
+      (Math.max(
+        1,
+        Math.min(
+          bounds.width,
+          bounds.height - (this.canvas.dataset.contained === '1' ? 0 : HUD_H + PANEL_H),
+        ),
+      ) *
+        this.dpr) /
+      (this.maze.w + 2 * FRAME)
+    );
   }
 
   /** Zoom keeping the CSS-pixel point (sx, sy) fixed. */
   setZoom(zoom: number, sx: number, sy: number, recentre = false) {
     const d = this.dpr;
-    [sx, sy] = [sx * d, sy * d];
-    const base =
-      (Math.min(innerWidth, innerHeight - HUD_H - PANEL_H) * d) / (this.maze.w + 2 * FRAME);
-    const cell = Math.max(4, Math.floor(base * Math.min(4, Math.max(1, zoom))));
-    this.zoom = cell / base;
+    const bounds = this.canvas.getBoundingClientRect();
+    const contained = this.canvas.dataset.contained === '1';
+    [sx, sy] = [(sx - bounds.left) * d, (sy - bounds.top) * d];
+    const base = this.fitCell(bounds);
+    this.zoom = Math.min(contained ? 8 : 4, Math.max(1, zoom));
+    const cell = Math.max(contained ? 1 : 4, Math.floor(base * this.zoom));
     if (recentre) {
       this.panX = Math.floor((this.canvas.width - cell * this.maze.w) / 2);
-      this.panY = Math.round(HUD_H * d + FRAME * cell);
+      this.panY = contained
+        ? Math.floor((this.canvas.height - cell * this.maze.h) / 2)
+        : Math.round(HUD_H * d + FRAME * cell);
     } else {
-      this.panX = sx - ((sx - this.panX) / (this.cell || cell)) * cell;
-      this.panY = sy - ((sy - this.panY) / (this.cell || cell)) * cell;
+      this.panX = sx - ((sx - this.panX) / (this.view || cell)) * cell;
+      this.panY = sy - ((sy - this.panY) / (this.view || cell)) * cell;
     }
+    this.view = cell;
     this.clamp(cell);
-    if (cell !== this.cell) {
-      this.cell = cell;
-      this.sprites.clear();
-      this.staticDirty = true;
-    }
+    this.zoomAt = performance.now();
+    // Bake at once for a resize, and before the scaled frame gets blurry or its buffer too big.
+    const k = cell / (this.cell || 1);
+    if (recentre || k < REBAKE[0] || k > REBAKE[1]) this.rebake();
+  }
+
+  /** Bake sprites and layers at the on-screen cell size. */
+  private rebake() {
+    if (this.cell === this.view) return;
+    this.cell = this.view;
+    this.sprites.clear();
+    this.staticDirty = true;
   }
 
   pan(dx: number, dy: number) {
     this.panX += dx * this.dpr;
     this.panY += dy * this.dpr;
-    this.clamp(this.cell);
+    this.clamp(this.view);
   }
 
   /** Keep the view inside the world: the board plus WORLD cells of lowland on every side. */
@@ -975,7 +1564,8 @@ export class Renderer {
     const fit = (pan: number, size: number, n: number) => {
       const a = size - (n + WORLD) * cell,
         b = WORLD * cell;
-      return Math.min(Math.max(pan, Math.min(a, b)), Math.max(a, b));
+      const centre = (size - n * cell) / 2;
+      return Math.min(Math.max(pan, Math.min(a, b, centre)), Math.max(a, b, centre));
     };
     this.panX = fit(this.panX, this.canvas.width, this.maze.w);
     this.panY = fit(this.panY, this.canvas.height, this.maze.h);
@@ -983,8 +1573,11 @@ export class Renderer {
 
   /** Live creep drawn under a screen point, nearest first. */
   creepAt(x: number, y: number) {
-    const wx = (x * this.dpr - this.panX) / this.cell,
-      wy = (y * this.dpr - this.panY) / this.cell;
+    const bounds = this.canvas.getBoundingClientRect();
+    x -= bounds.left;
+    y -= bounds.top;
+    const wx = (x * this.dpr - this.panX) / this.view,
+      wy = (y * this.dpr - this.panY) / this.view;
     let best: Creep | null = null,
       bd = 0.6; // cells
     for (const cr of this.sim.creeps) {
@@ -996,10 +1589,13 @@ export class Renderer {
   }
 
   screenToCell(x: number, y: number): [number, number] {
+    const bounds = this.canvas.getBoundingClientRect();
+    x -= bounds.left;
+    y -= bounds.top;
     const d = this.dpr;
     return [
-      Math.floor((x * d - this.panX) / this.cell),
-      Math.floor((y * d - this.panY) / this.cell),
+      Math.floor((x * d - this.panX) / this.view),
+      Math.floor((y * d - this.panY) / this.view),
     ];
   }
 
@@ -1672,8 +2268,8 @@ export class Renderer {
   private drawBg() {
     const { cell: s, panX, panY } = this,
       B = this.bg;
-    if (B.width !== this.canvas.width || B.height !== this.canvas.height)
-      [B.width, B.height] = [this.canvas.width, this.canvas.height];
+    const [bw, bh] = this.extent();
+    if (B.width !== bw || B.height !== bh) [B.width, B.height] = [bw, bh];
     const g = B.getContext('2d', { alpha: false })!;
     const tp = this.terrain();
     tp.setTransform(new DOMMatrix([1, 0, 0, 1, panX | 0, panY | 0]));
@@ -1750,15 +2346,34 @@ export class Renderer {
     g.globalCompositeOperation = 'source-over';
   }
 
+  /** Canvas size in baked pixels: larger than the canvas while the frame is drawn scaled down. */
+  private extent() {
+    const k = this.view / this.cell;
+    return [Math.ceil(this.canvas.width / k), Math.ceil(this.canvas.height / k)];
+  }
+
   /** alpha = fraction of the way from the previous tick to the current one; dt = frame seconds. */
   render(alpha: number, dt: number, now: number) {
+    if (performance.now() - this.zoomAt > ZOOM_SETTLE) this.rebake();
+    const k = this.view / this.cell;
+    if (k === 1) return this.paint(alpha, dt, now);
+    // Mid-gesture: paint at the baked size under a scale, with the pan in baked pixels.
+    const { ctx, panX, panY } = this;
+    [this.panX, this.panY] = [panX / k, panY / k];
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    this.paint(alpha, dt, now);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    [this.panX, this.panY] = [panX, panY];
+  }
+
+  private paint(alpha: number, dt: number, now: number) {
     const dimKey = this.pending.join();
     if (dimKey !== this.dimKey) [this.dimKey, this.staticDirty] = [dimKey, true];
     if (this.staticDirty) this.drawStatic();
     const { ctx, cell: s, panX, panY } = this;
     const X = (x: number) => (panX + x * s) | 0;
     const Y = (y: number) => (panY + y * s) | 0;
-    const bgKey = `${panX | 0},${panY | 0},${s},${this.canvas.width},${this.canvas.height},${this.staticVer}`;
+    const bgKey = `${panX | 0},${panY | 0},${s},${this.extent()},${this.staticVer}`;
     if (bgKey !== this.bgKey) {
       this.bgKey = bgKey;
       this.drawBg();
@@ -1921,14 +2536,9 @@ export class Renderer {
       }
       ctx.restore();
     }
-    // Crown floating over the tower with the most MVP awards (ties: more damage dealt).
+    // Crown over the tower that has dealt the most damage.
     let king: Tower | null = null;
-    for (const t of this.combat.towers)
-      if (
-        t.mvp &&
-        (!king || t.mvp > king.mvp || (t.mvp === king.mvp && t.damageDealt > king.damageDealt))
-      )
-        king = t;
+    for (const t of this.combat.towers) if (t.damageDealt > (king?.damageDealt ?? 0)) king = t;
     if (king) {
       const w = s * 0.5;
       const crown = this.sprite(`crown${w}`, w, w * 0.7, (g) => {
@@ -1954,8 +2564,7 @@ export class Renderer {
       });
       // Sits just above the head, whose size depends on the tower.
       const head = king.r - TOWER_H - TALL + HEAD_Y - headSize(king.def.quality);
-      const bob = 0.05 * Math.sin(now / 400);
-      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(head + bob - 0.05) - crown.height);
+      ctx.drawImage(crown, X(king.c + 0.5) - w / 2, Y(head - 0.05) - crown.height);
     }
     // Attack ranges: all towers when Ranges is on, the selected one always.
     const selT =

@@ -94,13 +94,19 @@ test('only rows that can reach a top-10 board are kept', () => {
 });
 
 test('difficulty scales creep HP and the score bonus; daily seed is stable per day', async () => {
-  const { newGame: ng, dailySeed } = await import('../src/sim/setup');
+  const { newGame: ng, dailySeed, DIFFICULTY } = await import('../src/sim/setup');
   const hard = ng(1, 'hard');
   const easy = ng(1, 'easy');
-  for (const g of [hard, easy]) g.sim.startWave();
+  for (const g of [hard, easy]) {
+    g.sim.wave = 20; // past the ramp, where the full multiplier applies
+    g.sim.startWave();
+  }
   hard.sim.tick();
   easy.sim.tick();
-  expect(hard.sim.creeps[0].hp / easy.sim.creeps[0].hp).toBeCloseTo(1.5 / 0.7);
+  expect(hard.sim.creeps[0].hp / easy.sim.creeps[0].hp).toBeCloseTo(
+    DIFFICULTY.hard.hp / DIFFICULTY.easy.hp,
+  );
+  expect(ng(1, 'hard', [], 'classic', 2).sim.hpMult).toBe(1.5); // saves from older rules keep theirs
   expect(hard.bonusPerWave).toBeGreaterThan(easy.bonusPerWave);
   const d = new Date(2026, 8, 27, 9);
   expect(dailySeed(d)).toBe(dailySeed(new Date(2026, 8, 27, 23)));

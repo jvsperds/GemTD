@@ -12,9 +12,9 @@ const PW = 'a1s2d3f4!';
 const USERS = `jds:${PW},admin:%upp0rT!x`;
 let server: ChildProcess;
 
-async function start(users = USERS) {
+async function start(users = USERS, isDev = '') {
   server = spawn(process.execPath, ['server.mjs'], {
-    env: { ...process.env, PORT: String(PORT), DATA_DIR: DATA, GEMTD_USERS: users },
+    env: { ...process.env, PORT: String(PORT), DATA_DIR: DATA, GEMTD_USERS: users, IS_DEV: isDev },
     stdio: 'inherit',
   });
   for (let i = 0; i < 50; i++) {
@@ -122,6 +122,28 @@ async function logIn(page: Page) {
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
 }
 
+test('browser: runtime IS_DEV controls branding in the same production build', async ({ page }) => {
+  for (const flag of ['', 'true', 'false', '1']) {
+    await stop();
+    await start(USERS, flag);
+    await page.context().clearCookies();
+    await logIn(page);
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.reload();
+    await expect(page.locator('body[data-ready="1"]')).toBeAttached();
+    expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+    const dev = flag === 'true' || flag === '1';
+    await expect(page).toHaveTitle(dev ? 'GemTD (dev)' : 'GemTD');
+    await expect(page.locator('#build')).toHaveText(dev ? /^v.+ · .+ \(dev\)$/ : /^v.+ · [^ ]+$/);
+    await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+      'href',
+      dev ? /^data:image\/svg\+xml,/ : 'icon.svg',
+    );
+  }
+  await stop();
+  await start();
+});
+
 test('browser: log in, play under service worker, saves land with no 401', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -139,7 +161,7 @@ test('browser: log in, play under service worker, saves land with no 401', async
   await expect(page.locator('body[data-ready="1"]')).toBeAttached();
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   if (await page.locator('#newdlg[open]').count()) await page.locator('#cancelnew').click();
-  await page.keyboard.press('Escape'); // menu → settings → volume change saves the profile
+  if (!(await page.locator('#menu').isVisible())) await page.keyboard.press('Escape'); // menu → settings → volume change saves the profile
   await page.click('button[data-tab=settings]');
   await page.locator('#volume').fill('0.2');
   await expect.poll(settingsOnDisk).toBe(0.2);

@@ -3,7 +3,7 @@ import gems from '../data/gems.json';
 import map from '../data/map.json';
 import waves from '../data/waves.json';
 import { Maze, type MapData } from '../src/sim/maze';
-import { armorMult, Combat, DEBUFF_TIME, type GemDef } from '../src/sim/towers';
+import { armorMult, Combat, DEBUFF_TIME, POISON_HP, type GemDef } from '../src/sim/towers';
 import {
   CASTLE_HP,
   MIN_SPEED,
@@ -71,6 +71,7 @@ test('sapphire slows, amethyst reduces armor, both expire', () => {
 
 test('emerald poison deals magic dps reduced by magic resist', () => {
   const { sim, combat } = setup();
+  combat.poisonHp = 0; // the flat part only
   const t = combat.place('G2', 10, 10)!; // 4 dmg hit, 4 dps poison
   const cr = creep(sim, 11.5, 10.5, { magicResist: 50 });
   combat.tick();
@@ -78,6 +79,16 @@ test('emerald poison deals magic dps reduced by magic resist', () => {
   for (let i = 0; i < 30 * DEBUFF_TIME + 5; i++) combat.tick();
   expect(1e6 - cr.hp).toBeCloseTo(4 + 4 * DEBUFF_TIME * 0.5, 0);
   expect(t.damageDealt).toBeCloseTo(1e6 - cr.hp);
+});
+
+test('poison also takes a share of max HP per second, by poison tier', () => {
+  const { sim, combat } = setup();
+  combat.place('G6', 10, 10); // 12 dmg hit, 128 dps poison, full tier
+  const cr = creep(sim, 11.5, 10.5);
+  combat.tick();
+  combat.towers.length = 0;
+  for (let i = 0; i < 30 * DEBUFF_TIME + 5; i++) combat.tick();
+  expect((1e6 - cr.hp) / ((128 + POISON_HP * 1e6) * DEBUFF_TIME)).toBeCloseTo(1, 1); // ± a tick
 });
 
 test('ruby cleaves nearby creeps, topaz hits three targets', () => {

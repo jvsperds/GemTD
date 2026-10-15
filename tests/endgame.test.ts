@@ -63,9 +63,11 @@ test('Sunder and Soul Harvest fall behind creep HP in endless, except on runs un
     for (let i = 0; i < 100 && prey.alive; i++) combat.tick();
     return king.souls;
   };
-  expect(gain(2, 0)).toBe(1000 * ENDGAME.souls);
-  expect(gain(2, 35)).toBeCloseTo((1000 * ENDGAME.souls) / ENDGAME.lag ** 35);
-  expect(gain(2, 35)).toBeLessThan(gain(2, 0) / 1.9); // about half after 35 waves
+  expect(gain(4, 0)).toBe(1000 * ENDGAME.souls);
+  expect(gain(4, 7)).toBeCloseTo((1000 * ENDGAME.souls) / ENDGAME.lag ** 7);
+  expect(gain(4, 7)).toBeLessThan(gain(4, 0) / 1.9); // about half after 7 waves
+  expect(gain(3, 18)).toBeCloseTo((1000 * ENDGAME.souls) / ENDGAME.lag3 ** 18); // older rules keep their pace
+  expect(gain(2, 35)).toBeCloseTo((1000 * ENDGAME.souls) / ENDGAME.lag2 ** 35);
   expect(gain(1, 35)).toBe(1000 * ENDGAME.souls);
 
   const { combat, sim } = newGame(1);

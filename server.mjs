@@ -14,6 +14,7 @@ import { join, normalize, extname } from 'node:path';
 const ROOT = new URL('./dist/', import.meta.url).pathname.replace(/^\/(\w:)/, '$1');
 const DATA = process.env.DATA_DIR ?? './profiles';
 const PORT = +(process.env.PORT ?? 80);
+const IS_DEV = /^(true|1)$/i.test(process.env.IS_DEV ?? 'false');
 const KEYS = new Set(['scores', 'mazes', 'save', 'settings', 'hero']);
 const TYPES = {
   '.html': 'text/html',
@@ -187,7 +188,12 @@ createServer(async (req, res) => {
   try {
     const buf = await readFile(file);
     res.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream' });
-    res.end(buf);
+    // Inject only the deployment flag; the same image can serve production or development.
+    res.end(
+      extname(file) === '.html'
+        ? buf.toString().replace('<head>', `<head><meta name="gemtd-is-dev" content="${IS_DEV}">`)
+        : buf,
+    );
   } catch {
     res.writeHead(404).end();
   }

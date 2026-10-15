@@ -21,6 +21,7 @@ export const UNITS_PER_CELL = 128;
 // ponytail: counts/leak damage/castle HP are defaults until the Lua values are known (BUILD.md §6).
 export const CREEPS_PER_WAVE = 10;
 export const SPAWN_INTERVAL = 1; // seconds
+export const HP_RAMP = 15; // wave by which creeps have the difficulty's full HP multiplier
 export const CASTLE_HP = 100;
 export const LEAK_DAMAGE = 1;
 export const BOSS_LEAK_DAMAGE = 10;
@@ -65,6 +66,9 @@ export const BOSS_TRICKS: Record<number, string[]> = {
   50: ['boss_split', 'enemy_shanshuo'],
 };
 export const SPLIT = { n: 4, hp: 0.1 };
+// Enrage: a wave still running after this long makes its creeps immune to stuns and slows, so a
+// creep that is locked in place but out-heals the towers walks on and the wave ends.
+export const ENRAGE_TIME = 180; // seconds
 
 /** Seeded PRNG (mulberry32) so the sim is deterministic. `s` is its state, for snapshots. */
 export type Rng = (() => number) & { s: number };
@@ -197,11 +201,16 @@ export class WaveSim {
   onKill: ((cr: Creep) => void) | null = null;
   rand: () => number;
   hpMult = 1; // difficulty (and the Tough mutator)
+  /** Share of `hpMult` that wave 1 gets; it grows evenly to all of it by wave `hpRamp`, so the
+   *  first waves play like the original (a Chipped Ruby one-shots wave 1). 1 = no ramp. */
+  hpEase = 1;
+  hpRamp = HP_RAMP;
   speedMult = 1; // Swift mutator
   bossTricks = false; // Cunning bosses mutator
   streak = 0; // waves in a row that ended with no castle damage
   endless = 0; // waves past the last one, for the current wave
   bosses = 1; // bosses in the current boss wave
+  waveT = 0; // seconds the current wave has run
   private hurt = false; // castle took damage this wave
   current: WaveEntry | null = null; // this wave's creep, for the banner
   private queue: WaveEntry[] = [];
@@ -214,6 +223,11 @@ export class WaveSim {
     seed = 1,
   ) {
     this.rand = rng(seed ^ 0xc4ee);
+  }
+
+  /** The wave has run past ENRAGE_TIME: creeps ignore stuns and slows. */
+  get enraged() {
+    return this.waveT >= ENRAGE_TIME;
   }
 
   get lastWave() {
@@ -259,7 +273,9 @@ export class WaveSim {
       extra = Math.max(0, this.wave - last);
     this.endless = extra;
     const base = extra ? last - 9 + ((extra - 1) % 10) : this.wave;
-    const mult = this.hpMult * ENDLESS.hp ** extra;
+    const t = this.hpRamp > 1 ? Math.min(1, (this.wave - 1) / (this.hpRamp - 1)) : 1;
+    const ease = this.hpEase + (1 - this.hpEase) * t;
+    const mult = this.hpMult * ease * ENDLESS.hp ** extra;
     const defs = this.waves
       .filter((w) => w.wave === base)
       .map((w) =>
@@ -283,6 +299,7 @@ export class WaveSim {
       this.queue[k] = { ...d, giant: true, hp: d.hp * GIANT.hp };
     }
     this.hurt = false;
+    this.waveT = 0;
     this.spawnTimer = 0;
     this.phase = 'wave';
     return true;
@@ -331,6 +348,7 @@ export class WaveSim {
 
   tick() {
     if (this.phase !== 'wave') return;
+    this.waveT += TICK;
     this.spawnTimer -= TICK;
     if (this.queue.length && this.spawnTimer <= 0) {
       this.spawn(this.queue.shift()!);
@@ -386,11 +404,10 @@ export class WaveSim {
 
   /** Move speed after rush, % slows (multiplicative) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
+    const base = cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1);
+    if (this.enraged) return base;
     const pct = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct) * (1 - cr.stackPct);
-    const v =
-      cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1) * (1 - pct) -
-      cr.slow -
-      cr.auraSlow;
+    const v = base * (1 - pct) - cr.slow - cr.auraSlow;
     return Math.max(v, MIN_SPEED);
   }
 
@@ -398,6 +415,7 @@ export class WaveSim {
     for (const k of ['slowPctT', 'stunT', 'noHealT', 'ampT', 'rushT', 'reactiveT'] as const)
       if (cr[k] > 0) cr[k] -= TICK;
     if (cr.slowPctT <= 0) cr.slowPct = 0;
+    if (this.enraged) cr.stunT = 0;
     if (cr.reactiveT <= 0) cr.reactive = 0;
     if ((cr.krakenT -= TICK) <= 0) [cr.kraken, cr.krakenT] = [0, KRAKEN_INTERVAL];
     if (hasAbility(cr, 'enemy_recharge') && cr.noHealT <= 0)

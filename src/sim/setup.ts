@@ -4,7 +4,7 @@ import map from '../../data/map.json';
 import quality from '../../data/quality_levels.json';
 import towerData from '../../data/towers.json';
 import waves from '../../data/waves.json';
-import { ancientGems, ENDGAME_TOWERS } from './endgame';
+import { ancientGems, ENDGAME, ENDGAME_TOWERS } from './endgame';
 import { Game, type LevelDef } from './game';
 import { PEDALS } from './pedals';
 import { Maze, type MapData } from './maze';
@@ -18,12 +18,17 @@ export const DEFS = allDefs(
 );
 
 // ponytail: difficulty only scales creep HP (BUILD.md §3.7: endless scaling is HP/armor too).
+// hp is tuned with `npm run balance` (skilled bot, Quartz, no hero skills, 40 seeds) for win rates
+// of 68% easy, 33% normal, 10% hard. Easy has more HP than normal because its perks (copies
+// stack, recipe luck, levels past 9) are worth more than the difference. `shells` multiplies the shells a run pays.
 export const DIFFICULTY = {
-  easy: { hp: 0.7, bonus: 0 },
-  normal: { hp: 1, bonus: 200 },
-  hard: { hp: 1.5, bonus: 500 },
+  easy: { hp: 3, bonus: 0, shells: 1 },
+  normal: { hp: 2.3, bonus: 200, shells: 2 },
+  hard: { hp: 3.4, bonus: 500, shells: 3 },
 } as const;
 export type Difficulty = keyof typeof DIFFICULTY;
+/** Creep HP of runs started under rules 1 to 3. */
+const OLD_HP = { easy: 0.7, normal: 1, hard: 1.5 };
 
 export const EASY_PERFECT_CAP = 10;
 
@@ -76,8 +81,12 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
 };
 
 /** Rule set of new games. A run records its own, so a save or Watch replay from before a change to
- *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless. */
-export const RULES = 2;
+ *  the sim's numbers still plays out the same. 2: Sunder and Soul Harvest lag in endless.
+ *  3: they lag twice as fast (4% per wave), as MVP and kill bonuses kept runs going past wave 300.
+ *  4: harder creeps per difficulty, 10% lag, easy's extra levels must be bought.
+ *  5: poison takes a share of max HP, chain lightning scales with attack damage, MVP caps at 10.
+ *  6: the difficulty's creep HP multiplier ramps up from ×1 on wave 1. */
+export const RULES = 6;
 
 export function newGame(
   seed: number,
@@ -89,7 +98,8 @@ export function newGame(
   const on = (m: string) => mutators.includes(m);
   const data = (MAPS[mapId] ?? MAPS.classic).data;
   const sim = new WaveSim(new Maze(data), waves as WaveEntry[], seed);
-  sim.hpMult = DIFFICULTY[difficulty].hp;
+  sim.hpMult = rules < 4 ? OLD_HP[difficulty] : DIFFICULTY[difficulty].hp;
+  if (rules >= 6) sim.hpEase = 1 / sim.hpMult;
   const levels = quality.levels as LevelDef[];
   const g = new Game(
     new Combat(sim, DEFS, seed),
@@ -102,7 +112,10 @@ export function newGame(
   if (on('swift')) sim.speedMult = 1.3;
   if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
   g.noMerge = on('nomerge');
-  if (rules < 2) g.combat.endgameLag = 1;
+  if (rules < 4) g.combat.endgameLag = rules < 2 ? 1 : rules < 3 ? ENDGAME.lag2 : ENDGAME.lag3;
+  // Levels past the XP curve (easy) all shared its last threshold, so buying one gave the rest free.
+  else g.xpFor.forEach((x, i) => i && x === g.xpFor[i - 1] && (g.xpFor[i] = Infinity));
+  if (rules < 5) [g.combat.poisonHp, g.combat.chainPct, g.mvpCap] = [0, 0, Infinity];
   sim.bossTricks = on('bosses');
   return g;
 }

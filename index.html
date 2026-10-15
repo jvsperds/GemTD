@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <title>GemTD</title>
     <link rel="manifest" href="manifest.webmanifest" />
@@ -40,6 +40,28 @@
         width: 100%;
         height: 100%;
         touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      #boardtools {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 8px);
+        right: 0;
+        gap: 4px;
+        padding: 4px;
+      }
+      body[data-touch='1'] #boardtools {
+        display: flex;
+      }
+      #boardtools button {
+        min-width: 44px;
+        min-height: 44px;
+        touch-action: none;
+      }
+      #boardtools #place-touch {
+        min-width: 130px;
       }
       #game:focus-visible {
         outline: 3px solid var(--accent);
@@ -224,88 +246,6 @@
       #banner[hidden] {
         display: none;
       }
-      #newdlg {
-        width: min(560px, calc(100vw - 32px));
-        box-sizing: border-box;
-        padding: 0;
-        color: var(--text);
-        border-color: var(--edge);
-        overflow: hidden;
-        background:
-          radial-gradient(ellipse at 50% 0%, #3a2f1c66, #0000 60%),
-          linear-gradient(180deg, #16171af7, #0b0c0ef9);
-      }
-      #newdlg::backdrop {
-        background: #000a;
-      }
-      .dialog-head {
-        padding: 22px 24px 14px;
-        border-bottom: 1px solid var(--edge-dim);
-        background: linear-gradient(180deg, #2a2418, #0000);
-      }
-      .dialog-head h2 {
-        margin: 2px 0 4px;
-        font-weight: normal;
-        letter-spacing: 5px;
-        color: var(--gold);
-        text-shadow: 0 2px 2px #000;
-      }
-      .dialog-head p {
-        margin: 0;
-        color: var(--muted);
-      }
-      .eyebrow,
-      .dialog-section h3,
-      .loadout-summary > div > span {
-        display: block;
-        color: var(--accent);
-        font-size: 11px;
-        font-weight: normal;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-      }
-      .dialog-section {
-        padding: 16px 24px 0;
-      }
-      .dialog-section h3 {
-        margin: 0 0 8px;
-      }
-      .loadout-summary {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin: 16px 24px;
-        padding: 12px;
-        border: 1px solid var(--edge-dim);
-        border-radius: 6px;
-        background: #0005;
-      }
-      .loadout-summary b,
-      .loadout-summary small {
-        display: block;
-      }
-      .loadout-summary small {
-        margin-top: 2px;
-        color: var(--muted);
-      }
-      .dialog-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 8px;
-        padding: 14px 24px;
-        border-top: 1px solid var(--edge-dim);
-        background: #0004;
-      }
-      .dialog-actions .primary {
-        min-width: 112px;
-        border-color: var(--gold);
-        color: var(--gold);
-        box-shadow:
-          inset 0 0 12px #f0c86033,
-          0 0 12px #f0c86022;
-      }
       @keyframes banner {
         0% {
           opacity: 0;
@@ -319,18 +259,6 @@
         100% {
           opacity: 0;
         }
-      }
-      #hint {
-        position: fixed;
-        top: 48px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 4px 16px;
-        font-style: italic;
-        color: var(--accent);
-        text-shadow: 0 1px 3px #000;
-        pointer-events: none;
-        white-space: nowrap;
       }
 
       /* Bottom panel: portrait | attributes | ability cards | actions */
@@ -672,66 +600,6 @@
           transform: translateX(-20px);
         }
       }
-      #herolist {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 6px;
-      }
-      .herocard {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        border-color: var(--rarity);
-        text-align: center;
-      }
-      .herocard.on {
-        box-shadow: 0 0 10px var(--rarity);
-      }
-      .herocard i {
-        font-style: normal;
-        font-size: 26px;
-      }
-      .herocard small {
-        color: var(--muted);
-      }
-      .herocard .rarity {
-        color: var(--rarity);
-      }
-      .herocard .cost {
-        color: var(--accent);
-      }
-      #menu h3 {
-        margin: 12px 0 6px;
-        font-size: 14px;
-      }
-      #shop,
-      #passives {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 6px;
-      }
-      .shopitem {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-      .shopitem > button:first-child {
-        flex: 1;
-        text-align: left;
-      }
-      .shopitem small {
-        display: block;
-        color: var(--muted);
-      }
-      .shopitem .bring {
-        font-size: 12px;
-        padding: 2px 6px;
-      }
-      .shopitem .bring.on {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
       #dmgtab {
         position: fixed;
         top: 50px;
@@ -881,70 +749,6 @@
         font-size: 11px;
         padding: 1px 6px;
       }
-
-      /* Menu */
-      #menu {
-        position: fixed;
-        top: 6vh;
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(820px, calc(100vw - 32px));
-        max-height: 88vh;
-        overflow: auto;
-        box-sizing: border-box;
-        padding: 16px 20px;
-        border-color: var(--edge);
-        animation: fade 0.2s;
-      }
-      @keyframes fade {
-        from {
-          opacity: 0;
-          transform: translate(-50%, -10px);
-        }
-      }
-      #menu h2 {
-        margin: 0 0 10px;
-        text-align: center;
-        font-weight: normal;
-        letter-spacing: 4px;
-        color: var(--accent);
-        text-shadow: 0 0 12px #c8d3df66;
-      }
-      #gameover {
-        text-align: center;
-        margin-bottom: 12px;
-      }
-      .recap {
-        margin: 6px auto;
-        font-size: 12px;
-        opacity: 0.85;
-      }
-      #mutators {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 14px;
-        justify-content: center;
-      }
-      #questlist {
-        list-style: none;
-        padding: 0;
-        line-height: 1.8;
-      }
-      #questlist .done {
-        color: var(--accent);
-      }
-      table.recap td {
-        padding: 1px 6px;
-        text-align: right;
-      }
-      table.recap td:first-child {
-        text-align: left;
-      }
-      #gameover .big {
-        font-size: 30px;
-        color: var(--accent);
-        margin: 4px 0 8px;
-      }
       .tabs {
         display: flex;
         gap: 4px;
@@ -958,54 +762,6 @@
       .tabs button.on {
         border-color: var(--accent);
         color: var(--accent);
-      }
-      #menu select,
-      #menu input:not([type='range']) {
-        font: inherit;
-        color: var(--text);
-        background: #0006;
-        border: 1px solid var(--edge-dim);
-        border-radius: 4px;
-        padding: 2px 4px;
-      }
-      #menu label {
-        margin-right: 12px;
-      }
-      #menu table {
-        border-collapse: collapse;
-        width: 100%;
-      }
-      #menu td,
-      #menu th {
-        padding: 3px 8px;
-        text-align: left;
-        border-bottom: 1px solid #ffffff14;
-      }
-      #menu th {
-        color: var(--accent);
-        font-weight: normal;
-      }
-      .cards {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .cards button {
-        flex: 1 1 140px;
-        padding: 12px;
-        text-align: center;
-      }
-      .cards button.on {
-        border-color: var(--accent);
-        box-shadow: inset 0 0 10px #c8d3df55;
-      }
-      .cards small {
-        display: block;
-        color: var(--muted);
-      }
-      #menu .keys {
-        color: var(--muted);
-        font-size: 12px;
       }
       #debug {
         position: fixed;
@@ -1108,17 +864,6 @@
         width: 22px;
         height: 22px;
         filter: drop-shadow(0 0 4px #f0c86066);
-      }
-      #menubtn {
-        height: 100%;
-        border-radius: 0;
-        border-width: 0 0 0 1px;
-        border-color: var(--edge);
-        padding: 0 16px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        font-size: 12px;
-        color: var(--accent);
       }
       .tag {
         border-color: var(--edge);
@@ -1289,30 +1034,6 @@
       #dmgtab {
         border-color: var(--edge);
       }
-      /* Menu: dashboard with a gold-underlined nav */
-      #menu {
-        z-index: 10;
-        padding: 0 0 16px;
-        border-color: var(--edge);
-        background:
-          radial-gradient(ellipse at 50% 0%, #3a2f1c66, #0000 60%),
-          linear-gradient(180deg, #16171af7, #0b0c0ef9);
-      }
-      #menu > :not(.tabs):not(h2) {
-        margin-left: 20px;
-        margin-right: 20px;
-      }
-      #menu h2 {
-        margin: 0;
-        padding: 14px 0 10px;
-        font-size: 22px;
-        letter-spacing: 8px;
-        color: var(--gold);
-        text-shadow:
-          0 0 14px #f0c86055,
-          0 2px 2px #000;
-        background: linear-gradient(180deg, #2a2418, #0000);
-      }
       .tabs {
         position: sticky;
         top: 0;
@@ -1344,40 +1065,198 @@
         border-bottom-color: var(--gold);
         text-shadow: 0 0 10px #f0c86066;
       }
-      #menu h3 {
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        font-size: 12px;
-        font-weight: normal;
-        color: var(--accent);
-        border-bottom: 1px solid var(--edge-dim);
-        padding-bottom: 4px;
+      /* ---- Cartoon theme, after the creep and tower models: ink outlines, flat two-tone fills,
+         chunky rounded shapes, hard drop shadows instead of glows ---- */
+      :root {
+        --ink: #241c1c;
+        --panel: #37323f;
+        --panel-lo: #2b2732;
+        --two-tone: linear-gradient(180deg, #5a5366 0 50%, #4a4456 50%);
+        --two-tone-gold: linear-gradient(180deg, #ffd95a 0 50%, #f2c52e 50%);
+        --glass: linear-gradient(180deg, #463f52 0 5px, var(--panel) 5px);
+        --edge: var(--ink);
+        --edge-dim: #1d171f;
+        --accent: #f5d76a;
+        --gold: #f2c52e;
+        --text: #f4efe4;
+        --muted: #b3aa9c;
+        --serif: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+        --bevel: 0 5px 0 #0007;
+        accent-color: var(--gold);
+        scrollbar-color: #5a5366 var(--panel-lo);
       }
-      #menu th {
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 11px;
-        background: #0006;
+      .glass {
+        border: 3px solid var(--ink);
+        border-radius: 14px;
       }
-      #menu tbody tr:nth-child(odd) {
-        background: #ffffff05;
+      button {
+        background: var(--two-tone);
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        box-shadow: 0 3px 0 var(--ink);
+        font-weight: bold;
       }
-      .cards button,
-      .herocard,
-      .shopitem > button:first-child {
-        background: linear-gradient(180deg, #25231f, #121110);
+      button:hover:not(:disabled) {
+        border-color: var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        filter: brightness(1.18);
+      }
+      button:active:not(:disabled) {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 var(--ink);
+      }
+      #dock button.on,
+      #combos button.on,
+      #actions button.on,
+      #actions #aim button.on,
+      #dmg header button.on {
+        background: var(--two-tone-gold);
+        border-color: var(--ink);
+        box-shadow: 0 3px 0 var(--ink);
+        color: var(--ink);
+      }
+      .maze.on,
+      .recipe.on {
         box-shadow:
-          inset 0 1px 0 #ffffff10,
-          inset 0 0 0 1px #000;
+          0 0 0 2px var(--rarity, var(--gold)),
+          0 3px 0 2px var(--ink);
       }
-      .cards button.on {
-        border-color: var(--gold);
-        box-shadow: inset 0 0 12px #f0c86044;
-      }
-      #gameover .big {
+      kbd {
+        border-color: var(--ink);
+        background: #0004;
+      } /* Headings and the logo: gold lettering with an ink outline and a hard shadow. */
+      #logo,
+      #banner b {
+        font-weight: 900;
         color: var(--gold);
-        font-size: 36px;
-        text-shadow: 0 0 16px #f0c86066;
+        -webkit-text-stroke: 4px var(--ink);
+        paint-order: stroke fill;
+        text-shadow: 0 3px 0 var(--ink);
+      }
+      #logo {
+        letter-spacing: 2px;
+      }
+      #logo svg {
+        width: 28px;
+        height: 28px;
+        filter: none;
+      }
+      #hud {
+        border-width: 0 0 3px;
+        background: var(--panel);
+      }
+      /* Moss: rounded tufts hang off the top bar and grow up the bottom panel's top edge. */
+      #hud::after,
+      #panel::before {
+        height: 12px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='12'%3E%3Cpath d='M0-3h64v6q-4 6-8 0q-3 9-9 0q-4 5-7 0q-5 8-10 0q-3 4-6 0q-6 9-11 0q-3 5-6 0q-3 6-7 0z' fill='%234a9a3a' stroke='%23241c1c' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M0 0h64v2H0z' fill='%236fc04a'/%3E%3C/svg%3E")
+          repeat-x;
+        image-rendering: auto;
+      }
+      #hud::after {
+        top: calc(100% + 1px);
+      }
+      .tag {
+        border: 2px solid var(--ink);
+        background: var(--two-tone-gold);
+        color: var(--ink);
+        font-weight: bold;
+      }
+      .bar,
+      #bar {
+        border: 2px solid var(--ink);
+        border-radius: 8px;
+        background: var(--panel-lo);
+        box-shadow: none;
+      }
+      .bar {
+        height: 9px;
+      }
+      .hp > i {
+        background: linear-gradient(180deg, #ff7a6a 0 50%, var(--ruby) 50%);
+      }
+      .xp > i {
+        background: linear-gradient(180deg, #7ab8f0 0 50%, #4a8ad0 50%);
+      }
+      #bar i {
+        background: var(--two-tone-gold);
+      }
+      #panel[data-view='creep'] #bar i,
+      #panel[data-view='tower'] #bar i {
+        background: linear-gradient(180deg, #7fe06a 0 50%, #4fb840 50%);
+      }
+      #bar span {
+        font-weight: bold;
+        text-shadow:
+          0 1px 0 var(--ink),
+          0 -1px 0 var(--ink),
+          1px 0 0 var(--ink),
+          -1px 0 0 var(--ink);
+      }
+      #portrait {
+        border: 3px solid var(--ink);
+        border-radius: 12px;
+        box-shadow: 0 3px 0 var(--ink);
+        background: linear-gradient(180deg, #5f5872 0 60%, #453f52 60%);
+      }
+      .card,
+      .slot {
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        box-shadow: 0 3px 0 var(--ink);
+        background: var(--two-tone);
+      }
+      .slot.on,
+      button.skillcard.on {
+        border-color: var(--ink);
+        box-shadow:
+          0 0 0 3px var(--gold),
+          0 3px 0 3px var(--ink);
+      }
+      .slot kbd {
+        color: var(--ink);
+        background: var(--gold);
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      #status span {
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        background: var(--panel);
+        box-shadow: 0 2px 0 var(--ink);
+      }
+      #status span.bad {
+        border-color: var(--ink);
+        background: #7a3ab0;
+      }
+      .oddsrow .odds,
+      .recipe,
+      .maze {
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        background: var(--panel-lo);
+      }
+      #panel[data-view='tower'] #actions {
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        background: var(--panel-lo);
+      }
+      #actions #tabs button,
+      #actions #tabs button:hover:not(:disabled) {
+        box-shadow: none;
+      }
+      #actions #tabs button.on,
+      .tabs button.on {
+        color: var(--gold);
+        border-bottom: 3px solid var(--gold);
+        text-shadow: none;
+      }
+      .tabs {
+        background: var(--panel-lo);
+        border-bottom: 3px solid var(--ink);
+      }
+      .tabs button:active:not(:disabled) {
+        transform: none;
       }
       @media (max-width: 760px) {
         #dock button {
@@ -1385,7 +1264,6 @@
           min-height: 48px;
           font-size: 9px;
         }
-        #menubtn kbd,
         #logo span {
           display: none;
         }
@@ -1415,9 +1293,6 @@
         }
         .bar {
           width: 40px;
-        }
-        #hint {
-          top: 64px;
         }
         #panel {
           flex-wrap: wrap;
@@ -1461,11 +1336,22 @@
     ></canvas>
     <header id="hud" class="glass">
       <div id="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <polygon points="12,1 23,12 12,23 1,12" fill="#b8913f" />
-          <polygon points="12,1 12,12 1,12" fill="#f6d77e" />
-          <polygon points="12,1 23,12 12,12" fill="#e2b85a" />
-          <polygon points="1,12 12,12 12,23" fill="#8a6a2c" />
+        <svg viewBox="0 0 32 32">
+          <polygon
+            points="16,2 29,12 16,30 3,12"
+            fill="#3a6bff"
+            stroke="#241c1c"
+            stroke-width="3"
+            stroke-linejoin="round"
+          />
+          <polygon points="16,2 3,12 16,12" fill="#8fb0ff" />
+          <polygon points="16,2 29,12 16,12" fill="#5a82ff" />
+          <polygon points="29,12 16,12 16,30" fill="#2a4fc0" />
+          <circle cx="16" cy="13" r="6.4" fill="#241c1c" />
+          <circle cx="16" cy="13" r="5" fill="#f7d23a" />
+          <circle cx="16" cy="13" r="3.1" fill="#e0701e" />
+          <circle cx="16" cy="13" r="1.6" fill="#0a0808" />
+          <circle cx="14.2" cy="11.2" r="1" fill="#fff" />
         </svg>
         <span>GEM TD</span>
       </div>
@@ -1474,7 +1360,8 @@
         <i data-icon="menu"></i> Menu <kbd>Esc</kbd>
       </button>
     </header>
-    <div id="hint" role="status" aria-live="polite"></div>
+    <div id="hint" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <div id="boardstatus" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="banner" class="glass" hidden></div>
     <div id="loading" class="glass" role="status" aria-live="polite">Loading…</div>
     <nav id="dock" class="glass">
@@ -1496,6 +1383,12 @@
       </button>
     </nav>
     <div id="panel" class="glass" data-view="hero">
+      <div id="boardtools" class="glass" role="group" aria-label="Board controls">
+        <button id="place-touch" disabled>Tap a tile</button>
+        <button data-zoom="0.8" aria-label="Zoom board out">−</button>
+        <button data-zoom="fit" aria-label="Fit board">Fit</button>
+        <button data-zoom="1.25" aria-label="Zoom board in">+</button>
+      </div>
       <div id="status"></div>
       <div id="who">
         <div id="portrait"></div>
@@ -1504,6 +1397,7 @@
       <div id="attrs"></div>
       <div id="mid">
         <div id="cards"></div>
+        <div id="actionhint" role="status" aria-live="polite" hidden></div>
         <div id="bar"><i></i><span></span></div>
         <div id="combos"></div>
       </div>
@@ -1554,149 +1448,312 @@
     </aside>
     <dialog id="newdlg" class="glass" aria-labelledby="newgametitle">
       <header class="dialog-head">
-        <span class="eyebrow">Start a run</span>
-        <h2 id="newgametitle">NEW GAME</h2>
-        <p>Choose a difficulty, then set the kind of run.</p>
+        <span class="eyebrow">Prepare your defense</span>
+        <h2 id="newgametitle">New game</h2>
+        <p>Pick a mode. Review your setup. Begin when you're ready.</p>
       </header>
-      <section class="dialog-section">
-        <h3>Difficulty</h3>
-        <div class="cards" id="diffcards">
-          <button data-diff="easy">🟢 Easy<small>For apprentices</small></button>
-          <button data-diff="normal">🔵 Normal<small>The true path</small></button>
-          <button data-diff="hard">🔴 Hard<small>Only the flawless</small></button>
+      <div class="setup-body">
+        <section class="dialog-section" aria-labelledby="modetitle">
+          <h3 id="modetitle">Run mode</h3>
+          <div class="cards mode-cards" role="group" aria-labelledby="modetitle">
+            <button data-mode="standard">⚔ Standard<small>Your rules, your maze</small></button>
+            <button id="daily" data-mode="daily">
+              ☀ Daily challenge<small>A shared seed each day</small>
+            </button>
+            <button id="builder" data-mode="builder">
+              🧱 Maze builder<small>Build without waves</small>
+            </button>
+          </div>
+          <p id="modedescription" class="menu-note" aria-live="polite"></p>
+        </section>
+        <div id="customsetup">
+          <section class="dialog-section" aria-labelledby="difftitle">
+            <h3 id="difftitle">Difficulty</h3>
+            <div class="cards" id="diffcards" role="group" aria-labelledby="difftitle">
+              <button data-diff="easy">Easy<small>Extra progression perks · 🐚 ×1</small></button>
+              <button data-diff="normal">
+                Normal<small>The standard challenge · 🐚 ×2</small>
+              </button>
+              <button data-diff="hard">Hard<small>Tougher creeps · 🐚 ×3</small></button>
+            </div>
+          </section>
+          <section class="dialog-section">
+            <h3>Map</h3>
+            <label class="map-choice"
+              >Layout
+              <select id="mapsel"></select
+            ></label>
+            <details class="mutator-details">
+              <summary>Optional mutators</summary>
+              <p class="menu-note">These runs rank separately under Mutators &amp; maps.</p>
+              <div id="mutators"></div>
+            </details>
+          </section>
         </div>
-      </section>
-      <section class="dialog-section">
-        <h3>Run type</h3>
-        <div class="cards">
-          <button id="builder">🧱 Maze builder<small>Design and test mazes</small></button>
-          <button id="daily">☀ Daily challenge<small>Same seed for everyone, normal</small></button>
-        </div>
-      </section>
-      <section class="dialog-section">
-        <h3>Map &amp; mutators</h3>
-        <p>
-          <label
-            >Map
-            <select id="mapsel"></select
-          ></label>
-        </p>
-        <p id="mutators" title="Optional rule changes, shown on the score"></p>
-      </section>
-      <section class="loadout-summary">
-        <div>
-          <span>Selected loadout</span>
-          <b id="loadout">—</b>
-          <small>Applies when the run begins.</small>
-        </div>
-        <button id="changeloadout">Change</button>
-      </section>
+        <section id="setuploadout" class="loadout-summary">
+          <div>
+            <span>Selected loadout</span><b id="loadout">—</b
+            ><small>Applies when this run begins.</small>
+          </div>
+          <button id="changeloadout">Change loadout</button>
+        </section>
+      </div>
       <footer class="dialog-actions">
-        <button id="cancelnew">Cancel</button>
-        <button id="newgame" class="primary">⚔ Begin</button>
+        <button id="cancelnew">Back</button>
+        <button id="newgame" class="primary">Begin run</button>
       </footer>
     </dialog>
-    <div
-      id="menu"
-      class="glass"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Game menu"
-      tabindex="-1"
-      hidden
-    >
-      <h2>✦ GEM TD ✦</h2>
-      <div id="gameover" hidden></div>
-      <div class="tabs">
-        <button data-tab="scores" class="on">Scores</button>
-        <button id="opennew">New game</button>
-        <button id="endrun" title="Stop here and record this run's score">End run</button>
-        <button data-tab="hero">Hero</button>
-        <button data-tab="quests">Quests</button>
-        <button data-tab="settings">Settings</button>
-        <span style="flex: 1"></span>
-        <button id="close">✕ <kbd>Esc</kbd></button>
+    <dialog id="menu" class="glass" aria-labelledby="menutitle" hidden>
+      <header class="menu-header">
+        <div>
+          <span class="eyebrow">Plan your next run</span>
+          <h2 id="menutitle">✦ GEM TD</h2>
+        </div>
+        <button id="close" aria-label="Close menu">✕ <kbd>Esc</kbd></button>
+      </header>
+      <nav class="menu-tabs" role="tablist" aria-label="Game menu">
+        <button id="tab-play" data-tab="play" role="tab" aria-controls="pane-play">Play</button>
+        <button id="tab-hero" data-tab="hero" role="tab" aria-controls="pane-hero">
+          Hero &amp; skills
+        </button>
+        <button id="tab-quests" data-tab="quests" role="tab" aria-controls="pane-quests">
+          Quests
+        </button>
+        <button id="tab-scores" data-tab="scores" role="tab" aria-controls="pane-scores">
+          Scores
+        </button>
+        <button id="tab-settings" data-tab="settings" role="tab" aria-controls="pane-settings">
+          Settings
+        </button>
+      </nav>
+      <div class="menu-body">
+        <div id="gameover" hidden></div>
+        <section
+          id="pane-play"
+          data-pane="play"
+          role="tabpanel"
+          aria-labelledby="tab-play"
+          tabindex="0"
+        >
+          <div class="play-intro">
+            <span class="eyebrow">Place · keep · combine</span>
+            <h2>Your next defense<br />starts here.</h2>
+            <p>
+              Turn random gems into a winding maze. Combine powerful towers and survive 50 waves.
+            </p>
+          </div>
+          <div class="run-actions">
+            <div class="run-current">
+              <p id="runstatus"></p>
+              <button id="resume" class="primary">Resume</button>
+            </div>
+            <button id="opennew" class="new-run">
+              ⚔ New game<span
+                >Choose difficulty, map, and mutators <b aria-hidden="true">→</b></span
+              >
+            </button>
+            <div class="alternate-modes">
+              <button id="opendaily">
+                ☀ Daily challenge<small>Same seed today. How far can you go?</small>
+              </button>
+              <button id="openbuilder">
+                🧱 Maze builder<small>Plan a route without the pressure.</small>
+              </button>
+            </div>
+          </div>
+          <div class="loadout-summary">
+            <div><span>Next run's loadout</span><b id="playloadout">—</b></div>
+            <button id="edithero">Edit loadout</button>
+          </div>
+          <details class="how-to">
+            <summary>New to Gem TD?</summary>
+            <p>
+              Double-click empty tiles to place 5 gems. On touchscreens, tap a tile, then Place gem.
+              Pinch or double-tap to zoom the board, and drag to pan. Select one gem to keep as a
+              tower; the rest become stones. Make the route longer, combine recipe ingredients, and
+              protect the exit.
+            </p>
+            <p>Open the Book during a run for recipes and maze guides.</p>
+          </details>
+          <div class="end-run"><button id="endrun" hidden>End run &amp; record score</button></div>
+        </section>
+        <section
+          id="pane-hero"
+          data-pane="hero"
+          role="tabpanel"
+          aria-labelledby="tab-hero"
+          tabindex="0"
+          hidden
+        >
+          <div class="pane-heading">
+            <div>
+              <h2>Hero &amp; skills</h2>
+              <p>Build your loadout for the next run. Changes won't affect a run in progress.</p>
+            </div>
+            <div class="shell-balance">🐚 <b id="shells">0</b> shells</div>
+          </div>
+          <button id="returnsetup" class="primary" hidden>Done · return to run setup →</button>
+          <h3>Choose your hero</h3>
+          <div id="herolist" role="group" aria-label="Inspect heroes"></div>
+          <section class="hero-detail" aria-label="Hero details">
+            <span id="herodetailicon" class="hero-detail-glyph" aria-hidden="true"></span>
+            <div class="hero-detail-copy" aria-live="polite" aria-atomic="true">
+              <h4><span id="herodetailname"></span> <small id="herodetailtitle"></small></h4>
+              <p id="herodetailtip"></p>
+              <small id="herodetailmeta"></small>
+            </div>
+            <div class="hero-detail-action">
+              <button id="selecthero"></button><small id="heroafford"></small>
+            </div>
+          </section>
+          <section class="equipped-section" aria-label="Next run's skills">
+            <div class="loadout-heading">
+              <h3>Your loadout</h3>
+              <b id="bringing">0 / 5 slots</b>
+            </div>
+            <div id="equipped" tabindex="-1" aria-label="Equipped skills"></div>
+            <p class="menu-note">
+              Select an equipped icon to remove it. Skills and passives share slots.
+            </p>
+          </section>
+          <p id="progressionstatus" role="status" aria-live="polite"></p>
+          <h3>Active skills</h3>
+          <p class="menu-note">
+            Cast with gold during a run. Level and Stone are always available.
+          </p>
+          <div id="shop"></div>
+          <h3>Passive skills</h3>
+          <div id="passives"></div>
+          <p class="menu-note">
+            Earn shells every 3 waves, plus a full-clear bonus. Difficulty multiplies your reward.
+          </p>
+        </section>
+        <section
+          id="pane-quests"
+          data-pane="quests"
+          role="tabpanel"
+          aria-labelledby="tab-quests"
+          tabindex="0"
+          hidden
+        >
+          <div class="pane-heading">
+            <div>
+              <h2>Quests</h2>
+              <p>Reach milestones to earn bonus shells. Each quest pays once.</p>
+            </div>
+          </div>
+          <ul id="questlist"></ul>
+        </section>
+        <section
+          id="pane-scores"
+          data-pane="scores"
+          role="tabpanel"
+          aria-labelledby="tab-scores"
+          tabindex="0"
+          hidden
+        >
+          <div class="pane-heading">
+            <div>
+              <h2>Scores &amp; replays</h2>
+              <p>Compare completed runs or watch a recorded defense.</p>
+            </div>
+          </div>
+          <div class="score-filters">
+            <label
+              >Board<select id="board">
+                <option value="score">Top score</option>
+                <option value="wave">Highest wave</option>
+                <option value="fastest">Fastest full clear</option>
+              </select></label
+            >
+            <label
+              >Run filter<select id="difficulty">
+                <option value="">All difficulties</option>
+                <option value="easy">Easy</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Hard</option>
+                <option id="dailyopt">Today's daily</option>
+                <option value="modded">Mutators &amp; maps</option>
+              </select></label
+            >
+          </div>
+          <div
+            class="score-scroll"
+            role="region"
+            aria-label="Leaderboard, scroll for more columns"
+            tabindex="0"
+          >
+            <table>
+              <caption class="menu-note">
+                Top runs for the selected board and filter
+              </caption>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Score</th>
+                  <th>Waves</th>
+                  <th>HP</th>
+                  <th>Time</th>
+                  <th>Difficulty</th>
+                  <th>Date</th>
+                  <th>Replay</th>
+                </tr>
+              </thead>
+              <tbody id="rows" aria-live="polite"></tbody>
+            </table>
+          </div>
+        </section>
+        <section
+          id="pane-settings"
+          data-pane="settings"
+          role="tabpanel"
+          aria-labelledby="tab-settings"
+          tabindex="0"
+          hidden
+        >
+          <div class="pane-heading">
+            <div>
+              <h2>Settings</h2>
+              <p>Changes save automatically on this device.</p>
+            </div>
+          </div>
+          <fieldset class="settings-group">
+            <legend>Gameplay</legend>
+            <label
+              >Game speed<select id="speed">
+                <option value="1">×1</option>
+                <option value="2">×2</option>
+                <option value="4">×4</option>
+                <option value="10">×10</option>
+                <option value="20">×20</option>
+              </select></label
+            >
+          </fieldset>
+          <fieldset class="settings-group">
+            <legend>Audio</legend>
+            <label>Volume<input id="volume" type="range" min="0" max="1" step="0.05" /></label
+            ><label>Music<input id="music" type="range" min="0" max="1" step="0.05" /></label>
+          </fieldset>
+          <fieldset class="settings-group">
+            <legend>Display</legend>
+            <label><input id="lowgfx" type="checkbox" /> Low graphics</label
+            ><label><input id="showdock" type="checkbox" /> Side bar</label>
+          </fieldset>
+          <details class="how-to">
+            <summary>Keyboard &amp; mouse controls</summary>
+            <p class="keys">
+              K keep · M / N merge ×2 / ×4 · D downgrade · R remove stone · U undo · L level up · S
+              skip turn · Space pause · 1–5 speed ×1 to ×20 · G guide · P path · V ranges · H book ·
+              Esc menu / deselect · F3 debug · wheel zoom · right-drag pan
+            </p>
+          </details>
+        </section>
       </div>
-      <section data-pane="quests" hidden>
-        <ul id="questlist"></ul>
-      </section>
-      <section data-pane="scores">
-        <p>
-          <label
-            >Board
-            <select id="board">
-              <option value="score">Top score</option>
-              <option value="wave">Highest wave</option>
-              <option value="fastest">Fastest full clear</option>
-            </select></label
-          >
-          <label
-            >Difficulty
-            <select id="difficulty">
-              <option value="">All</option>
-              <option value="easy">Easy</option>
-              <option value="normal">Normal</option>
-              <option value="hard">Hard</option>
-              <option id="dailyopt">Today's daily</option>
-              <option value="modded">Mutators &amp; maps</option>
-            </select></label
-          >
-        </p>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Score</th>
-              <th>Waves</th>
-              <th>HP</th>
-              <th>Time</th>
-              <th>Difficulty</th>
-              <th>Date</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-        <p id="build" style="opacity: 0.6; font-size: 0.8em"></p>
-      </section>
-      <section data-pane="hero" hidden>
-        <p>
-          🐚 <b id="shells">0</b> shells — earned each game (1 per 3 waves cleared, +4 for a win,
-          max 20). Your hero and skills apply from your next new game.
-        </p>
-        <h3>Hero</h3>
-        <div id="herolist"></div>
-        <h3>Skills · bringing <b id="bringing">0/5</b></h3>
-        <p>Hero and passive skills share the bring slots. Level and Stone are always available.</p>
-        <div id="shop"></div>
-        <h3>Passive skills</h3>
-        <div id="passives"></div>
-      </section>
-      <section data-pane="settings" hidden>
-        <p>
-          <label
-            >Speed
-            <select id="speed">
-              <option value="1">×1</option>
-              <option value="2">×2</option>
-              <option value="4">×4</option>
-              <option value="10">×10</option>
-              <option value="20">×20</option>
-            </select></label
-          >
-          <label>Volume <input id="volume" type="range" min="0" max="1" step="0.05" /></label>
-          <label>Music <input id="music" type="range" min="0" max="1" step="0.05" /></label>
-          <label><input id="lowgfx" type="checkbox" /> Low graphics</label>
-          <label><input id="showdock" type="checkbox" /> Side bar</label>
-        </p>
-        <p class="keys">
-          Keys: K keep · M merge ×2 · N merge ×4 · D downgrade · R remove stone · L level up · S
-          skip turn · Space pause · 1-5 speed ×1 to ×20 · G guide · B menu · F3 debug · wheel zoom ·
-          right-drag pan
-        </p>
-      </section>
-    </div>
+      <footer class="menu-footer">
+        <span>Local saves · Offline ready</span><span id="build"></span>
+      </footer>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

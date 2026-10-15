@@ -4,6 +4,7 @@ services:
     ports:
       - "5180:80"
     environment:
+      IS_DEV: "${IS_DEV:-false}" # true = development favicon, title, and menu version label
       GEMTD_USERS: "jasper:change-me,friend:change-me-too" # preset name:password pairs (optional)
       GEMTD_MAX_USERS: "50" # players may register on the login page up to this many users; 0 = off
     volumes:

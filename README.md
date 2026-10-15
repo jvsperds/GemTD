@@ -33,6 +33,10 @@ Then open `http://<your-server>:5180`. It works as a stack in Dockge/Portainer t
   `docker compose pull && docker compose up -d`, or Dockge's **Update** button. Pin a release
   instead with its version, e.g. `ghcr.io/jvsperds/gemtd:0.5.0`.
 - **Local checkout:** replace `image:` with `build: .` to build what's on disk.
+- **Development branding:** set `IS_DEV=true` in the Compose `.env` file, or set `IS_DEV: "true"`
+  under `environment` in `compose.yaml`. Run `docker compose up -d` to apply the change.
+  The game uses an orange DEV favicon and adds `(dev)` to the page title and menu version.
+  The default is `false`; changing this flag needs no image rebuild and does not select the image tag.
 - **Players:** friends sign themselves up with **Register** on the login page: just a name and a
   password, no email. `GEMTD_MAX_USERS` in `compose.yaml` caps the total number of users
   (default 50; `0` turns sign-ups off). You can also preset accounts in `GEMTD_USERS` as
@@ -63,7 +67,8 @@ Each round:
 3. The wave starts. Creeps walk S → 1 → 2 → 3 → 4 → 5 → E; leaks damage the castle.
 
 Kills give gold and XP. XP raises your level (better gem odds); **Buy level (L)** spends gold to
-level up early. The top-damage tower each wave earns an MVP stack (+10% damage) and wears a crown.
+level up early. The top-damage tower each wave earns an MVP stack (+10% damage, up to 10 per tower; a capped tower
+passes the award on). The tower with the most damage dealt wears a crown.
 Special towers gain +10% damage per 10 kills. Pedals are 2-gem utility blocks built with Combine
 and laid on open path cells, where they cast a spell on creeps that cross them. Select towers (Ctrl+click or Ctrl+drag for several) to set
 their aim mode on the **Targeting** tab.

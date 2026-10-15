@@ -6,6 +6,7 @@ import {
   AIM,
   AIM_ELITE,
   codeOf,
+  MVP_CAP,
   rng,
   type Combat,
   type GemDef,
@@ -104,6 +105,7 @@ export class Game {
   onCommand: (() => void) | null = null;
   goldMult = 1; // Tough mutator
   noMerge = false; // No merges mutator
+  mvpCap = MVP_CAP; // Infinity for runs started before the cap (rules < 5)
   /** State at the end of the last wave, as JSON ('' before the first); see `resume`. */
   snap = '';
   /** XP needed to reach level L is xpFor[L - 1]. */
@@ -292,7 +294,8 @@ export class Game {
     this.sim.startWave();
   }
 
-  /** Advance one sim tick; awards the MVP stack when a wave ends. */
+  /** Advance one sim tick; when a wave ends, its top damage dealer still under the cap earns an
+   *  MVP stack. */
   tick() {
     if (this.sim.phase !== 'wave') return;
     this.ticks++;
@@ -306,7 +309,7 @@ export class Game {
       best = 0;
     for (const t of this.combat.towers) {
       const d = t.damageDealt - (this.dmg0.get(t) ?? 0);
-      if (d > best) [mvp, best] = [t, d];
+      if (d > best && t.mvp < this.mvpCap) [mvp, best] = [t, d];
     }
     if (mvp) mvp.mvp++;
     if (this.sim.phase !== 'build') return;
@@ -612,7 +615,8 @@ export class Game {
     if (cost === null || this.gold < cost) return false;
     this.gold -= cost;
     this.level++;
-    this.xp = Math.max(this.xp, this.xpFor[this.level - 1]);
+    const xp = this.xpFor[this.level - 1];
+    if (isFinite(xp)) this.xp = Math.max(this.xp, xp); // bought-only levels (easy) have no XP mark
     return true;
   }
 
