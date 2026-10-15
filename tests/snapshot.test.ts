@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import type { Game } from '../src/sim/game';
+import { SNAPSHOT, type Game } from '../src/sim/game';
 import { newGame } from '../src/sim/setup';
 
 const cols = [10, 12, 14, 16, 20];
@@ -22,7 +22,9 @@ test.each([true, false])(
     expect(JSON.parse(g.snap).log).toBe(g.log.length - 2);
 
     const h = newGame(7, 'easy');
-    h.resume(g.log, usable ? g.snap : g.snap.replace('"v":1', '"v":0'));
+    const snapshot = JSON.parse(g.snap);
+    if (!usable) snapshot.v = SNAPSHOT + 1;
+    h.resume(g.log, JSON.stringify(snapshot));
     expect(h.log).toEqual(g.log);
     expect(h.placed.map((t) => t.def.name)).toEqual(g.placed.map((t) => t.def.name));
     // Same gems, damage, gold and random draws from here on.
@@ -56,4 +58,21 @@ test('resume restarts the next endless wave on difficulties without build rounds
   ]);
   for (const x of [g, h]) while (x.sim.wave === g.sim.lastWave + 2) x.tick();
   expect(h.snap).toBe(g.snap);
+});
+
+test('rules-6 version-1 snapshot falls back to the historical command log', () => {
+  const g = newGame(7, 'easy', [], 'classic', 6);
+  play(g, [8, 10, 12, 14]);
+  const legacy = JSON.parse(g.snap);
+  legacy.v = 1;
+  for (const key of ['pendingEvent', 'activeEvent', 'eventGold', 'eventXp'])
+    delete legacy.game[key];
+  g.run(['place', 10, 16]);
+  const resumed = newGame(7, 'easy', [], 'classic', 6);
+  resumed.resume(g.log, JSON.stringify(legacy));
+  const replayed = newGame(7, 'easy', [], 'classic', 6);
+  replayed.resume(g.log);
+  expect(resumed.log).toEqual(replayed.log);
+  expect(resumed.snap).toBe(replayed.snap);
+  expect(resumed.placed.map((t) => t.def.name)).toEqual(replayed.placed.map((t) => t.def.name));
 });

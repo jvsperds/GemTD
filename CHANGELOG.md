@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added Skyhunter and Skyhunter Ascended, physical anti-air specialists with reduced ground damage.
+- Added optional seeded Events: Shrine, Gold Rush and Hurry Wave, with build-phase choices,
+  explicit risks, decline controls, and one-wave modifiers. Auto-skip waits for event decisions.
+- Preserved historical rules for saved runs and replays; added event resume and browser coverage.
+
 ## 0.5.0 — 2026-10-10
 
 - **Creeps:** every creep is redrawn after the Dota 2 courier it is named for (boar, yak, panda,

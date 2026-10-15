@@ -837,6 +837,42 @@
   ],
   "secret": true
  },
+ "Skyhunter": {
+  "name": "Skyhunter",
+  "damage": 85.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.65,
+  "range": 750.0,
+  "abilities": [
+   "tower_skyhunter"
+  ],
+  "recipes": [
+   [
+    "B2",
+    "R2",
+    "Y2"
+   ]
+  ],
+  "secret": false
+ },
+ "Skyhunter Ascended": {
+  "name": "Skyhunter Ascended",
+  "damage": 180.0,
+  "bonusDamage": 0.0,
+  "attackRate": 0.55,
+  "range": 850.0,
+  "abilities": [
+   "tower_skyhunter2"
+  ],
+  "recipes": [
+   [
+    "Skyhunter",
+    "B4",
+    "R4"
+   ]
+  ],
+  "secret": false
+ },
  "The Great Stone": {
   "name": "The Great Stone",
   "damage": 1369.0,

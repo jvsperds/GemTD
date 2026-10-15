@@ -206,6 +206,8 @@ export class WaveSim {
   hpEase = 1;
   hpRamp = HP_RAMP;
   speedMult = 1; // Swift mutator
+  eventHpMult = 1; // one accepted Gold Rush wave
+  eventSpeedMult = 1; // one accepted Hurry Wave
   bossTricks = false; // Cunning bosses mutator
   streak = 0; // waves in a row that ended with no castle damage
   endless = 0; // waves past the last one, for the current wave
@@ -275,7 +277,7 @@ export class WaveSim {
     const base = extra ? last - 9 + ((extra - 1) % 10) : this.wave;
     const t = this.hpRamp > 1 ? Math.min(1, (this.wave - 1) / (this.hpRamp - 1)) : 1;
     const ease = this.hpEase + (1 - this.hpEase) * t;
-    const mult = this.hpMult * ease * ENDLESS.hp ** extra;
+    const mult = this.hpMult * this.eventHpMult * ease * ENDLESS.hp ** extra;
     const defs = this.waves
       .filter((w) => w.wave === base)
       .map((w) =>
@@ -404,7 +406,8 @@ export class WaveSim {
 
   /** Move speed after rush, % slows (multiplicative) and flat slows, floored at MIN_SPEED. */
   speed(cr: Creep) {
-    const base = cr.def.speed * this.speedMult * (cr.rushT > 0 ? 1 + RUSH : 1);
+    const base =
+      cr.def.speed * this.speedMult * this.eventSpeedMult * (cr.rushT > 0 ? 1 + RUSH : 1);
     if (this.enraged) return base;
     const pct = 1 - (1 - cr.slowPct) * (1 - cr.auraSlowPct) * (1 - cr.stackPct);
     const v = base * (1 - pct) - cr.slow - cr.auraSlow;
