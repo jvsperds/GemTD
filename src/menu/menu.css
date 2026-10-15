@@ -337,6 +337,15 @@
 .settings-group label:has(input[type='checkbox']) {
   justify-content: start;
 }
+.zoom-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.zoom-controls button {
+  flex: 1 1 100px;
+  padding: 10px;
+}
 #questlist {
   display: grid;
   gap: 12px;

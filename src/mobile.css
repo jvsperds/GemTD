@@ -6,6 +6,8 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   #hud {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     flex-wrap: nowrap;
     gap: 6px;
     padding: max(4px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 4px
@@ -15,13 +17,37 @@
     display: none;
   }
   #hudinfo {
-    flex: 1;
-    gap: 2px 8px;
+    display: grid;
+    gap: 6px;
     font-size: 12px;
     min-width: 0;
   }
   #hudinfo .chip {
     gap: 4px;
+    min-width: 0;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  #hudinfo .hud-run {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+  }
+  #hudinfo .hud-resources {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: baseline;
+    gap: 4px 8px;
+    padding-top: 6px;
+    border-top: 1px solid #ffffff18;
+  }
+  .hud-resources > .chip {
+    order: 1;
+  }
+  .hud-resources > :is(#hp, #gold, #clock) {
+    order: 0;
   }
   #hudinfo .chip b,
   #hudinfo .tag {
@@ -56,10 +82,10 @@
     display: grid;
     grid-template-columns: 52px minmax(0, 1fr);
     align-items: center;
-    gap: 6px;
+    gap: 4px 6px;
     width: calc(100% - 16px);
     max-width: none;
-    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+    padding: 6px 8px max(8px, env(safe-area-inset-bottom));
   }
   #panel button {
     min-width: 44px;
@@ -170,15 +196,21 @@
     font-size: 10px;
   }
   #boardtools {
-    bottom: calc(100% + 6px);
-    right: 0;
-    gap: 4px;
-    padding: 3px;
-    border-width: 1px;
+    position: static;
+    grid-column: 1 / -1;
+    order: 3;
+    padding: 0;
   }
   #boardtools #place-touch {
-    min-width: 120px;
+    width: 100%;
     font-size: 12px;
+  }
+  #boardtools:has(#place-touch[hidden]) {
+    display: none;
+  }
+  #place-touch:not(:disabled) {
+    background: var(--two-tone-gold);
+    color: var(--ink);
   }
   #boardtools button {
     padding: 4px 8px;
@@ -194,7 +226,7 @@
   }
   #dock {
     top: auto;
-    bottom: calc(var(--panel-height, 130px) + var(--boardtools-height, 52px) + 12px);
+    bottom: calc(var(--panel-height, 130px) + 12px);
     left: 50%;
     transform: translateX(-50%);
     flex-direction: row;
@@ -245,7 +277,7 @@
   #boardtools {
     position: static;
     grid-column: 1 / -1;
-    order: -2;
+    order: 3;
     flex-wrap: wrap;
     justify-content: center;
   }
