@@ -425,8 +425,7 @@ export class Game {
     if (usesRound && this.pendingEvent) return false;
     const def = this.combat.gems[name];
     if (!def) return false;
-    if (!def.pedal)
-      this.towerDiscoveries = [...new Set([...this.towerDiscoveries, def.name])];
+    if (!def.pedal) this.towerDiscoveries = [...new Set([...this.towerDiscoveries, def.name])];
     if (this.contract && !def.pedal) {
       this.contractSpecialsBuilt++;
       if (

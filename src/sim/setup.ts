@@ -132,7 +132,12 @@ export function newGame(
 ) {
   const on = (m: string) => mutators.includes(m);
   const data = (MAPS[mapId] ?? MAPS.classic).data;
-  const sim = new WaveSim(new Maze(data, rules >= 9), waves as WaveEntry[], seed);
+  // Lock only Rift's new terrain; Classic and Crossroads retain their historical build rules.
+  const sim = new WaveSim(
+    new Maze(data, rules >= 9 && mapId === 'rift'),
+    waves as WaveEntry[],
+    seed,
+  );
   sim.hpMult = rules < 4 ? OLD_HP[difficulty] : DIFFICULTY[difficulty].hp;
   if (rules >= 6) sim.hpEase = 1 / sim.hpMult;
   const levels = quality.levels as LevelDef[];

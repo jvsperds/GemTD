@@ -163,6 +163,9 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   'star-of-eden': ['beast', '#1a5a3a', '#2fbf5a', 'b'],
   skyhunter: ['bird', '#456078', '#d9f3ff', 'b'],
   'skyhunter-ascended': ['bird', '#35445c', '#ffd85a', 'b'],
+  'the-singularity': ['crystal', '#29233f', '#c08aff', 'b'],
+  echo: ['orb', '#356d83', '#74e9ff', 'b'],
+  quintessence: ['pillar', '#d6e5f0', '#ad7cff', 'b'],
 };
 // Pedals: hexagonal rune stones in the spell's colour, rimmed by tier (base, Sparkling, Blingbling).
 const SPELL_COLOR: Record<string, string> = {
@@ -2864,6 +2867,9 @@ const ATTACK: Record<string, [Style, string]> = {
   'star-of-eden': ['laguna', '#4dff8a'],
   skyhunter: ['ray', '#bfefff'],
   'skyhunter-ascended': ['ray', '#ffe27a'],
+  'the-singularity': ['finger', '#c08aff'],
+  echo: ['line', '#74e9ff'],
+  quintessence: ['ray', '#ad7cff'],
 };
 export const hasAttack = (key: string) => key in ATTACK;
 /** Gems throw a cut shard of their own colour; specials have their own entry. */

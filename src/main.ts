@@ -706,8 +706,7 @@ async function recordScore() {
     ...h,
     shells: h.shells + shells,
     quests: [...(h.quests ?? []), ...quests.map((q) => q.id)],
-    contractRewards:
-      contractReward && period ? [...paidPeriods, period] : paidPeriods,
+    contractRewards: contractReward && period ? [...paidPeriods, period] : paidPeriods,
   });
   const ended = game.log.at(-1)?.[1][0] === 'end';
   menu.show({
@@ -1413,15 +1412,17 @@ function updateHud() {
     builder && 'Maze builder',
     cfg.daily && `Daily ${cfg.daily}`,
     game.activeEvent && `${EVENT_COPY[game.activeEvent.id].name} · this wave only`,
-    game.contract && `Contract · ${game.contract.name}${game.contractFailed ? ' · failed' : ' · active'}`,
+    game.contract &&
+      `Contract · ${game.contract.name}${game.contractFailed ? ' · failed' : ' · active'}`,
     cfg.map && cfg.map !== 'classic' && MAPS[cfg.map]?.name,
     !builder && cfg.difficulty,
   ].filter(Boolean);
   const s =
     '<div class="hud-run">' +
     tags
-      .map((t) =>
-        `<span class="tag"${game.contract && String(t).startsWith('Contract ·') ? ` title="${game.contract.tip}"` : ''}>${t}</span>`,
+      .map(
+        (t) =>
+          `<span class="tag"${game.contract && String(t).startsWith('Contract ·') ? ` title="${game.contract.tip}"` : ''}>${t}</span>`,
       )
       .join('') +
     (builder
