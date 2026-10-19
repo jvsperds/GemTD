@@ -54,7 +54,8 @@ export function initNewGame(
     $('customsetup').hidden = mode !== 'standard';
     $('setuploadout').hidden = mode === 'builder';
     $('modedescription').textContent = {
-      standard: 'Choose your difficulty and map. Optional mutators change the rules. Challenge contracts give a seeded goal and pay once per day.',
+      standard:
+        'Choose your difficulty and map. Optional mutators change the rules. Challenge contracts give a seeded goal and pay once per day.',
       daily: `Today's challenge (${new Date().toLocaleDateString()}): Normal difficulty, Classic map, no mutators. Your hero and skills apply.`,
       builder:
         'Build and save mazes freely on the Classic map. No waves, scores, or shell rewards.',
