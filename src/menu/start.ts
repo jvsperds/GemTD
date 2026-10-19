@@ -6,6 +6,7 @@ export interface Start {
   seed: number;
   difficulty: string;
   daily?: string;
+  contractPeriod?: string;
   mutators?: string[];
   map?: string;
   replay?: LogEntry[];

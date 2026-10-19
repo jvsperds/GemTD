@@ -205,6 +205,7 @@ const saveNow = (commands = game.log) =>
     seed: game.seed,
     difficulty: cfg.difficulty,
     daily: cfg.daily,
+    contractPeriod: cfg.contractPeriod,
     mutators: cfg.mutators,
     map: cfg.map,
     commands,
@@ -653,6 +654,7 @@ async function recordScore() {
     daily: cfg.daily,
     mutators: cfg.mutators,
     map: cfg.map,
+    contractPeriod: cfg.contractPeriod,
     seed: game.seed,
     won: game.wavesCleared >= sim.lastWave,
     date: Date.now(),
@@ -675,18 +677,47 @@ async function recordScore() {
       fullHp: sim.castleHp >= CASTLE_HP,
       maxLevel: game.level >= game.levels.length,
       towers: combat.towers.map((t) => t.def.name),
+      builtTowers: game.towerDiscoveries,
+      eventContractsCompleted: game.eventContractsCompleted,
     },
     h.quests,
   );
   const rate = DIFFICULTY[cfg.difficulty as Difficulty]?.shells ?? 1;
-  const shells = shellsFor(game.wavesCleared, won, rate) + quests.reduce((n, q) => n + q.shells, 0);
+  const period = cfg.contractPeriod;
+  const paidPeriods = h.contractRewards ?? [];
+  const contractReward =
+    game.contractComplete && period && !paidPeriods.includes(period) ? game.contract!.reward : 0;
+  const shells =
+    shellsFor(game.wavesCleared, won, rate) +
+    quests.reduce((n, q) => n + q.shells, 0) +
+    contractReward;
+  const contractNotice = game.contract
+    ? {
+        id: `contract-${period ?? 'untracked'}`,
+        name: game.contractComplete
+          ? `${game.contract.name} complete`
+          : `${game.contract.name} incomplete`,
+        tip: game.contract.tip,
+        shells: contractReward,
+        done: () => game.contractComplete,
+      }
+    : null;
   await db.set('hero', {
     ...h,
     shells: h.shells + shells,
     quests: [...(h.quests ?? []), ...quests.map((q) => q.id)],
+    contractRewards:
+      contractReward && period ? [...paidPeriods, period] : paidPeriods,
   });
   const ended = game.log.at(-1)?.[1][0] === 'end';
-  menu.show({ score: score(game), won, ended, shells, summary: summary(), quests });
+  menu.show({
+    score: score(game),
+    won,
+    ended,
+    shells,
+    summary: summary(),
+    quests: contractNotice ? [...quests, contractNotice] : quests,
+  });
 }
 /** Game-over recap: run totals, then the five towers that did the most damage. */
 function summary() {
@@ -728,7 +759,9 @@ function showBanner() {
   if (!d) return;
   const tags = [
     game.activeEvent && `${EVENT_COPY[game.activeEvent.id].name} · this wave only`,
+    game.contract && `Contract · ${game.contract.name}${game.contractFailed ? ' · failed' : ''}`,
     d.boss && (sim.bosses > 1 ? `${sim.bosses} Bosses` : 'Boss'),
+    d.boss && sim.currentBossRotation,
     d.flying && 'Flying',
     sim.wave > sim.lastWave && 'Endless',
   ]
@@ -1380,12 +1413,17 @@ function updateHud() {
     builder && 'Maze builder',
     cfg.daily && `Daily ${cfg.daily}`,
     game.activeEvent && `${EVENT_COPY[game.activeEvent.id].name} · this wave only`,
+    game.contract && `Contract · ${game.contract.name}${game.contractFailed ? ' · failed' : ' · active'}`,
     cfg.map && cfg.map !== 'classic' && MAPS[cfg.map]?.name,
     !builder && cfg.difficulty,
   ].filter(Boolean);
   const s =
     '<div class="hud-run">' +
-    tags.map((t) => `<span class="tag">${t}</span>`).join('') +
+    tags
+      .map((t) =>
+        `<span class="tag"${game.contract && String(t).startsWith('Contract ·') ? ` title="${game.contract.tip}"` : ''}>${t}</span>`,
+      )
+      .join('') +
     (builder
       ? ''
       : `<span class="chip"><b>Wave</b> ${sim.wave > sim.lastWave ? `${sim.wave} ∞` : `${sim.wave}/${sim.lastWave}`}</span>`) +

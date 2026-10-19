@@ -268,5 +268,23 @@
     "name": "Burning Stone",
     "inputs": "R5 + P5 + R4 + P4",
     "altInputs": []
+  },
+  {
+    "section": "Secret towers",
+    "name": "The Singularity",
+    "inputs": "Obsidian + Agate + Fantastic Miss Shrimp + Yaphets Stone + Burning Stone",
+    "altInputs": []
+  },
+  {
+    "section": "Combined towers",
+    "name": "Echo",
+    "inputs": "Yaphets Stone + R5 + B5",
+    "altInputs": []
+  },
+  {
+    "section": "Combined towers",
+    "name": "Quintessence",
+    "inputs": "Obsidian + D6 + Q6",
+    "altInputs": []
   }
 ]

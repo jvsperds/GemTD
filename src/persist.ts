@@ -13,6 +13,7 @@ export interface ScoreRow {
   timeSec: number;
   difficulty: string;
   daily?: string; // local date of a daily-challenge run
+  contractPeriod?: string;
   mutators?: string[];
   map?: string;
   seed: number;
@@ -30,6 +31,7 @@ export interface Save {
   mutators?: string[];
   map?: string;
   daily?: string;
+  contractPeriod?: string;
   commands: LogEntry[];
   snap?: string; // Game.snap: resume from here, replaying only the commands after it
   rules?: number; // as on ScoreRow
@@ -45,6 +47,7 @@ export interface Hero {
   heroes?: string[]; // unlocked heroes besides the free one
   hero?: string; // picked for the next game
   quests?: string[]; // completed quest ids
+  contractRewards?: string[]; // local dates on which a seeded contract has paid
 }
 export interface Settings {
   speed: number;

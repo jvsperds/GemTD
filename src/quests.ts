@@ -9,6 +9,8 @@ export interface Run {
   fullHp: boolean;
   maxLevel: boolean;
   towers: string[]; // names on the board at the end
+  builtTowers?: string[]; // special towers combined during the run, even if later upgraded
+  eventContractsCompleted?: number;
 }
 export interface Quest {
   id: string;
@@ -85,6 +87,20 @@ export const QUESTS: Quest[] = [
     tip: 'Reach the top builder level',
     shells: 5,
     done: (r) => r.maxLevel,
+  },
+  {
+    id: 'skyhunter-discovery',
+    name: 'Sky hunter',
+    tip: 'Build Skyhunter or Skyhunter Ascended once',
+    shells: 6,
+    done: (r) => (r.builtTowers ?? []).some((n) => n.startsWith('Skyhunter')),
+  },
+  {
+    id: 'event-contract',
+    name: 'Contract keeper',
+    tip: 'Complete one accepted Gold Rush or Hurry Wave event',
+    shells: 6,
+    done: (r) => (r.eventContractsCompleted ?? 0) > 0,
   },
 ];
 

@@ -10,6 +10,7 @@ import { PEDALS } from './pedals';
 import { Maze, type MapData } from './maze';
 import { allDefs, Combat, type GemDef, type SpecialDef } from './towers';
 import { WaveSim, type WaveEntry } from './waves';
+import { contractAt } from './contracts';
 
 const GEMS = gems as Record<string, GemDef>;
 export const DEFS = allDefs(
@@ -59,6 +60,10 @@ export const MUTATORS: Record<string, { name: string; tip: string }> = {
   nomerge: { name: 'No merges', tip: 'Merge ×2 and ×4 are disabled' },
   bosses: { name: 'Cunning bosses', tip: 'Bosses blink, shield, rush or split on death' },
   events: { name: 'Events', tip: 'Optional build-phase contracts with visible rewards and risks' },
+  contracts: {
+    name: 'Challenge contract',
+    tip: 'A seeded run goal. Complete it for 10 shells, once per day.',
+  },
 };
 
 /** Layouts: same grid and walls, different checkpoint order. */
@@ -79,6 +84,31 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
       ],
     },
   },
+  rift: {
+    name: 'Rift Garden',
+    data: {
+      ...classic,
+      noBuildZones: [
+        ...(classic.noBuildZones ?? []),
+        { cols: [11, 14], rows: [11, 13] },
+        { cols: [22, 25], rows: [23, 25] },
+      ],
+      walls: {
+        ...classic.walls,
+        segments: [
+          ...classic.walls.segments,
+          { row: 11, cols: [10, 14] },
+          { row: 13, cols: [10, 14] },
+          { col: 10, rows: [11, 13] },
+          { col: 14, rows: [11, 13] },
+          { row: 23, cols: [22, 26] },
+          { row: 25, cols: [22, 26] },
+          { col: 22, rows: [23, 25] },
+          { col: 26, rows: [23, 25] },
+        ],
+      },
+    },
+  },
 };
 
 /** Rule set of new games. A run records its own, so a save or Watch replay from before a change to
@@ -87,8 +117,11 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
  *  4: harder creeps per difficulty, 10% lag, easy's extra levels must be bought.
  *  5: poison takes a share of max HP, chain lightning scales with attack damage, MVP caps at 10.
  *  6: the difficulty's creep HP multiplier ramps up from ×1 on wave 1.
- *  7: Skyhunter and opt-in Events. */
-export const RULES = 7;
+ *  7: Skyhunter and opt-in Events.
+ *  8: The Singularity secret tower.
+ *  9: Fixed terrain and seeded challenge contracts.
+ * 10: Echo, Quintessence and endless boss rotations. */
+export const RULES = 10;
 
 export function newGame(
   seed: number,
@@ -99,7 +132,7 @@ export function newGame(
 ) {
   const on = (m: string) => mutators.includes(m);
   const data = (MAPS[mapId] ?? MAPS.classic).data;
-  const sim = new WaveSim(new Maze(data), waves as WaveEntry[], seed);
+  const sim = new WaveSim(new Maze(data, rules >= 9), waves as WaveEntry[], seed);
   sim.hpMult = rules < 4 ? OLD_HP[difficulty] : DIFFICULTY[difficulty].hp;
   if (rules >= 6) sim.hpEase = 1 / sim.hpMult;
   const levels = quality.levels as LevelDef[];
@@ -116,11 +149,13 @@ export function newGame(
   if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
   g.noMerge = on('nomerge');
   g.events = rules >= 7 && on('events');
+  if (rules >= 9 && on('contracts')) g.contract = contractAt(seed);
   if (rules < 4) g.combat.endgameLag = rules < 2 ? 1 : rules < 3 ? ENDGAME.lag2 : ENDGAME.lag3;
   // Levels past the XP curve (easy) all shared its last threshold, so buying one gave the rest free.
   else g.xpFor.forEach((x, i) => i && x === g.xpFor[i - 1] && (g.xpFor[i] = Infinity));
   if (rules < 5) [g.combat.poisonHp, g.combat.chainPct, g.mvpCap] = [0, 0, Infinity];
   sim.bossTricks = on('bosses');
+  sim.endlessBossRotation = rules >= 10;
   return g;
 }
 

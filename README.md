@@ -83,7 +83,7 @@ Each game pays **shells**. Spend them in the menu's **Hero** tab on heroes, skil
 and choose what to bring before a run. **Quests** (menu → Quests) pay bonus shells the first time
 you meet them.
 
-The new-game dialog sets difficulty (Easy/Normal/Hard), the **map** (Classic or Crossroads),
+The new-game dialog sets difficulty (Easy/Normal/Hard), the **map** (Classic, Crossroads or Rift Garden),
 **mutators** (Swift, Tough, No merges and Cunning bosses that blink, shield, rush or split), the
 local **Daily challenge** (same seed for the whole day) and the **Maze builder**. Your first game
 shows teaching hints for three waves.
@@ -93,6 +93,12 @@ extra gold) and Hurry Wave (faster creeps for extra XP). Choose or decline befor
 the wave; contracts expire after that wave. Events stop before wave 50 and use the modified-run
 leaderboard. **Skyhunter** combines B2 + R2 + Y2 into a physical anti-air specialist; add B4 + R4
 to upgrade it to **Skyhunter Ascended**. Both sacrifice ground damage for stronger flyer damage.
+The secret **The Singularity** combines Obsidian, Agate, Fantastic Miss Shrimp, Geluanshi and
+The Burning Stone. It is exceptionally powerful and requires all five secret towers in one run.
+The optional **Challenge contract** mutator adds a seed-selected run goal; a completed contract pays
+10 shells once per day. **Echo** repeats part of a landed hit after a delay, while **Quintessence**
+is a slow sniper that bypasses armor and magic resistance. Endless boss waves announce their seeded
+two-trick rotation.
 
 Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `S` skip
 turn · `L` buy level · `Space` pause · `1`–`5` speed ×1/×2/×4/×10/×20 · `G` cycle maze guides ·

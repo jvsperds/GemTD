@@ -45,6 +45,7 @@ export function initScores(confirmLeave: () => boolean) {
               seed: x.seed,
               difficulty: x.difficulty,
               daily: x.daily,
+              contractPeriod: x.contractPeriod,
               mutators: x.mutators,
               map: x.map,
               replay: x.commands,

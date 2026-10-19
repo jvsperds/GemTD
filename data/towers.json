@@ -888,6 +888,63 @@
   "recipes": [],
   "secret": true
  },
+ "The Singularity": {
+  "name": "The Singularity",
+  "damage": 12000.0,
+  "bonusDamage": 640.0,
+  "attackRate": 0.25,
+  "range": 1200.0,
+  "abilities": [
+   "tower_baoji1",
+   "tower_attack6"
+  ],
+  "recipes": [
+   [
+    "Obsidian",
+    "Agate",
+    "Fantastic Miss Shrimp",
+    "Geluanshi",
+    "The Burning Stone"
+   ]
+  ],
+  "secret": true
+ },
+ "Echo": {
+  "name": "Echo",
+  "damage": 850.0,
+  "bonusDamage": 320.0,
+  "attackRate": 0.75,
+  "range": 850.0,
+  "abilities": [
+   "tower_echo"
+  ],
+  "recipes": [
+   [
+    "Geluanshi",
+    "R5",
+    "B5"
+   ]
+  ],
+  "secret": false
+ },
+ "Quintessence": {
+  "name": "Quintessence",
+  "damage": 1800.0,
+  "bonusDamage": 0.0,
+  "attackRate": 3.5,
+  "range": 1400.0,
+  "abilities": [
+   "tower_quintessence"
+  ],
+  "recipes": [
+   [
+    "Obsidian",
+    "D6",
+    "Q6"
+   ]
+  ],
+  "secret": false
+ },
  "Black Opal": {
   "name": "Black Opal",
   "damage": 90.0,

@@ -127,6 +127,7 @@ export const CHAIN_FROST = { chance: 0.25, bounces: 10, dmg: 300, range: 600, pc
 export const FROST = { pct: 0.5, splash: 300, time: 3 };
 // Each jump deals `damage`, or `pct` of the tower's attack damage if that is more.
 export const LIGHTNING = { chance: 0.3, damage: 150, pct: 0.5, jumps: 5, radius: 1000 };
+export const ECHO = { delay: 0.4, share: 0.4 };
 /** Poison at the top tier also deals this share of max HP per second (lower tiers in proportion
  *  to their flat damage; half on bosses; lags in endless like Sunder). */
 export const POISON_HP = 0.01;
@@ -146,6 +147,12 @@ interface EnemyAura {
   mr?: number;
   flyingOnly?: boolean;
   pierceImmune?: boolean;
+}
+interface PendingEcho {
+  due: number;
+  from: Tower;
+  target: Creep;
+  damage: number;
 }
 export interface Fx {
   slow: number;
@@ -176,6 +183,8 @@ export interface Fx {
   maxHp: number; // fraction of target max HP per hit, pure
   souls: number; // fraction of a killed creep's max HP gained as attack damage
   flyerDamage: [flyer: number, ground: number] | null;
+  echo: number;
+  quintessence: boolean;
 }
 
 const pct = (x: number) => +(x * 100).toFixed(2) + '%';
@@ -223,6 +232,8 @@ export function parseFx(d: GemDef): Fx {
     maxHp: 0,
     souls: 0,
     flyerDamage: null,
+    echo: 0,
+    quintessence: false,
   };
   for (const id of d.abilities) {
     const n = lvl(id);
@@ -260,6 +271,8 @@ export function parseFx(d: GemDef): Fx {
     else if (id === 'endgame_souls') f.souls = ENDGAME.souls;
     else if (id === 'tower_skyhunter') f.flyerDamage = [1.5, 0.65];
     else if (id === 'tower_skyhunter2') f.flyerDamage = [2, 0.6];
+    else if (id === 'tower_echo') f.echo = ECHO.share;
+    else if (id === 'tower_quintessence') f.quintessence = true;
     else if (id === 'tower_speed2') f.as = 500;
     else if (id === 'tower_speed1') f.as = 200;
     else if (id === 'tower_speed_aura_guichu') f.asAura = [200, 200];
@@ -306,6 +319,8 @@ export class Combat {
   onHeal: (() => void) | null = null;
   rand: () => number;
   private fxCache = new Map<GemDef, Fx>();
+  private tickCount = 0;
+  private echoes: PendingEcho[] = [];
 
   /** A tower's effects, including Natural Zumurud's copied skills. */
   tfx(t: Tower) {
@@ -534,6 +549,7 @@ export class Combat {
       cr.shield--;
       return;
     }
+    if (f.quintessence && (hasAbility(cr, 'enemy_wumian') || magicImmune(cr))) return;
     let dmg = (d.damage + d.bonusDamage + t.souls) * this.damageMult(t);
     if (f.flyerDamage) dmg *= cr.def.flying ? f.flyerDamage[0] : f.flyerDamage[1];
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
@@ -572,7 +588,16 @@ export class Combat {
       }
     if (f.gaze && this.rand() < GAZE.chance)
       for (const o of this.near(cr, GAZE.range)) o.stunT = o.ampT = GAZE.time;
-    this.hit(t, cr, dmg);
+    if (f.quintessence) {
+      if (!hasAbility(cr, 'enemy_wumian') && !magicImmune(cr)) this.deal(t, cr, dmg);
+    } else this.hit(t, cr, dmg);
+    if (f.echo && cr.alive && !hasAbility(cr, 'enemy_wumian'))
+      this.echoes.push({
+        due: this.tickCount + Math.ceil(ECHO.delay / TICK),
+        from: t,
+        target: cr,
+        damage: dmg * f.echo,
+      });
     if (f.maxHp)
       this.deal(t, cr, this.lagged(cr) * f.maxHp * (cr.def.boss ? ENDGAME.bossMaxHp : 1));
     if (t.bonds.t > 0) {
@@ -754,6 +779,16 @@ export class Combat {
 
   tick() {
     this.shots.length = 0;
+    this.tickCount++;
+    const due = this.echoes.filter((e) => e.due <= this.tickCount);
+    this.echoes = this.echoes.filter((e) => e.due > this.tickCount);
+    for (const e of due) {
+      if (!e.target.alive) continue; // echoes never retarget a dead original target
+      this.shots.push({ from: e.from, to: e.target });
+      if (e.target.shield > 0) e.target.shield--;
+      else this.hit(e.from, e.target, e.damage); // armor is current; no on-hit effects can repeat
+    }
+    if (this.sim.phase !== 'wave') this.echoes.length = 0;
     const creeps = this.sim.creeps;
     if (this.aurasStale()) this.refreshAuras();
     this.auras();
