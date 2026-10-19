@@ -18,6 +18,7 @@ import { ROCK } from './maze';
 import { DURATION, SKILLS, goldOf, withPassives, type Loadout } from './skills';
 import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL, type Rng } from './waves';
 import { eventAt, type EventChoice, type EventOffer } from './events';
+import type { ChallengeContract } from './contracts';
 
 export interface LevelDef {
   level: number;
@@ -66,7 +67,7 @@ export function score(g: Game) {
 }
 
 /** Snapshot format; a save with another number is resumed by replaying its commands instead. */
-export const SNAPSHOT = 2;
+export const SNAPSHOT = 3;
 
 export const GREED = { chance: 0.05, mult: 10 };
 // Tuned with `npm run balance` (8 seeds): a level-buying bot is at level 6–8 by wave ~22.
@@ -108,6 +109,11 @@ export class Game {
   goldMult = 1; // Tough mutator
   noMerge = false; // No merges mutator
   events = false; // Events mutator; disabled for historical rules
+  contract: ChallengeContract | null = null;
+  contractSpecialsBuilt = 0;
+  contractFailed = false;
+  towerDiscoveries: string[] = [];
+  eventContractsCompleted = 0;
   pendingEvent: EventOffer | null = null;
   activeEvent: EventOffer | null = null;
   eventGold = 1;
@@ -276,6 +282,11 @@ export class Game {
       activeEvent,
       eventGold,
       eventXp,
+      contract,
+      contractSpecialsBuilt,
+      contractFailed,
+      towerDiscoveries,
+      eventContractsCompleted,
     } = this;
     return {
       v: SNAPSHOT,
@@ -292,6 +303,11 @@ export class Game {
         activeEvent,
         eventGold,
         eventXp,
+        contract,
+        contractSpecialsBuilt,
+        contractFailed,
+        towerDiscoveries,
+        eventContractsCompleted,
       },
       sim: { wave, castleHp, guard, evade, revenge, streak, endless, bosses },
       rand: [this.rand, sim.rand, combat.rand].map((f) => (f as Rng).s),
@@ -353,6 +369,7 @@ export class Game {
     }
     if (mvp) mvp.mvp++;
     if (this.sim.phase !== 'build') return;
+    if (this.activeEvent) this.eventContractsCompleted++;
     // Contracts last exactly one wave. Clear them before offering the next one so no base
     // difficulty or mutator state leaks into a later wave.
     this.activeEvent = null;
@@ -370,6 +387,8 @@ export class Game {
     if (this.over) return out; // towers can be combined mid-wave too
     for (const def of Object.values(this.combat.gems)) {
       if (this.rules < 7 && def.name.startsWith('Skyhunter')) continue;
+      if (this.rules < 8 && def.name === 'The Singularity') continue;
+      if (this.rules < 10 && (def.name === 'Echo' || def.name === 'Quintessence')) continue;
       const recipes = (def as GemDef & Partial<SpecialDef>).recipes ?? [];
       for (const rec of recipes) {
         const parts = this.match(rec, t);
@@ -405,6 +424,16 @@ export class Game {
     const usesRound = r.parts.some((p) => this.placed.includes(p));
     if (usesRound && this.pendingEvent) return false;
     const def = this.combat.gems[name];
+    if (!def) return false;
+    if (!def.pedal) this.towerDiscoveries = [...new Set([...this.towerDiscoveries, def.name])];
+    if (this.contract && !def.pedal) {
+      this.contractSpecialsBuilt++;
+      if (
+        this.contract.id === 'special-limit' &&
+        this.contractSpecialsBuilt > (this.contract.limit ?? 0)
+      )
+        this.contractFailed = true;
+    }
     // Gems combined into a pedal all become stones and the pedal goes into the hand, to be laid
     // on the path. Upgrading pedals (3× same) keeps the selected one where it lies.
     const fromGems = def.pedal && !t.def.pedal;
@@ -475,6 +504,8 @@ export class Game {
     const out = new Set<string>();
     for (const def of Object.values(this.combat.gems)) {
       if (this.rules < 7 && def.name.startsWith('Skyhunter')) continue;
+      if (this.rules < 8 && def.name === 'The Singularity') continue;
+      if (this.rules < 10 && (def.name === 'Echo' || def.name === 'Quintessence')) continue;
       for (const rec of (def as GemDef & Partial<SpecialDef>).recipes ?? []) {
         const left = new Map(have);
         const miss = rec.filter((c) => {
@@ -534,7 +565,18 @@ export class Game {
   removeStone(c: number, r: number) {
     // Only while gems can still be placed this round.
     if (this.step !== 'place' || this.combat.towerAt(c, r)) return false;
-    return this.sim.maze.removeRock(c, r);
+    const removed = this.sim.maze.removeRock(c, r);
+    if (removed && this.contract?.id === 'no-stones') this.contractFailed = true;
+    return removed;
+  }
+
+  get contractComplete() {
+    return !!(
+      this.contract &&
+      !this.contractFailed &&
+      this.wavesCleared >= this.sim.lastWave &&
+      this.sim.castleHp > 0
+    );
   }
 
   /** Whether skill `id` can be cast now (before any map cells are picked). */

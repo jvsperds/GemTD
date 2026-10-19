@@ -92,6 +92,10 @@ def apply_codex(towers, gems):
     if not codex.exists():
         return towers
     towers = {CODEX_RENAME.get(n, n): {**t, "name": CODEX_RENAME.get(n, n)} for n, t in towers.items()}
+    # Normalize recipe references too; otherwise new recipes that use the wiki names of
+    # renamed towers become invalid after the definitions receive their Codex names.
+    for t in towers.values():
+        t["recipes"] = [[CODEX_RENAME.get(part, part) for part in rec] for rec in t["recipes"]]
     gem_code = {(g["name"].split()[-1], g["quality"]): code for code, g in gems.items()}
     for c in load(codex):
         t = towers.get(c["name"])

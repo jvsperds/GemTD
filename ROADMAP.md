@@ -1,6 +1,6 @@
 # GemTD expansion roadmap
 
-Status: Release A implemented; validation evidence and limits are in [EXPANSION-VALIDATION.md](EXPANSION-VALIDATION.md). Releases B/C and later candidates remain proposed. Based on three Claude Haiku 5.5 repository research passes (2026-10-15). Release labels indicate sequence, not delivery dates.
+Status: Release A is in `dev`; validation evidence and limits are in [EXPANSION-VALIDATION.md](EXPANSION-VALIDATION.md). The Singularity is a rules-8 secret-tower add-on. Releases B/C have implementation prototypes in this checkout under rules 9/10. Map-specific balance, player-duration evidence, combat balance, and browser validation remain pending. Based on three Claude Haiku 5.5 repository research passes (2026-10-15). Release labels indicate sequence, not delivery dates.
 
 ## Direction
 
@@ -22,6 +22,8 @@ Completion criteria: new mechanics have focused tests; old saves and replays ret
 
 ## Release B — maps and goals
 
+Implementation status: Rift Garden, opt-in seeded challenge contracts, daily contract rewards, discovery quests, and a source-priced progression review are implemented under rules 9/10. Route/playtest evidence and representative player-duration data remain outstanding. The balance bot has not been updated for Rift Garden, so its results cannot yet be used to compare map difficulty.
+
 - **One terrain-distinct map:** new walls or no-build regions, rather than another checkpoint permutation. Preserve valid routes and test ground/flying movement. Update the balance bot's map-specific maze strategy before using its results to judge difficulty.
 - **Challenge contracts:** seeded optional run goals such as limited special-tower counts or no stone removal. Record required counters through commands/state so replay and resume agree. Reward completion once per contract period; keep them separate from one-off quests.
 - **Progression pacing review:** measure time to the first useful unlock and several representative loadouts. Research estimates roughly 7,700 shells for all existing unlocks versus about 40 for a Normal clear; verify those totals before tuning. Prefer improving rewards or offering sidegrades before adding more purchase tiers.
@@ -30,6 +32,8 @@ Completion criteria: new mechanics have focused tests; old saves and replays ret
 Completion criteria: map routing and playtests pass, challenge rewards cannot be paid twice, old profiles load, and shell pacing has an explicit target based on measured run duration.
 
 ## Release C — combat depth
+
+Implementation status: Echo, Quintessence, and announced seeded endless-boss rotations are implemented under rules 10. Their behavior is defined in simulation code; balance and browser validation remain outstanding.
 
 - **Echo tower:** repeat a portion of a hit after a delay. Define whether the echo follows the original target, what happens when it dies, and which on-hit effects can repeat. Prevent recursive echoes and duplicate proc chains. Resolve pending attacks consistently during replay and resume.
 - **Quintessence sniper prototype:** slow, low-throughput damage that bypasses mitigation. Keep experimental until it has a clear weakness against ordinary waves and cannot replace both physical and magical counters. Avoid unrestricted max-HP damage.

@@ -1157,5 +1157,60 @@
         "id": "e10007"
       }
     ]
+  },
+  {
+    "code": "gemtd_singularity",
+    "name": "The Singularity / TS",
+    "damage": 12000.0,
+    "bonusDamage": 640.0,
+    "attackRate": 0.25,
+    "range": 1200.0,
+    "recipe": "Obsidian + Agate + Fantastic Miss Shrimp + Yaphets Stone + Burning Stone",
+    "abilities": [
+      {
+        "id": "tower_baoji1",
+        "Name": "crit 1",
+        "Tooltip": "10% chance to deal 5x damage.",
+        "Raw": "On Attack Start, [10%][CRITICALSTRIKE: 500]"
+      },
+      {
+        "id": "tower_attack6",
+        "Name": "damage MAX",
+        "Tooltip": "+640 attack damage.",
+        "Raw": "[BASEATTACK BONUSDAMAGE: 640]"
+      }
+    ]
+  },
+  {
+    "code": "gemtd_echo",
+    "name": "Echo / ECH",
+    "damage": 850.0,
+    "bonusDamage": 320.0,
+    "attackRate": 0.75,
+    "range": 850.0,
+    "recipe": "Yaphets Stone + R5 + B5",
+    "abilities": [
+      {
+        "id": "tower_echo",
+        "Name": "Echo Strike",
+        "Tooltip": "Repeats 40% of a landed hit after a short delay. The echo only hits the original target and cannot repeat effects."
+      }
+    ]
+  },
+  {
+    "code": "gemtd_quintessence",
+    "name": "Quintessence / QT",
+    "damage": 1800.0,
+    "bonusDamage": 0.0,
+    "attackRate": 3.5,
+    "range": 1400.0,
+    "recipe": "Obsidian + D6 + Q6",
+    "abilities": [
+      {
+        "id": "tower_quintessence",
+        "Name": "Pure Strike",
+        "Tooltip": "Its slow attack bypasses armor and magic resistance. Shields and explicit immunity still block it."
+      }
+    ]
   }
 ]
