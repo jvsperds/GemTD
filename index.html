@@ -692,6 +692,25 @@
         color: var(--muted);
         font-style: italic;
       }
+      .recipe-search {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid var(--edge-dim);
+        border-radius: 5px;
+        background: #0005;
+        color: var(--text);
+        font: inherit;
+      }
+      .recipe-search:focus {
+        outline: 1px solid var(--accent);
+        border-color: var(--accent);
+      }
+      .recipe-clear {
+        align-self: flex-start;
+        padding: 2px 6px;
+        font-size: 11px;
+      }
       .recipe,
       .maze {
         display: flex;
@@ -732,6 +751,29 @@
       .maze b {
         font-weight: normal;
         color: var(--accent);
+      }
+      .recipe-name,
+      .recipe-part {
+        appearance: none;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        box-shadow: none;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .recipe-name {
+        color: var(--accent);
+      }
+      .recipe-name:hover,
+      .recipe-name:focus-visible,
+      .recipe-part:hover,
+      .recipe-part:focus-visible {
+        color: var(--gold);
+        text-decoration: underline;
       }
       .parts {
         font-size: 12px;

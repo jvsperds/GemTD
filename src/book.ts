@@ -98,6 +98,8 @@ export function initBook(opts: {
   const body = document.querySelector<HTMLElement>('#bookbody')!;
   const tabs = [...book.querySelectorAll<HTMLButtonElement>('[data-book]')];
   let tab = 'recipes';
+  let recipeSearch = '';
+  let recipeFocus: string | null = null;
   let library: Guide[] = [];
   const stats = new Map<string[], ReturnType<typeof evaluate>>();
   const guides = (): Guide[] => [...GUIDES, ...library];
@@ -132,12 +134,50 @@ export function initBook(opts: {
       (d) =>
         d.recipes?.length &&
         !d.pedal === !pedals &&
-        (!mine || d.recipes.some((r) => r.includes(mine))),
+        (!recipeFocus || codeOf(d) === recipeFocus) &&
+        // Searching is global: it should still find a recipe when a tower is selected on the board.
+        (recipeSearch || !mine || d.recipes.some((r) => r.includes(mine))) &&
+        (!recipeSearch ||
+          [d.name, ...d.recipes.flat()].some((value) =>
+            value.toLocaleLowerCase().includes(recipeSearch.toLocaleLowerCase()),
+          )),
     );
     const what = pedals ? 'pedal' : 'tower';
-    body.append(
-      el('p', 'note', sel ? `${what} recipes using ${sel.def.name}` : `All ${what} recipes`),
-    );
+    if (!pedals) {
+      const search = document.createElement('input');
+      search.className = 'recipe-search';
+      search.type = 'search';
+      search.placeholder = 'Search recipes or components';
+      search.value = recipeSearch;
+      search.setAttribute('aria-label', 'Search recipes or components');
+      search.oninput = () => {
+        const cursor = search.selectionStart ?? search.value.length;
+        recipeSearch = search.value.trim();
+        recipeFocus = null;
+        draw();
+        const next = body.querySelector<HTMLInputElement>('.recipe-search');
+        next?.focus();
+        next?.setSelectionRange(cursor, cursor);
+      };
+      body.append(search);
+    }
+    const focus = recipeFocus && DEFS[recipeFocus];
+    const note = focus
+      ? `Recipe for ${focus.name}`
+      : recipeSearch
+        ? `Recipes matching “${recipeSearch}”`
+        : sel
+          ? `${what} recipes using ${sel.def.name}`
+          : `All ${what} recipes`;
+    body.append(el('p', 'note', note));
+    if (focus) {
+      const clear = el('button', 'recipe-clear', 'Show all recipes');
+      clear.onclick = () => {
+        recipeFocus = null;
+        draw();
+      };
+      body.append(clear);
+    }
     if (pedals)
       body.append(
         el(
@@ -158,16 +198,39 @@ export function initBook(opts: {
       row.append(im);
       const text = el('div');
       const need = (p: string) => r.filter((x) => x === p).length;
-      text.append(el('b', '', d.name + (r.every((p) => n(p) >= need(p)) ? ' ✓' : '')));
+      const name = el(
+        'button',
+        'recipe-name',
+        d.name + (r.every((p) => n(p) >= need(p)) ? ' ✓' : ''),
+      );
+      name.title = `Show recipe for ${d.name}`;
+      name.onclick = () => {
+        recipeFocus = codeOf(d);
+        recipeSearch = '';
+        draw();
+      };
+      text.append(name);
       const parts = el('div', 'parts');
       if (r.length > 1 && r.every((p) => p === r[0]))
         parts.append(
           el('span', n(r[0]) >= r.length ? 'own' : '', `${r.length}× ${r[0]} (${n(r[0])})`),
         );
       else
-        r.forEach((p, i) =>
-          parts.append(el('span', n(p) >= need(p) ? 'own' : '', `${i ? ' + ' : ''}${p} (${n(p)})`)),
-        );
+        r.forEach((p, i) => {
+          const part = el('span', n(p) >= need(p) ? 'own' : '', `${i ? ' + ' : ''}`);
+          const ingredient = DEFS[p];
+          if (ingredient && !ingredient.quality) {
+            const link = el('button', 'recipe-part', `${p} (${n(p)})`);
+            link.title = `Show recipe for ${ingredient.name}`;
+            link.onclick = () => {
+              recipeFocus = p;
+              recipeSearch = '';
+              draw();
+            };
+            part.append(link);
+          } else part.append(`${p} (${n(p)})`);
+          parts.append(part);
+        });
       text.append(parts);
       const tip = d.pedal && PEDAL_TIPS.get(d.abilities[0])?.tip;
       if (tip) text.append(el('div', 'parts', tip));
@@ -239,7 +302,15 @@ export function initBook(opts: {
     else if (tab === 'pedals') recipes(true);
     else mazes();
   }
-  for (const b of tabs) b.onclick = () => ((tab = b.dataset.book!), draw());
+  for (const b of tabs)
+    b.onclick = () => {
+      tab = b.dataset.book!;
+      if (tab !== 'recipes') {
+        recipeSearch = '';
+        recipeFocus = null;
+      }
+      draw();
+    };
   loadLibrary().then(draw);
 
   return {
