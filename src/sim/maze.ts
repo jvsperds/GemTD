@@ -38,7 +38,7 @@ export class Maze {
   readonly noBuild: Uint8Array;
   readonly waypoints: Cell[]; // spawn, CP1..CPn, castle
 
-  constructor(map: MapData) {
+  constructor(map: MapData, fixedTerrain = false) {
     this.w = map.width;
     this.h = map.height;
     this.cells = new Uint8Array(this.w * this.h);
@@ -52,9 +52,21 @@ export class Maze {
         for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) fn(this.idx(c, r));
       }
     };
-    // Preset walls are ordinary stones (removable); only waypoints are no-build.
+    // Preset walls remain editable in historical rules; newer rules lock terrain walls.
     // placeRock's route check stops stones from closing the loop.
-    each(map.walls.segments, (i) => (this.cells[i] = ROCK));
+    each(map.walls.segments, (i) => {
+      this.cells[i] = ROCK;
+      if (fixedTerrain) this.noBuild[i] = 1;
+    });
+    if (fixedTerrain) {
+      for (const zone of map.noBuildZones ?? []) {
+        const [c0, c1] = zone.cols;
+        const [r0, r1] = zone.rows;
+        for (let r = r0; r <= r1; r++)
+          for (let c = c0; c <= c1; c++) this.noBuild[this.idx(c, r)] = 1;
+      }
+      each(map.centerCross.segments, (i) => (this.noBuild[i] = 1));
+    }
     for (const [c, r] of this.waypoints) {
       this.cells[this.idx(c, r)] = OPEN; // checkpoints stay walkable even inside a wall line
       this.noBuild[this.idx(c, r)] = 1;
@@ -200,7 +212,7 @@ export class Maze {
 
   removeRock(c: number, r: number): boolean {
     const i = this.idx(c, r);
-    if (this.cells[i] !== ROCK) return false;
+    if (this.cells[i] !== ROCK || this.noBuild[i]) return false;
     this.cells[i] = OPEN;
     return true;
   }

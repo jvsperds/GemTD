@@ -65,6 +65,21 @@ export const BOSS_TRICKS: Record<number, string[]> = {
   40: ['boss_split'],
   50: ['boss_split', 'enemy_shanshuo'],
 };
+export const ENDLESS_BOSS_ROTATIONS = [
+  { name: 'Blink & Rush', abilities: ['enemy_shanshuo', 'runrunrun'] },
+  { name: 'Refraction & Rush', abilities: ['enemy_zheguang', 'runrunrun'] },
+  { name: 'Blink & Refraction', abilities: ['enemy_shanshuo', 'enemy_zheguang'] },
+] as const;
+
+/** A seed-and-cycle lookup; it does not consume the simulation RNG stream. */
+export function endlessBossRotation(seed: number, extra: number) {
+  const cycle = Math.max(0, Math.floor(extra / 10) - 1);
+  let h = Math.imul((seed ^ Math.imul(cycle + 1, 0x9e3779b1)) >>> 0, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return ENDLESS_BOSS_ROTATIONS[(h >>> 0) % ENDLESS_BOSS_ROTATIONS.length];
+}
 export const SPLIT = { n: 4, hp: 0.1 };
 // Enrage: a wave still running after this long makes its creeps immune to stuns and slows, so a
 // creep that is locked in place but out-heals the towers walks on and the wave ends.
@@ -209,6 +224,8 @@ export class WaveSim {
   eventHpMult = 1; // one accepted Gold Rush wave
   eventSpeedMult = 1; // one accepted Hurry Wave
   bossTricks = false; // Cunning bosses mutator
+  endlessBossRotation = false;
+  currentBossRotation: string | null = null;
   streak = 0; // waves in a row that ended with no castle damage
   endless = 0; // waves past the last one, for the current wave
   bosses = 1; // bosses in the current boss wave
@@ -222,7 +239,7 @@ export class WaveSim {
   constructor(
     readonly maze: Maze,
     readonly waves: WaveEntry[],
-    seed = 1,
+    readonly seed = 1,
   ) {
     this.rand = rng(seed ^ 0xc4ee);
   }
@@ -278,16 +295,24 @@ export class WaveSim {
     const t = this.hpRamp > 1 ? Math.min(1, (this.wave - 1) / (this.hpRamp - 1)) : 1;
     const ease = this.hpEase + (1 - this.hpEase) * t;
     const mult = this.hpMult * this.eventHpMult * ease * ENDLESS.hp ** extra;
-    const defs = this.waves
-      .filter((w) => w.wave === base)
-      .map((w) =>
-        mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra },
-      )
-      .map((w) =>
-        this.bossTricks && w.boss
-          ? { ...w, abilities: [...w.abilities, ...(BOSS_TRICKS[base] ?? [])] }
-          : w,
-      );
+    const baseDefs = this.waves.filter((w) => w.wave === base);
+    const rotation =
+      this.endlessBossRotation && extra >= 10 && baseDefs.some((w) => w.boss)
+        ? endlessBossRotation(this.seed, extra)
+        : null;
+    this.currentBossRotation = rotation?.name ?? null;
+    const defs = baseDefs.map((w) => {
+      const abilities = [
+        ...w.abilities,
+        ...(this.bossTricks && w.boss ? (BOSS_TRICKS[base] ?? []) : []),
+        ...(rotation && w.boss ? rotation.abilities : []),
+      ];
+      const adjusted =
+        mult === 1 ? w : { ...w, hp: w.hp * mult, armor: w.armor + ENDLESS.armor * extra };
+      return abilities.length === w.abilities.length
+        ? adjusted
+        : { ...adjusted, abilities: [...new Set(abilities)] };
+    });
     this.current = defs[0];
     const b = ENDLESS_BOSS;
     this.bosses = extra
