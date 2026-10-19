@@ -17,6 +17,7 @@ import { HEROES, type Perk } from './heroes';
 import { ROCK } from './maze';
 import { DURATION, SKILLS, goldOf, withPassives, type Loadout } from './skills';
 import { CASTLE_HP, CREEPS_PER_WAVE, TICK, UNITS_PER_CELL, type Rng } from './waves';
+import { eventAt, type EventChoice, type EventOffer } from './events';
 
 export interface LevelDef {
   level: number;
@@ -51,6 +52,7 @@ export type Cmd =
   // Target cell (the tower for tower skills; ignored by castle skills), then an optional picked cell.
   | ['skill', number, number, string, number?, number?]
   | ['level']
+  | ['event', EventChoice]
   | ['skip'] // start the wave without keeping a gem (this round's gems become stones)
   | ['end']; // end the run here; it scores like a loss with the castle HP that is left
 /** Logged command with the wave tick it was issued at (commands may land mid-wave). */
@@ -64,7 +66,7 @@ export function score(g: Game) {
 }
 
 /** Snapshot format; a save with another number is resumed by replaying its commands instead. */
-export const SNAPSHOT = 1;
+export const SNAPSHOT = 2;
 
 export const GREED = { chance: 0.05, mult: 10 };
 // Tuned with `npm run balance` (8 seeds): a level-buying bot is at level 6–8 by wave ~22.
@@ -105,6 +107,11 @@ export class Game {
   onCommand: (() => void) | null = null;
   goldMult = 1; // Tough mutator
   noMerge = false; // No merges mutator
+  events = false; // Events mutator; disabled for historical rules
+  pendingEvent: EventOffer | null = null;
+  activeEvent: EventOffer | null = null;
+  eventGold = 1;
+  eventXp = 1;
   mvpCap = MVP_CAP; // Infinity for runs started before the cap (rules < 5)
   /** State at the end of the last wave, as JSON ('' before the first); see `resume`. */
   snap = '';
@@ -118,6 +125,7 @@ export class Game {
     readonly combat: Combat,
     readonly levels: LevelDef[],
     readonly seed = 1,
+    readonly rules = 7,
   ) {
     this.rand = rng(seed ^ 0x5eed);
     const { sim } = combat;
@@ -147,8 +155,12 @@ export class Game {
         (greedy ? GREED.mult : 1) *
         (cr.def.boss ? 1 + (this.perk.bossGold ?? 0) : 1) *
         (this.perk.midas && this.rand() < this.perk.midas ? 3 : 1);
-      this.gold += Math.round(gold * this.goldMult * (1 + (this.perk.killGold ?? 0)));
-      this.xp += cr.def.hp * XP_PER_HP * (1 + (this.perk.xp ?? 0));
+      this.gold += Math.round(
+        gold * this.goldMult * this.eventGold * (1 + (this.perk.killGold ?? 0)),
+      );
+      // Gold Rush increases combat HP, not the XP value of the underlying creep.
+      this.xp +=
+        (cr.def.hp / this.sim.eventHpMult) * XP_PER_HP * this.eventXp * (1 + (this.perk.xp ?? 0));
       this.kills++;
       while (this.level < this.levels.length && this.xp >= this.xpFor[this.level]) this.level++;
     };
@@ -192,7 +204,9 @@ export class Game {
 
   /** Apply a command; successful ones are logged. */
   run(cmd: Cmd) {
-    const [op, c = 0, r = 0, name = ''] = cmd;
+    const [op, rawC = 0, rawR = 0, name = ''] = cmd;
+    const c = Number(rawC),
+      r = Number(rawR);
     const t = this.combat.towerAt(c, r);
     const ok =
       op === 'place'
@@ -205,22 +219,24 @@ export class Game {
               ? this.skip()
               : op === 'end'
                 ? this.end()
-                : op === 'pedal'
-                  ? this.layPedal(c, r)
-                  : cmd[0] === 'skill'
-                    ? this.cast(String(name), c, r, cmd[4], cmd[5])
-                    : !!t &&
-                      (op === 'aim'
-                        ? this.setAim(t, Number(name))
-                        : op === 'keep'
-                          ? this.keep(t)
-                          : op === 'merge2'
-                            ? this.merge(t, 2)
-                            : op === 'merge4'
-                              ? this.merge(t, 4)
-                              : op === 'down'
-                                ? this.downgrade(t)
-                                : this.combine(t, String(name)));
+                : op === 'event'
+                  ? this.chooseEvent(rawC as EventChoice)
+                  : op === 'pedal'
+                    ? this.layPedal(c, r)
+                    : cmd[0] === 'skill'
+                      ? this.cast(String(name), c, r, cmd[4], cmd[5])
+                      : !!t &&
+                        (op === 'aim'
+                          ? this.setAim(t, Number(name))
+                          : op === 'keep'
+                            ? this.keep(t)
+                            : op === 'merge2'
+                              ? this.merge(t, 2)
+                              : op === 'merge4'
+                                ? this.merge(t, 4)
+                                : op === 'down'
+                                  ? this.downgrade(t)
+                                  : this.combine(t, String(name)));
     if (ok) {
       this.log.push([this.ticks, cmd]);
       this.onCommand?.();
@@ -248,11 +264,35 @@ export class Game {
   private state() {
     const { sim, combat } = this;
     const { wave, castleHp, guard, evade, revenge, streak, endless, bosses } = sim;
-    const { gold, xp, level, kills, ticks, pray, pedals } = this;
+    const {
+      gold,
+      xp,
+      level,
+      kills,
+      ticks,
+      pray,
+      pedals,
+      pendingEvent,
+      activeEvent,
+      eventGold,
+      eventXp,
+    } = this;
     return {
       v: SNAPSHOT,
       log: this.log.length,
-      game: { gold, xp, level, kills, ticks, pray, pedals },
+      game: {
+        gold,
+        xp,
+        level,
+        kills,
+        ticks,
+        pray,
+        pedals,
+        pendingEvent,
+        activeEvent,
+        eventGold,
+        eventXp,
+      },
       sim: { wave, castleHp, guard, evade, revenge, streak, endless, bosses },
       rand: [this.rand, sim.rand, combat.rand].map((f) => (f as Rng).s),
       cells: sim.maze.cells.join(''),
@@ -313,6 +353,13 @@ export class Game {
     }
     if (mvp) mvp.mvp++;
     if (this.sim.phase !== 'build') return;
+    // Contracts last exactly one wave. Clear them before offering the next one so no base
+    // difficulty or mutator state leaks into a later wave.
+    this.activeEvent = null;
+    this.eventGold = this.eventXp = 1;
+    this.sim.eventHpMult = this.sim.eventSpeedMult = 1;
+    const nextWave = this.sim.wave + 1;
+    this.pendingEvent = this.events ? eventAt(this.seed, nextWave, nextWave % 10 === 0) : null;
     this.snap = JSON.stringify(this.state());
     this.nextEndless();
   }
@@ -322,6 +369,7 @@ export class Game {
     const out: { name: string; parts: Tower[] }[] = [];
     if (this.over) return out; // towers can be combined mid-wave too
     for (const def of Object.values(this.combat.gems)) {
+      if (this.rules < 7 && def.name.startsWith('Skyhunter')) continue;
       const recipes = (def as GemDef & Partial<SpecialDef>).recipes ?? [];
       for (const rec of recipes) {
         const parts = this.match(rec, t);
@@ -355,6 +403,7 @@ export class Game {
     const r = this.recipesFor(t).find((x) => x.name === name);
     if (!r) return false;
     const usesRound = r.parts.some((p) => this.placed.includes(p));
+    if (usesRound && this.pendingEvent) return false;
     const def = this.combat.gems[name];
     // Gems combined into a pedal all become stones and the pedal goes into the hand, to be laid
     // on the path. Upgrading pedals (3× same) keeps the selected one where it lies.
@@ -424,7 +473,8 @@ export class Game {
     for (const o of this.combat.towers)
       if (o !== skip) have.set(codeOf(o.def), (have.get(codeOf(o.def)) ?? 0) + 1);
     const out = new Set<string>();
-    for (const def of Object.values(this.combat.gems))
+    for (const def of Object.values(this.combat.gems)) {
+      if (this.rules < 7 && def.name.startsWith('Skyhunter')) continue;
       for (const rec of (def as GemDef & Partial<SpecialDef>).recipes ?? []) {
         const left = new Map(have);
         const miss = rec.filter((c) => {
@@ -434,6 +484,7 @@ export class Game {
         });
         if (miss.length === 1 && /^[A-Z][1-6]$/.test(miss[0])) out.add(miss[0]); // Q7 is combined only
       }
+    }
     return [...out].sort();
   }
 
@@ -444,6 +495,7 @@ export class Game {
   canMerge(t: Tower, n: 2 | 4) {
     return (
       this.step === 'choose' &&
+      !this.pendingEvent &&
       this.placed.includes(t) &&
       this.same(t) >= n &&
       !this.noMerge &&
@@ -622,7 +674,27 @@ export class Game {
 
   /** Skip the turn: no gem is kept, the round's gems become stones, the wave starts. */
   skip() {
-    return this.sim.phase === 'build' && this.finish(null);
+    return this.sim.phase === 'build' && !this.pendingEvent && this.finish(null);
+  }
+
+  /** Resolve the build-phase event. Invalid or mismatched choices never change state. */
+  chooseEvent(choice: EventChoice) {
+    const offer = this.pendingEvent;
+    if (!offer || this.sim.phase !== 'build') return false;
+    if (offer.id === 'shrine') {
+      if (choice === 'gold') this.gold += 75;
+      else if (choice === 'xp') this.xp += 120;
+      else if (choice !== 'decline') return false;
+      while (this.level < this.levels.length && this.xp >= this.xpFor[this.level]) this.level++;
+    } else if (choice === 'accept') {
+      this.activeEvent = offer;
+      if (offer.id === 'goldRush') this.sim.eventHpMult = 1.35;
+      else this.sim.eventSpeedMult = 1.35;
+      if (offer.id === 'goldRush') this.eventGold = 1.5;
+      else this.eventXp = 1.5;
+    } else if (choice !== 'decline') return false;
+    this.pendingEvent = null;
+    return true;
   }
 
   /** End the run now, so an endless game the creeps can't finish still gets its score. */
@@ -635,6 +707,7 @@ export class Game {
 
   /** Keep `t`; the round's other gems become stones; start the wave. */
   private finish(t: Tower | null) {
+    if (this.pendingEvent) return false;
     const stones = new Set(this.placed.filter((o) => o !== t));
     this.combat.towers = this.combat.towers.filter((o) => !stones.has(o));
     this.placed = [];

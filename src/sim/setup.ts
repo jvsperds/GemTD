@@ -58,6 +58,7 @@ export const MUTATORS: Record<string, { name: string; tip: string }> = {
   tough: { name: 'Tough', tip: 'Creeps have double HP; kills pay double gold' },
   nomerge: { name: 'No merges', tip: 'Merge ×2 and ×4 are disabled' },
   bosses: { name: 'Cunning bosses', tip: 'Bosses blink, shield, rush or split on death' },
+  events: { name: 'Events', tip: 'Optional build-phase contracts with visible rewards and risks' },
 };
 
 /** Layouts: same grid and walls, different checkpoint order. */
@@ -85,8 +86,9 @@ export const MAPS: Record<string, { name: string; data: MapData }> = {
  *  3: they lag twice as fast (4% per wave), as MVP and kill bonuses kept runs going past wave 300.
  *  4: harder creeps per difficulty, 10% lag, easy's extra levels must be bought.
  *  5: poison takes a share of max HP, chain lightning scales with attack damage, MVP caps at 10.
- *  6: the difficulty's creep HP multiplier ramps up from ×1 on wave 1. */
-export const RULES = 6;
+ *  6: the difficulty's creep HP multiplier ramps up from ×1 on wave 1.
+ *  7: Skyhunter and opt-in Events. */
+export const RULES = 7;
 
 export function newGame(
   seed: number,
@@ -105,6 +107,7 @@ export function newGame(
     new Combat(sim, DEFS, seed),
     difficulty === 'easy' ? easyLevels(levels) : levels,
     seed,
+    rules,
   );
   g.bonusPerWave = DIFFICULTY[difficulty].bonus;
   g.combat.stackCopies = difficulty === 'easy';
@@ -112,6 +115,7 @@ export function newGame(
   if (on('swift')) sim.speedMult = 1.3;
   if (on('tough')) [sim.hpMult, g.goldMult] = [sim.hpMult * 2, 2];
   g.noMerge = on('nomerge');
+  g.events = rules >= 7 && on('events');
   if (rules < 4) g.combat.endgameLag = rules < 2 ? 1 : rules < 3 ? ENDGAME.lag2 : ENDGAME.lag3;
   // Levels past the XP curve (easy) all shared its last threshold, so buying one gave the rest free.
   else g.xpFor.forEach((x, i) => i && x === g.xpFor[i - 1] && (g.xpFor[i] = Infinity));

@@ -175,6 +175,7 @@ export interface Fx {
   pedal: [Spell, number] | null; // spell and tier
   maxHp: number; // fraction of target max HP per hit, pure
   souls: number; // fraction of a killed creep's max HP gained as attack damage
+  flyerDamage: [flyer: number, ground: number] | null;
 }
 
 const pct = (x: number) => +(x * 100).toFixed(2) + '%';
@@ -221,6 +222,7 @@ export function parseFx(d: GemDef): Fx {
     pedal: null,
     maxHp: 0,
     souls: 0,
+    flyerDamage: null,
   };
   for (const id of d.abilities) {
     const n = lvl(id);
@@ -256,6 +258,8 @@ export function parseFx(d: GemDef): Fx {
     else if (id === 'tower_true_sight') f.trueSight = true;
     else if (id === 'endgame_maxhp') f.maxHp = ENDGAME.maxHp;
     else if (id === 'endgame_souls') f.souls = ENDGAME.souls;
+    else if (id === 'tower_skyhunter') f.flyerDamage = [1.5, 0.65];
+    else if (id === 'tower_skyhunter2') f.flyerDamage = [2, 0.6];
     else if (id === 'tower_speed2') f.as = 500;
     else if (id === 'tower_speed1') f.as = 200;
     else if (id === 'tower_speed_aura_guichu') f.asAura = [200, 200];
@@ -531,6 +535,7 @@ export class Combat {
       return;
     }
     let dmg = (d.damage + d.bonusDamage + t.souls) * this.damageMult(t);
+    if (f.flyerDamage) dmg *= cr.def.flying ? f.flyerDamage[0] : f.flyerDamage[1];
     for (const [chance, mult] of f.crit) if (this.rand() < chance) dmg *= mult;
     if (t.crit.t > 0 && this.rand() < SKILL_CRIT_CHANCE) dmg *= t.crit.v;
     const p = this.heroProc; // checked only when owned, so older replays draw the same numbers
@@ -705,7 +710,7 @@ export class Combat {
   }
 
   /** Invisible creeps can only be targeted inside some tower's True Sight (its attack range). */
-  private visible(cr: Creep) {
+  visible(cr: Creep) {
     if (!hasAbility(cr, 'riki_permanent_invisibility')) return true;
     return this.towers.some((o) => this.tfx(o).trueSight && this.dist(o, cr) <= this.range(o));
   }

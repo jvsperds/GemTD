@@ -12,6 +12,7 @@ import * as sfx from './sfx';
 import { newlyDone } from './quests';
 import { DOWNGRADE_COST, score, type Cmd } from './sim/game';
 import { DIFFICULTY, MAPS, newGame, RULES, type Difficulty } from './sim/setup';
+import { EVENT_COPY } from './sim/events';
 import { DEFAULT_HERO, HEROES, RARITY_COLOR } from './sim/heroes';
 import { SKILLS, bringLimit, shellsFor, skillTip } from './sim/skills';
 import { AIM, AIM_ELITE, AURA, codeOf, MAGIC_TIPS, MVP_BONUS, type Tower } from './sim/towers';
@@ -355,9 +356,9 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-zoom]')
     else view.setZoom(view.zoom * Number(button.dataset.zoom), x, y);
   });
 function act(a: string) {
-  touchCell = null;
   lastTap = null;
   if (a === 'menu') return menu.toggle();
+  touchCell = null;
   if (a === 'guide') {
     // cycle: off -> each guide (built-in, then library) -> off
     const all = book.guides();
@@ -388,6 +389,8 @@ function act(a: string) {
     return db.set('settings', settings);
   }
   if (replaying) return;
+  if (a.startsWith('event:'))
+    return void run(['event', a.slice(6) as 'gold' | 'xp' | 'accept' | 'decline']);
   if (a.startsWith('skill:')) {
     const id = a.slice(6);
     if (SKILLS[id].picks) picking = picking?.id === id ? null : { id, tower: sel, cells: [] };
@@ -724,6 +727,7 @@ function showBanner() {
   const d = sim.current;
   if (!d) return;
   const tags = [
+    game.activeEvent && `${EVENT_COPY[game.activeEvent.id].name} · this wave only`,
     d.boss && (sim.bosses > 1 ? `${sim.bosses} Bosses` : 'Boss'),
     d.flying && 'Flying',
     sim.wave > sim.lastWave && 'Endless',
@@ -1115,6 +1119,37 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
   const ids = Object.keys(game.skills).filter((id) => SKILLS[id]);
   const cost = game.levelCost;
   cards.replaceChildren(
+    ...(game.pendingEvent
+      ? (() => {
+          const offer = game.pendingEvent!;
+          const copy = EVENT_COPY[offer.id];
+          const wrap = el('div', 'event-card');
+          wrap.setAttribute('role', 'group');
+          wrap.setAttribute('aria-label', `${copy.name} event choice`);
+          wrap.append(
+            el('b', '', `✦ ${copy.name} — wave ${offer.wave}`),
+            el('small', '', copy.detail),
+          );
+          const choices =
+            offer.id === 'shrine'
+              ? [
+                  ['gold', '+75 gold'],
+                  ['xp', '+120 XP'],
+                ]
+              : [['accept', 'Accept contract']];
+          for (const [id, text] of choices) {
+            const button = document.createElement('button');
+            button.dataset.a = `event:${id}`;
+            button.textContent = text;
+            wrap.append(button);
+          }
+          const decline = document.createElement('button');
+          decline.dataset.a = 'event:decline';
+          decline.textContent = 'Decline';
+          wrap.append(decline);
+          return [wrap];
+        })()
+      : []),
     slot('level', `Level ${cost ?? '—'}g`, 'Buy the next builder level', 'level', 'L', {
       off: !!replaying || cost === null || game.gold < cost,
     }),
@@ -1130,7 +1165,10 @@ function drawHero(xpPct: number, lvlTo: number | undefined) {
         : 'Skip this turn: start the wave without keeping a gem. Hold to auto-skip every turn',
       'skip',
       'S',
-      { off: !!replaying || (sim.phase !== 'build' && !autoSkip), on: autoSkip },
+      {
+        off: !!replaying || !!game.pendingEvent || (sim.phase !== 'build' && !autoSkip),
+        on: autoSkip,
+      },
     ),
     slot('undo', 'Undo', 'Take back the last gem you placed', 'undo', 'U', { off: !canUndo() }),
     ...ids.map((id) => {
@@ -1296,6 +1334,9 @@ function updateHud() {
     view.invalidate();
   }
   const step = game.step;
+  // An event is a mandatory build-phase decision: surface its keyboard/touch buttons even if a
+  // tower was selected at the end of the previous wave.
+  if (game.pendingEvent) sel = null;
   const touchPlacement =
     document.body.dataset.touch === '1' &&
     !replaying &&
@@ -1317,13 +1358,15 @@ function updateHud() {
   }
   const actionHint = builder
     ? 'Maze builder: click to edit stones. Open Book → Maze helpers to load a route.'
-    : picking
-      ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
-      : removing
-        ? 'Click a stone to shatter it'
-        : game.pedals.length
-          ? `Lay your ${game.pedals[0]} on the path: creeps set it off by stepping on it`
-          : '';
+    : game.pendingEvent
+      ? `✦ ${EVENT_COPY[game.pendingEvent.id].name}: choose or decline the event before this wave.`
+      : picking
+        ? `${SKILLS[picking.id].name}: ${SKILLS[picking.id].picks![picking.cells.length / 2]} (Esc cancels)`
+        : removing
+          ? 'Click a stone to shatter it'
+          : game.pedals.length
+            ? `Lay your ${game.pedals[0]} on the path: creeps set it off by stepping on it`
+            : '';
   const hint = tutorial ? teach() : '';
   showGuideToast(hint, tutorial && !game.over, menu.open || !!actionHint);
   if (actionHintEl.textContent !== actionHint) actionHintEl.textContent = actionHint;
@@ -1336,14 +1379,20 @@ function updateHud() {
     replaying && 'Replay',
     builder && 'Maze builder',
     cfg.daily && `Daily ${cfg.daily}`,
+    game.activeEvent && `${EVENT_COPY[game.activeEvent.id].name} · this wave only`,
     cfg.map && cfg.map !== 'classic' && MAPS[cfg.map]?.name,
     !builder && cfg.difficulty,
   ].filter(Boolean);
   const s =
+    '<div class="hud-run">' +
     tags.map((t) => `<span class="tag">${t}</span>`).join('') +
     (builder
       ? ''
-      : `<span class="chip"><b>Wave</b> ${sim.wave > sim.lastWave ? `${sim.wave} ∞` : `${sim.wave}/${sim.lastWave}`}</span>` +
+      : `<span class="chip"><b>Wave</b> ${sim.wave > sim.lastWave ? `${sim.wave} ∞` : `${sim.wave}/${sim.lastWave}`}</span>`) +
+    '</div>' +
+    (builder
+      ? ''
+      : '<div class="hud-resources">' +
         `<span class="chip" id="hp"><b>HP</b> <span class="bar hp"><i style="width:${hp}%"></i></span>${hp}/${CASTLE_HP}</span>` +
         (game.pray
           ? `<span class="chip" title="Pray: ${game.pray.chance}% chance for the next gem">🙏 ${game.pray.chance}%</span>`
@@ -1359,7 +1408,7 @@ function updateHud() {
           ? `<span class="chip" title="Evade: ${sim.evade.v}% dodge">💨 ${Math.ceil(sim.evade.t)}s</span>`
           : '') +
         `<span class="chip" id="gold"><b>Gold</b> ${game.gold}</span>` +
-        `<span class="chip"><b>Time</b> ${Math.floor(game.seconds)}s</span>`);
+        `<span class="chip" id="clock"><b>Time</b> ${Math.floor(game.seconds)}s</span></div>`);
   const live = sel && combat.towers.includes(sel) ? sel : null;
   if (!live) sel = null;
   const creep = selCreep?.alive ? selCreep : null;
@@ -1456,12 +1505,12 @@ function updateHud() {
     // Glow the round's gems until one is kept, merged or combined.
     view.pending = step === 'choose' ? game.placed.map((t) => maze.idx(t.c, t.r)) : [];
     const en: Record<string, boolean> = {
-      keep: !!sel && step === 'choose' && game.placed.includes(sel),
+      keep: !game.pendingEvent && !!sel && step === 'choose' && game.placed.includes(sel),
       merge2: !!sel && game.canMerge(sel, 2),
       merge4: !!sel && game.canMerge(sel, 4),
       down: !!sel && game.canDowngrade(sel),
       stone: step === 'place',
-      skip: sim.phase === 'build',
+      skip: sim.phase === 'build' && !game.pendingEvent,
       level: game.levelCost !== null && game.gold >= game.levelCost,
       guide: true,
       path: true,
@@ -1526,7 +1575,8 @@ requestAnimationFrame(function frame(now) {
     nextCmdAt = now + 250 / Math.max(1, speed);
   }
   if (builder || menu.open) acc = 0; // Menus pause without changing the selected speed.
-  if (!menu.open && autoSkip && !replaying && sim.phase === 'build') run(['skip']);
+  if (!menu.open && autoSkip && !replaying && !game.pendingEvent && sim.phase === 'build')
+    run(['skip']);
   for (; acc >= TICK; acc -= TICK) {
     const t0 = performance.now();
     // Replay: mid-wave commands (level buys) land on the tick they were issued.
@@ -1542,6 +1592,7 @@ requestAnimationFrame(function frame(now) {
   }
   const t0 = performance.now();
   if (ticked) view.sparks();
+  if (stress && !bench) view.fillStressParticles();
   view.render(acc / TICK, dt, now);
   drawT += performance.now() - t0;
   frames++;

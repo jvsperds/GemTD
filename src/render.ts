@@ -161,6 +161,8 @@ const MODELS: Record<string, [Body, string, string, 'y' | 'b']> = {
   'the-blood-king': ['house', '#5a1010', '#e03a3a', 'b'],
   'cullinan-heart': ['orb', '#fff4c0', '#3a6bff', 'b'],
   'star-of-eden': ['beast', '#1a5a3a', '#2fbf5a', 'b'],
+  skyhunter: ['bird', '#456078', '#d9f3ff', 'b'],
+  'skyhunter-ascended': ['bird', '#35445c', '#ffd85a', 'b'],
 };
 // Pedals: hexagonal rune stones in the spell's colour, rimmed by tier (base, Sparkling, Blingbling).
 const SPELL_COLOR: Record<string, string> = {
@@ -1984,6 +1986,16 @@ export class Renderer {
     this.staticVer++;
   }
 
+  /** Keep the stress fixture's advertised particle workload constant across render frames. */
+  fillStressParticles() {
+    if (this.low) return;
+    for (let i = 0; i < this.particles; i++) this.px[i * 6 + 4] = 60;
+    while (this.particles < MAX_PARTICLES) {
+      const i = this.particles;
+      this.emit((i % 37) + 0.5, ((i * 7) % 37) + 0.5, 0, 0, 60, i % PARTICLE_COLOR.length);
+    }
+  }
+
   private emit(x: number, y: number, vx: number, vy: number, life: number, colour: number) {
     if (this.low || this.particles >= MAX_PARTICLES) return;
     const p = this.px,
@@ -2610,7 +2622,9 @@ export class Renderer {
       const sh = this.shadow(cr.def.boss || !!cr.def.giant);
       const x = cr.px + (cr.x - cr.px) * alpha,
         y = cr.py + (cr.y - cr.py) * alpha;
+      ctx.globalAlpha = this.combat.visible(cr) ? 1 : 0.35;
       ctx.drawImage(sh, X(x) - sh.width / 2, Y(y) - sh.height / 2);
+      ctx.globalAlpha = 1;
     }
     for (const cr of order) {
       // Face the way it last moved sideways; purely vertical steps keep the old facing.
@@ -2653,7 +2667,9 @@ export class Renderer {
         ctx.ellipse(X(x), Y(y + bob + 0.3), sp.width * 0.35, sp.width * 0.13, 0, 0, 7);
         ctx.stroke();
       }
+      ctx.globalAlpha = this.combat.visible(cr) ? 1 : 0.35;
       ctx.drawImage(sp, X(x) - sp.width / 2, Y(y) - sp.height / 2);
+      ctx.globalAlpha = 1;
       // Health bar once damaged (always for the selected creep).
       if (cr.hp < cr.def.hp || cr === this.creep) {
         const w = sp.width * 0.7,
@@ -2846,6 +2862,8 @@ const ATTACK: Record<string, [Style, string]> = {
   'the-blood-king': ['finger', '#ff2020'],
   'cullinan-heart': ['laguna', '#ffe680'],
   'star-of-eden': ['laguna', '#4dff8a'],
+  skyhunter: ['ray', '#bfefff'],
+  'skyhunter-ascended': ['ray', '#ffe27a'],
 };
 export const hasAttack = (key: string) => key in ATTACK;
 /** Gems throw a cut shard of their own colour; specials have their own entry. */

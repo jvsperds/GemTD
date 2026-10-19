@@ -1,5 +1,8 @@
 /** One-sentence summary per special tower, shown on recipe cards instead of the full stat list. */
 export const BLURB: Record<string, string> = {
+  Skyhunter: 'Physical specialist: devastating to flyers, deliberately weak against ground units.',
+  'Skyhunter Ascended':
+    'An upgraded anti-air physical hunter with an even sharper ground weakness.',
   Silver: 'Slows the enemies it hits.',
   'Silver Knight': 'Splash damage that also slows.',
   'Pink Diamond': 'Big hitter with critical strikes.',

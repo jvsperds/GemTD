@@ -228,6 +228,18 @@
     "altInputs": []
   },
   {
+    "section": "Combined towers",
+    "name": "Skyhunter",
+    "inputs": "B2 + R2 + Y2",
+    "altInputs": []
+  },
+  {
+    "section": "Combined towers",
+    "name": "Skyhunter Ascended",
+    "inputs": "Skyhunter + B4 + R4",
+    "altInputs": []
+  },
+  {
     "section": "Secret towers",
     "name": "Obsidian",
     "inputs": "B5 + Y5 + D5",

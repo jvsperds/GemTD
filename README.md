@@ -88,6 +88,12 @@ The new-game dialog sets difficulty (Easy/Normal/Hard), the **map** (Classic or 
 local **Daily challenge** (same seed for the whole day) and the **Maze builder**. Your first game
 shows teaching hints for three waves.
 
+The optional **Events** mutator offers Shrines (gold or XP), Gold Rush (tougher creeps for
+extra gold) and Hurry Wave (faster creeps for extra XP). Choose or decline before starting
+the wave; contracts expire after that wave. Events stop before wave 50 and use the modified-run
+leaderboard. **Skyhunter** combines B2 + R2 + Y2 into a physical anti-air specialist; add B4 + R4
+to upgrade it to **Skyhunter Ascended**. Both sacrifice ground damage for stronger flyer damage.
+
 Keys: `K` keep · `M` / `N` merge · `D` downgrade · `R` remove stone · `U` undo placement · `S` skip
 turn · `L` buy level · `Space` pause · `1`–`5` speed ×1/×2/×4/×10/×20 · `G` cycle maze guides ·
 `P` path · `V` ranges · `H` recipe book · `Esc` deselect, or open the menu · `F3` debug overlay ·

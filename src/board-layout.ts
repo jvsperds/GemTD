@@ -3,7 +3,6 @@ import type { Renderer } from './render';
 /** Keep the touch playing field clear of the actual, responsive HUD rectangles. */
 export function initBoardLayout(canvas: HTMLCanvasElement, view: Renderer) {
   const panel = document.querySelector<HTMLElement>('#panel')!;
-  const tools = document.querySelector<HTMLElement>('#boardtools')!;
   const header = document.querySelector<HTMLElement>('#hud')!;
   const hint = document.querySelector<HTMLElement>('#hint')!;
   const dock = document.querySelector<HTMLElement>('#dock')!;
@@ -16,10 +15,6 @@ export function initBoardLayout(canvas: HTMLCanvasElement, view: Renderer) {
     const oldBounds = canvas.getBoundingClientRect();
     const preserve = previous !== '' && canvas.dataset.contained === '1' && mobile.matches;
     document.body.style.setProperty('--panel-height', `${panel.getBoundingClientRect().height}px`);
-    document.body.style.setProperty(
-      '--boardtools-height',
-      `${tools.getBoundingClientRect().height}px`,
-    );
     let key = 'full';
     if (mobile.matches) {
       const landscape = innerHeight <= 500 && innerWidth > innerHeight;
@@ -27,7 +22,6 @@ export function initBoardLayout(canvas: HTMLCanvasElement, view: Renderer) {
       const h = header.getBoundingClientRect();
       const tip = hint.getBoundingClientRect();
       const d = dock.getBoundingClientRect();
-      const t = tools.getBoundingClientRect();
       const s = status.getBoundingClientRect();
       const styles = getComputedStyle(document.body);
       const safe = (side: string) =>
@@ -40,12 +34,7 @@ export function initBoardLayout(canvas: HTMLCanvasElement, view: Renderer) {
       const bottom = Math.floor(
         landscape
           ? innerHeight - safe('bottom')
-          : Math.min(
-              p.top,
-              t.height ? t.top : p.top,
-              !dock.hidden ? d.top : p.top,
-              s.height ? s.top : p.top,
-            ) - 8,
+          : Math.min(p.top, !dock.hidden ? d.top : p.top, s.height ? s.top : p.top) - 8,
       );
       const width = Math.max(1, right - left);
       const height = Math.max(1, bottom - top);
@@ -72,7 +61,7 @@ export function initBoardLayout(canvas: HTMLCanvasElement, view: Renderer) {
     if (!frame) frame = requestAnimationFrame(measure);
   };
   const observer = new ResizeObserver(schedule);
-  for (const element of [panel, tools, header, hint, dock, status]) observer.observe(element);
+  for (const element of [panel, header, hint, dock, status]) observer.observe(element);
   addEventListener('resize', schedule);
   mobile.addEventListener('change', schedule);
   measure();

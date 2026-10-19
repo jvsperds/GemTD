@@ -141,7 +141,9 @@ function stat(d: Def): Stat {
   const dmg = d.damage + d.bonusDamage;
   const crit = f.crit.reduce((m, [c, x]) => m * (1 + c * (x - 1)), 1);
   const aps = (1 + f.as / 100) / d.attackRate;
-  const p = dmg * crit * aps * Math.min(f.targets, 8) * (f.cleave ? 1 + f.cleave[0] : 1);
+  // Approximate campaign mix; this is not a substitute for flyer-specific combat tests.
+  const sky = f.flyerDamage ? 0.3 * f.flyerDamage[0] + 0.7 * f.flyerDamage[1] : 1;
+  const p = dmg * crit * aps * Math.min(f.targets, 8) * (f.cleave ? 1 + f.cleave[0] : 1) * sky;
   // ponytail: poison's max-HP share is not valued (it depends on the wave); the flat part is.
   let m = f.poison * 4 + (f.magicPct ? p : 0);
   if (f.lightning)
@@ -278,6 +280,8 @@ function coverage(g: Game, radius = 4) {
 }
 
 export interface SkilledOpts {
+  events?: 'accept' | 'decline';
+  rules?: number;
   maxWave?: number; // stop once this many waves are cleared (default: the last wave)
   hp?: number; // harness knob: overrides sim.hpMult
   hpRamp?: number; // overrides sim.hpRamp (1 = no ramp: full HP from wave 1)
@@ -287,7 +291,7 @@ export interface SkilledOpts {
 }
 
 export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: SkilledOpts = {}) {
-  const g = newGame(seed, difficulty);
+  const g = newGame(seed, difficulty, opts.events ? ['events'] : [], 'classic', opts.rules);
   const { sim, combat } = g;
   // The two harness knobs: the only sim fields written. Everything else goes through g.run.
   if (opts.hp) sim.hpMult = opts.hp;
@@ -446,6 +450,15 @@ export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: S
   ramp();
   while (!g.over && g.wavesCleared < maxWave) {
     if (sim.phase === 'build') {
+      if (g.pendingEvent)
+        g.run([
+          'event',
+          opts.events === 'decline'
+            ? 'decline'
+            : g.pendingEvent.id === 'shrine'
+              ? 'gold'
+              : 'accept',
+        ]);
       while (g.gold >= (g.levelCost ?? Infinity)) g.run(['level']);
       look();
       combineBoard();
@@ -482,6 +495,8 @@ export function skilled(seed: number, difficulty: Difficulty = 'normal', opts: S
     hp: sim.castleHp,
     level: g.level,
     seconds: g.seconds,
+    gold: g.gold,
+    skyhunters: board().filter((t) => t.def.name.startsWith('Skyhunter')).length,
     dmg,
   };
 }
@@ -501,6 +516,8 @@ test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_2
   const N = Number(env.SEEDS ?? 8);
   const diff = (env.DIFF ?? 'normal') as Difficulty;
   const opts: SkilledOpts = {
+    events: env.EVENTS === 'accept' || env.EVENTS === 'decline' ? env.EVENTS : undefined,
+    rules: env.RULES ? Number(env.RULES) : undefined,
     hp: env.HP ? Number(env.HP) : undefined,
     hpRamp: env.HP_RAMP ? Number(env.HP_RAMP) : undefined,
     ramp: env.RAMP ? Number(env.RAMP) : undefined,
@@ -525,6 +542,7 @@ test.skipIf(import.meta.env.MODE !== 'balance')('skilled report', { timeout: 7_2
       ` | win ${share(runs.filter((r) => r.won).length)} | cleared ${runs.map((r) => r.wave).join(' ')}` +
       ` | reach w10 ${reach(10)} w20 ${reach(20)} w30 ${reach(30)} w40 ${reach(40)} w50 ${reach(50)}` +
       ` | winner castle hp median ${hps.length ? hps[hps.length >> 1] : '-'}` +
+      ` | events ${opts.events ?? 'off'} | skyhunters ${runs.map((r) => r.skyhunters).join(' ')} | gold ${runs.map((r) => r.gold).join(' ')}` +
       ` | ${secs.toFixed(1)} s/game`,
   );
   // Share of all damage per 10 waves: magic / of that, poison towers / chain lightning towers.
