@@ -37,7 +37,7 @@ import {
   type Creep,
   type WaveEntry,
 } from './sim/waves';
-import { initBook, mazeRows, measure, pinGlow, type Guide } from './book';
+import { initBook, mazeRows, measure, pinGlow, placementGlow, type Guide } from './book';
 import { initDmgChart, short } from './dmgchart';
 import { initMenu } from './ui';
 import type { Start } from './menu/start';
@@ -123,10 +123,16 @@ const menu = initMenu(
   !replaying && !builder && !stress,
 );
 let guide: Guide | null = null;
+const towerHelper = document.querySelector<HTMLInputElement>('#towerhelper')!;
+const updateTowerGuide = () => {
+  view.guideTowers =
+    towerHelper.checked && (cfg.map ?? 'classic') === 'classic' ? (guide?.towers ?? []) : [];
+  view.invalidate();
+};
 const showGuide = (g: Guide | null) => {
   guide = g;
   view.guide = g?.rows ?? null;
-  view.invalidate();
+  updateTowerGuide();
 };
 // Ability names/tooltips from the wiki extract, keyed by ability id.
 const ABILITY = new Map(
@@ -188,6 +194,11 @@ const remember = (k: string, v: boolean) => {
 };
 view.showRanges = toggles.ranges ?? view.showRanges;
 view.showPath = toggles.path ?? view.showPath;
+towerHelper.checked = toggles.towerhelper ?? false;
+towerHelper.onchange = () => {
+  remember('towerhelper', towerHelper.checked);
+  updateTowerGuide();
+};
 // Low graphics: per browser, since it's about this device.
 const lowgfx = document.querySelector<HTMLInputElement>('#lowgfx')!;
 lowgfx.checked = view.low = toggles.lowgfx ?? view.low;
@@ -1263,6 +1274,7 @@ function drawBuilder() {
 /** Selected tower: portrait, stats, ability cards, combines and recipe uses. */
 function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share: number) {
   const d = t.def;
+  const planned = view.guideTowers.find((p) => p.c === t.c && p.r === t.r);
   const colour = GEM_COLOR[d.quality ? d.type : 'S'];
   setPortrait(towerIcon(d), '◆', colour);
   nameEl.textContent = d.name;
@@ -1274,6 +1286,7 @@ function drawTower(t: Tower, recipes: ReturnType<typeof game.recipesFor>, share:
     ['⏱ Rate', `${d.attackRate}s`],
     ['◎ Range', String(d.range)],
     ['☠ Kills', String(t.kills)],
+    ...(planned ? [['Guide target', planned.code] as [string, string]] : []),
   ]);
   const skillCards = (src: typeof d, from = '') =>
     src.abilities
@@ -1477,6 +1490,7 @@ function updateHud() {
     book.open +
     [...book.pins] +
     guide?.name +
+    towerHelper.checked +
     mazeVer +
     recipes.map((x) => x.name) +
     combat.towers.length +
@@ -1518,6 +1532,9 @@ function updateHud() {
     // matching every recipe against every tower is far too dear to redo on each counter tick.
     const board =
       step +
+      guide?.name +
+      towerHelper.checked +
+      view.guideTowers.map((p) => `${p.code}@${p.c},${p.r}`).join() +
       game.placed.length +
       game.over +
       [...book.pins] +
@@ -1535,6 +1552,9 @@ function updateHud() {
       const cell = (t: Tower) => maze.idx(t.c, t.r);
       view.pinReady = pin.ready.map(cell);
       view.pinned = pin.working.map(cell);
+      const placement = placementGlow(view.guideTowers, combat.towers);
+      view.placementWorking = placement.working.map(cell);
+      view.placementComplete = placement.complete.map(cell);
       view.hints = combat.towers
         .filter((t) => !pin.ready.includes(t) && game.recipesFor(t).length)
         .map(cell);

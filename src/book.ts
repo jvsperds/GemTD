@@ -1,6 +1,6 @@
 // Side book: recipe list and maze helpers (built-in guides + the player's saved maze library).
 import map from '../data/map.json';
-import { GUIDES } from './guide';
+import { GUIDES, type TowerPlacement } from './guide';
 import * as db from './persist';
 import { towerIcon } from './render';
 import { Maze, OPEN, ROCK, type MapData } from './sim/maze';
@@ -11,6 +11,7 @@ import { codeOf, type GemDef, type SpecialDef, type Tower } from './sim/towers';
 export interface Guide {
   name: string;
   rows: string[];
+  towers?: TowerPlacement[];
   lib?: boolean; // from the player's library (deletable)
 }
 
@@ -63,6 +64,32 @@ export function pinGlow(
     ready: [...ready],
     working: towers.filter((t) => !ready.has(t) && want.has(codeOf(t.def))),
   };
+}
+
+/** Match only the planned cell, following alternative recipes, upgrades and gem merges. */
+export function placementGlow(plan: TowerPlacement[], towers: Tower[]) {
+  const matches = (code: string, target: string, seen = new Set<string>()): boolean => {
+    if (code === target) return true;
+    const def = DEFS[target];
+    if (!def || seen.has(target)) return false;
+    seen.add(target);
+    const gem = DEFS[code];
+    if (def.quality && gem?.quality && gem.type === def.type && gem.quality < def.quality)
+      return true;
+    return ((def as Partial<SpecialDef>).recipes ?? []).some((recipe) =>
+      recipe.some((part) => matches(code, part, seen)),
+    );
+  };
+  const working: Tower[] = [],
+    complete: Tower[] = [];
+  for (const p of plan) {
+    const t = towers.find((t) => t.c === p.c && t.r === p.r);
+    if (!t) continue;
+    const code = codeOf(t.def);
+    if (code === p.code) complete.push(t);
+    else if (matches(code, p.code)) working.push(t);
+  }
+  return { working, complete };
 }
 
 const el = (tag: string, cls = '', text = '') => {
@@ -248,6 +275,13 @@ export function initBook(opts: {
   function mazes() {
     const shown = opts.guide();
     body.append(el('p', 'note', 'Legs = route legs (of 6) that cross the middle.'));
+    body.append(
+      el(
+        'p',
+        'note',
+        'Tower plans: Easy / Classic. Enable Tower placement helper in Settings. Gold glow = a recipe ingredient in its planned cell; green ring = completed tower.',
+      ),
+    );
     for (const g of guides()) {
       let st = stats.get(g.rows);
       if (!st) stats.set(g.rows, (st = evaluate(g.rows, opts.map && new Maze(opts.map))));
@@ -289,6 +323,17 @@ export function initBook(opts: {
         btns.append(del);
       }
       text.append(btns);
+      if (shown?.rows === g.rows && g.towers?.length) {
+        const details = el('details');
+        details.append(el('summary', '', `${g.towers.length} planned tower positions`));
+        const list = el('ol');
+        for (const p of g.towers)
+          list.append(
+            el('li', '', `Column ${p.c + 1}, row ${p.r + 1}: ${DEFS[p.code]?.name ?? p.code}`),
+          );
+        details.append(list);
+        text.append(details);
+      }
       row.append(text);
       body.append(row);
     }

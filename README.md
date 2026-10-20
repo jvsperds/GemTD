@@ -113,6 +113,14 @@ top 10 across all players. Closing the tab mid-game is fine: the game resumes on
 
 Score = waves cleared × (1000 + difficulty bonus) + castle HP × 50 − seconds played.
 
+**Tower placement helper:** enable it in Settings, then Show a layout in Book → Maze helpers.
+The built-in layouts have 25-tower plans evaluated on Easy / Classic. Ghost towers mark the
+target positions; a matching recipe ingredient in that exact cell glows gold, and a completed
+target gets a green ring. Nested recipes, gem merges and Ancient upgrades count. Low graphics
+uses rings, and reduced-motion preferences use steady rings. Expand the selected guide's
+planned positions for tower names and coordinates. These are late-game plans; they do not
+guarantee recipe acquisition or a maximum score. See [the comparison](GUIDE-EVALUATION.md).
+
 ## Develop
 
 Building needs Node 22. `npm run build` writes the single-file game to `dist/index.html` (plus
