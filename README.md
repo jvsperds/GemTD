@@ -1,5 +1,13 @@
 # GemTD
 
+> **This project is retired and continues as [Facet TD](https://github.com/jvsperds/facet-td).**
+>
+> Facet TD is the successor: the same game, with a **Classic** mode that follows the original
+> addon's rules and a **Facet** mode that keeps the tuned rules from this repo. It also adds a
+> new 3D renderer and still ships as a single offline HTML file. New work, issues and releases
+> happen there. This repo stays available read-only, and its
+> [releases](https://github.com/jvsperds/GemTD/releases) remain downloadable.
+
 A single-player, fully offline browser remake of the Dota 2 custom game **Gem TD**: place random
 gems, keep one, maze the rest as stones, combine into special towers, survive 50 waves, then keep going in endless mode.
 The standalone file needs no server and makes no network calls; the optional self-hosted server
