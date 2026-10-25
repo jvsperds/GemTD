@@ -1,10 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-25 (final release)
 
-- Evaluated every built-in maze guide with Easy tower plans and added an optional Tower
-  placement helper: ghost targets, gold ingredient hints and green completed-tower rings.
+GemTD is retired with this release and continues as
+[Facet TD](https://github.com/jvsperds/facet-td). This repo stays available read-only.
 
+- **Leaks:** a leaking creep deals 1 + a random roll whose range grows every 10 waves (1–3 on
+  waves 1–9, up to 1–59 on waves 90–99), as in the original addon. It used to be a flat 1.
+- **Maps and contracts:** added the Rift Garden map, opt-in challenge contracts and new tower
+  mechanics.
+- **Recipes:** added recipe search and nested recipe navigation.
+- **Tower placement helper:** evaluated every built-in maze guide with Easy tower plans and added
+  an optional helper with ghost targets, gold ingredient hints and green completed-tower rings.
+- **Menu and mobile:** an accessible, touch-ready game menu and a grouped mobile HUD; zoom
+  controls moved to Settings.
+- **Invisible creeps** fade outside true-sight range.
 - Added Skyhunter and Skyhunter Ascended, physical anti-air specialists with reduced ground damage.
 - Added optional seeded Events: Shrine, Gold Rush and Hurry Wave, with build-phase choices,
   explicit risks, decline controls, and one-wave modifiers. Auto-skip waits for event decisions.
