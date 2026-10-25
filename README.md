@@ -1,5 +1,13 @@
 # GemTD
 
+> **This project is retired and continues as [Facet TD](https://github.com/jvsperds/facet-td).**
+>
+> Facet TD is the successor: the same game, with a **Classic** mode that follows the original
+> addon's rules and a **Facet** mode that keeps the tuned rules from this repo. It also adds a
+> new 3D renderer and still ships as a single offline HTML file. New work, issues and releases
+> happen there. This repo stays available read-only, and its
+> [releases](https://github.com/jvsperds/GemTD/releases) remain downloadable.
+
 A single-player, fully offline browser remake of the Dota 2 custom game **Gem TD**: place random
 gems, keep one, maze the rest as stones, combine into special towers, survive 50 waves, then keep going in endless mode.
 The standalone file needs no server and makes no network calls; the optional self-hosted server
@@ -112,6 +120,14 @@ rank separately), **Watch** replays of finished games, and settings for speed, v
 top 10 across all players. Closing the tab mid-game is fine: the game resumes on the next load.
 
 Score = waves cleared × (1000 + difficulty bonus) + castle HP × 50 − seconds played.
+
+**Tower placement helper:** enable it in Settings, then Show a layout in Book → Maze helpers.
+The built-in layouts have 25-tower plans evaluated on Easy / Classic. Ghost towers mark the
+target positions; a matching recipe ingredient in that exact cell glows gold, and a completed
+target gets a green ring. Nested recipes, gem merges and Ancient upgrades count. Low graphics
+uses rings, and reduced-motion preferences use steady rings. Expand the selected guide's
+planned positions for tower names and coordinates. These are late-game plans; they do not
+guarantee recipe acquisition or a maximum score. See [the comparison](GUIDE-EVALUATION.md).
 
 ## Develop
 

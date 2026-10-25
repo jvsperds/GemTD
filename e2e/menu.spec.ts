@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import type { Hero } from '../src/persist';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
+import plans from '../data/guide-plans.json' with { type: 'json' };
 
 test.beforeEach(async ({ page, context }) => {
   await context.route(/^https?:/, (route) => route.abort());
@@ -130,6 +131,53 @@ test('menu navigation supports keyboard tabs, focus containment, and Escape', as
   await page.locator('#menubtn').click();
   await page.keyboard.press('Escape');
   await expect(page.locator('#menubtn')).toBeFocused();
+});
+
+test('tower placement helper is optional, persists, and lists guide targets', async ({ page }) => {
+  await page.getByRole('tab', { name: 'Settings', exact: true }).click();
+  const helper = page.getByRole('checkbox', { name: 'Tower placement helper', exact: true });
+  await expect(helper).not.toBeChecked();
+  await helper.check();
+  await page.reload();
+  await expect(page.locator('body[data-ready="1"]')).toBeAttached();
+  await expect(page.locator('#menu')).toBeVisible();
+  await page.getByRole('tab', { name: 'Settings', exact: true }).click();
+  await expect(helper).toBeChecked();
+  await page.locator('#close').click();
+  await page.keyboard.press('h');
+  await page.locator('[data-book="mazes"]').click();
+  const guide = page.locator('#bookbody .maze').first();
+  await guide.getByRole('button', { name: 'Show', exact: true }).click();
+  await guide.locator('summary').click();
+  await expect(guide.locator('li')).toHaveCount(25);
+  await expect(guide.locator('li').first()).toContainText(/Column \d+, row \d+:/);
+  const target = plans
+    .find((p) => p.name === 'Almond-6 pass')!
+    .towers.find((p) => p.code === 'Ehome')!;
+  await page.evaluate(({ c, r }) => {
+    const g = (
+      window as unknown as {
+        gemtd: { combat: { place(code: string, c: number, r: number): unknown } };
+      }
+    ).gemtd;
+    if (!g.combat.place('E3', c, r)) throw new Error('Cannot set up recipe ingredient');
+  }, target);
+  await page.keyboard.press('h');
+  const canvas = page.locator('#game');
+  await canvas.focus();
+  for (let i = 0; i < Math.abs(target.c - 18); i++)
+    await page.keyboard.press(target.c < 18 ? 'ArrowLeft' : 'ArrowRight');
+  for (let i = 0; i < Math.abs(target.r - 18); i++)
+    await page.keyboard.press(target.r < 18 ? 'ArrowUp' : 'ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#attrs')).toContainText('Guide target');
+  await expect(page.locator('#attrs')).toContainText('Ehome');
+  await page.screenshot({ path: 'test-results/tower-placement-helper.png' });
+  await page.locator('#menubtn').click();
+  await page.getByRole('tab', { name: 'Settings', exact: true }).click();
+  await helper.uncheck();
+  await page.locator('#close').click();
+  await expect(page.locator('#attrs')).not.toContainText('Guide target');
 });
 
 test('run setup keeps draft choices through loadout editing and Back', async ({ page }) => {

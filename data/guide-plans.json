@@ -1,0 +1,2508 @@
+[
+  {
+    "name": "5X5 Crossover Remix",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "Red Coral"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Natural Zumurud"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 183,
+      "path": 882.5340546095179,
+      "middlePasses": 6,
+      "objective": 80063584.59333333,
+      "ehomeAdjacency": [
+        5,
+        1,
+        2,
+        5,
+        3,
+        3,
+        1,
+        0,
+        0,
+        3,
+        1,
+        2,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 129,
+          "hp": -25,
+          "score": 126808,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 129,
+          "hp": -31,
+          "score": 126730,
+          "capped": false
+        }
+      ],
+      "waves": [
+        129,
+        129
+      ],
+      "meanScore": 126769
+    }
+  },
+  {
+    "name": "Top #1 Maze",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "The Blood King"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Red Coral"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 18,
+        "r": 14,
+        "code": "The Blood King"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 22,
+        "r": 18,
+        "code": "Lucky Chinese Jade"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 157,
+      "path": 803.1198410471445,
+      "middlePasses": 6,
+      "objective": 71457708.9308,
+      "ehomeAdjacency": [
+        5,
+        5,
+        2,
+        2,
+        3,
+        2,
+        2,
+        1,
+        1,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -8,
+          "score": 108002,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -5,
+          "score": 107962,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107982
+    }
+  },
+  {
+    "name": "Solo lvl 40",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 15,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 17,
+        "r": 15,
+        "code": "The Blood King"
+      },
+      {
+        "c": 19,
+        "r": 15,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 16,
+        "r": 15,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 20,
+        "r": 15,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 15,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 21,
+        "r": 16,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 15,
+        "r": 20,
+        "code": "Red Coral"
+      },
+      {
+        "c": 21,
+        "r": 20,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 16,
+        "r": 21,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 21,
+        "code": "The Blood King"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "Carmen-Lucia"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 115,
+      "path": 521.3380951166241,
+      "middlePasses": 6,
+      "objective": 50752776.24076665,
+      "ehomeAdjacency": [
+        6,
+        3,
+        3,
+        2,
+        3,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -22,
+          "score": 107939,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -17,
+          "score": 107972,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107955.5
+    }
+  },
+  {
+    "name": "Flower Maze",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 15,
+        "code": "The Blood King"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 21,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 18,
+        "r": 21,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 16,
+        "r": 15,
+        "code": "Red Coral"
+      },
+      {
+        "c": 20,
+        "r": 15,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 15,
+        "r": 16,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 21,
+        "r": 16,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 15,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 21,
+        "r": 20,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 16,
+        "r": 21,
+        "code": "Ehome"
+      },
+      {
+        "c": 20,
+        "r": 21,
+        "code": "Monkey King Jade"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 168,
+      "path": 1061.1787155501906,
+      "middlePasses": 6,
+      "objective": 72006632.59995,
+      "ehomeAdjacency": [
+        3,
+        3,
+        2,
+        1,
+        1,
+        2,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -35,
+          "score": 107937,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -30,
+          "score": 107937,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107937
+    }
+  },
+  {
+    "name": "Copy of 5X5 Crossover",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Red Coral"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "The Blood King"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "The Blood King"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Cullinan Heart"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 219,
+      "path": 1341.019335983757,
+      "middlePasses": 6,
+      "objective": 104689137.47973333,
+      "ehomeAdjacency": [
+        5,
+        4,
+        2,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        2,
+        3,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -1,
+          "score": 107925,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -13,
+          "score": 107928,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107926.5
+    }
+  },
+  {
+    "name": "Experimental",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Red Coral"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "The Blood King"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Star Sapphire"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 242,
+      "path": 1199.9238815542517,
+      "middlePasses": 5,
+      "objective": 92273411.02259998,
+      "ehomeAdjacency": [
+        3,
+        1,
+        4,
+        2,
+        4,
+        2,
+        5,
+        0,
+        1,
+        1,
+        0,
+        2,
+        0,
+        3,
+        1,
+        0,
+        0,
+        0,
+        1
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -53,
+          "score": 107876,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -34,
+          "score": 107973,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107924.5
+    }
+  },
+  {
+    "name": "5x5 Maze",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Red Coral"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "The Blood King"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 277,
+      "path": 1307.6812408671321,
+      "middlePasses": 6,
+      "objective": 105563609.02514999,
+      "ehomeAdjacency": [
+        5,
+        3,
+        3,
+        3,
+        2,
+        3,
+        1,
+        1,
+        1,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1,
+        1,
+        2,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -30,
+          "score": 107897,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -42,
+          "score": 107904,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107900.5
+    }
+  },
+  {
+    "name": "Almond-6 pass",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Ehome"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 15,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 15,
+        "r": 16,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 21,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 20,
+        "r": 21,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 18,
+        "r": 14,
+        "code": "Red Coral"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "The Blood King"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 230,
+      "path": 1442.7939392393405,
+      "middlePasses": 6,
+      "objective": 99059033.76626669,
+      "ehomeAdjacency": [
+        4,
+        3,
+        3,
+        3,
+        3,
+        1,
+        1,
+        2,
+        1,
+        3,
+        2,
+        2,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": 0,
+          "score": 107887,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -39,
+          "score": 107888,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107887.5
+    }
+  },
+  {
+    "name": "5X5 Crossover",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Red Coral"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "The Blood King"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Lucky Chinese Jade"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 155,
+      "path": 864.0315292925761,
+      "middlePasses": 6,
+      "objective": 67597488.90729998,
+      "ehomeAdjacency": [
+        3,
+        6,
+        2,
+        3,
+        1,
+        1,
+        1,
+        2,
+        0,
+        2,
+        3,
+        1,
+        1,
+        0,
+        0,
+        1,
+        2,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -52,
+          "score": 107854,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -47,
+          "score": 107896,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107875
+    }
+  },
+  {
+    "name": "Rosemary Maze",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "The Blood King"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 18,
+        "r": 15,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 21,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 18,
+        "r": 21,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 14,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 19,
+        "r": 14,
+        "code": "The Blood King"
+      },
+      {
+        "c": 14,
+        "r": 17,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 22,
+        "r": 17,
+        "code": "Red Coral"
+      },
+      {
+        "c": 14,
+        "r": 19,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 22,
+        "r": 19,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 17,
+        "r": 22,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 19,
+        "r": 22,
+        "code": "Star of Eden"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 181,
+      "path": 1068.0071426749369,
+      "middlePasses": 6,
+      "objective": 86069456.13430004,
+      "ehomeAdjacency": [
+        6,
+        4,
+        4,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -44,
+          "score": 107878,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -6,
+          "score": 107828,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107853
+    }
+  },
+  {
+    "name": "Almond-6 mirrored",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Red Coral"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 16,
+        "r": 15,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 15,
+        "r": 16,
+        "code": "The Blood King"
+      },
+      {
+        "c": 21,
+        "r": 20,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 20,
+        "r": 21,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 14,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "Regent Diamond"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 230,
+      "path": 1442.7939392393405,
+      "middlePasses": 6,
+      "objective": 105930387.93200001,
+      "ehomeAdjacency": [
+        5,
+        2,
+        3,
+        1,
+        1,
+        2,
+        2,
+        3,
+        1,
+        1,
+        2,
+        2,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 109,
+          "hp": -1,
+          "score": 107745,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 109,
+          "hp": -23,
+          "score": 107728,
+          "capped": false
+        }
+      ],
+      "waves": [
+        109,
+        109
+      ],
+      "meanScore": 107736.5
+    }
+  },
+  {
+    "name": "Simple Maze",
+    "towers": [
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 17,
+        "r": 16,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 20,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 21,
+        "r": 18,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 15,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 15,
+        "r": 19,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 15,
+        "r": 16,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 21,
+        "r": 16,
+        "code": "Red Coral"
+      },
+      {
+        "c": 15,
+        "r": 20,
+        "code": "Ehome"
+      },
+      {
+        "c": 21,
+        "r": 20,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 18,
+        "r": 14,
+        "code": "The Blood King"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "The Blood King"
+      },
+      {
+        "c": 22,
+        "r": 18,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 18,
+        "r": 22,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 17,
+        "r": 14,
+        "code": "Ehome"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 116,
+      "path": 322.7695526217004,
+      "middlePasses": 3,
+      "objective": 28296172.55375001,
+      "ehomeAdjacency": [
+        0,
+        3,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 99,
+          "hp": -28,
+          "score": 98190,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 105,
+          "hp": 0,
+          "score": 103988,
+          "capped": false
+        }
+      ],
+      "waves": [
+        99,
+        105
+      ],
+      "meanScore": 101089
+    }
+  },
+  {
+    "name": "Turtle Maze",
+    "towers": [
+      {
+        "c": 18,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 18,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 16,
+        "r": 17,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 20,
+        "r": 17,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 16,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 20,
+        "r": 19,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 16,
+        "r": 16,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 20,
+        "r": 16,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 16,
+        "r": 20,
+        "code": "The Blood King"
+      },
+      {
+        "c": 20,
+        "r": 20,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 18,
+        "r": 15,
+        "code": "Red Coral"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 21,
+        "r": 18,
+        "code": "The Blood King"
+      },
+      {
+        "c": 18,
+        "r": 21,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 17,
+        "r": 14,
+        "code": "Natural Zumurud"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 152,
+      "path": 815.80613254816,
+      "middlePasses": 6,
+      "objective": 73948708.70043334,
+      "ehomeAdjacency": [
+        5,
+        5,
+        3,
+        1,
+        3,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        2,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 99,
+          "hp": -11,
+          "score": 98291,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 99,
+          "hp": -17,
+          "score": 98275,
+          "capped": false
+        }
+      ],
+      "waves": [
+        99,
+        99
+      ],
+      "meanScore": 98283
+    }
+  },
+  {
+    "name": "Standard Maze",
+    "towers": [
+      {
+        "c": 17,
+        "r": 18,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 19,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 17,
+        "r": 17,
+        "code": "Ehome"
+      },
+      {
+        "c": 19,
+        "r": 19,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 18,
+        "r": 16,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 16,
+        "r": 18,
+        "code": "Kyparium Core"
+      },
+      {
+        "c": 20,
+        "r": 18,
+        "code": "Regent Diamond"
+      },
+      {
+        "c": 18,
+        "r": 20,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 19,
+        "r": 16,
+        "code": "Carmen-Lucia"
+      },
+      {
+        "c": 17,
+        "r": 20,
+        "code": "Ehome"
+      },
+      {
+        "c": 15,
+        "r": 18,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 21,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 21,
+        "r": 17,
+        "code": "The Blood King"
+      },
+      {
+        "c": 15,
+        "r": 19,
+        "code": "Ehome"
+      },
+      {
+        "c": 16,
+        "r": 15,
+        "code": "Star Sapphire"
+      },
+      {
+        "c": 15,
+        "r": 16,
+        "code": "Natural Zumurud"
+      },
+      {
+        "c": 21,
+        "r": 16,
+        "code": "Red Coral"
+      },
+      {
+        "c": 15,
+        "r": 20,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 21,
+        "r": 20,
+        "code": "Lucky Chinese Jade"
+      },
+      {
+        "c": 20,
+        "r": 21,
+        "code": "Star of Eden"
+      },
+      {
+        "c": 18,
+        "r": 14,
+        "code": "Cullinan Heart"
+      },
+      {
+        "c": 14,
+        "r": 18,
+        "code": "Ehome"
+      },
+      {
+        "c": 22,
+        "r": 18,
+        "code": "The Blood King"
+      },
+      {
+        "c": 18,
+        "r": 22,
+        "code": "Monkey King Jade"
+      },
+      {
+        "c": 17,
+        "r": 14,
+        "code": "Natural Zumurud"
+      }
+    ],
+    "evaluation": {
+      "valid": true,
+      "stones": 222,
+      "path": 1218.3675323681473,
+      "middlePasses": 6,
+      "objective": 58488548.699200004,
+      "ehomeAdjacency": [
+        1,
+        1,
+        1,
+        2,
+        2,
+        1,
+        0,
+        2,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "results": [
+        {
+          "seed": 11,
+          "wave": 99,
+          "hp": -4,
+          "score": 98131,
+          "capped": false
+        },
+        {
+          "seed": 29,
+          "wave": 99,
+          "hp": -32,
+          "score": 98136,
+          "capped": false
+        }
+      ],
+      "waves": [
+        99,
+        99
+      ],
+      "meanScore": 98133.5
+    }
+  }
+]

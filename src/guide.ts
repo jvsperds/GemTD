@@ -1,3 +1,11 @@
+import plans from '../data/guide-plans.json';
+
+export interface TowerPlacement {
+  c: number;
+  r: number;
+  code: string;
+}
+
 // Maze guide overlay: '1'-'5' build order, 'O' opal, 'S' special (Yellow Sapphire / Grey Jade /
 // auras). One string per map row. Almond-6 pass was edited by hand in the guide spreadsheet (2026-09-28).
 const ALMOND_6 = [
@@ -590,8 +598,8 @@ const SHEET: { name: string; rows: string[] }[] = [
   },
 ];
 
-export const GUIDES: { name: string; rows: string[] }[] = [
+export const GUIDES: { name: string; rows: string[]; towers?: TowerPlacement[] }[] = [
   { name: 'Almond-6 pass', rows: ALMOND_6 },
   { name: 'Almond-6 mirrored', rows: ALMOND_6_MIRROR },
   ...SHEET,
-];
+].map((guide) => ({ ...guide, towers: plans.find((plan) => plan.name === guide.name)?.towers }));

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Evaluated every built-in maze guide with Easy tower plans and added an optional Tower
+  placement helper: ghost targets, gold ingredient hints and green completed-tower rings.
+
 - Added Skyhunter and Skyhunter Ascended, physical anti-air specialists with reduced ground damage.
 - Added optional seeded Events: Shrine, Gold Rush and Hurry Wave, with build-phase choices,
   explicit risks, decline controls, and one-wave modifiers. Auto-skip waits for event decisions.

@@ -2,6 +2,7 @@
 // Static layer (ground, route, blocks) is an offscreen canvas redrawn only on maze/zoom change;
 // the dynamic layer (creeps, tracers, particles) is redrawn every frame from baked sprites.
 import { ROCK, WALL, type Maze } from './sim/maze';
+import type { TowerPlacement } from './guide';
 import { PEDAL, PEDALS, SPELL, TIERS } from './sim/pedals';
 import type { Combat, GemDef, SpecialDef, Tower } from './sim/towers';
 import { UNITS_PER_CELL, type Creep, type WaveSim } from './sim/waves';
@@ -1409,6 +1410,9 @@ export class Renderer {
   hints: number[] = []; // cells of towers that can combine now
   pinned: number[] = []; // cells of pinned-recipe ingredients still waiting on the rest
   pinReady: number[] = []; // cells of pinned-recipe ingredients that can combine now
+  placementWorking: number[] = [];
+  placementComplete: number[] = [];
+  guideTowers: TowerPlacement[] = [];
   pending: number[] = []; // this round's gems, one of which must be picked to finish it
   guide: string[] | null = null; // maze guide overlay rows
   showPath = true;
@@ -1483,6 +1487,7 @@ export class Renderer {
   /** Low graphics (default on touch devices, where per-frame shadowBlur is costly): no live glows,
    * no particles, combine hints as plain rings, and 1 device pixel per CSS pixel. */
   low = matchMedia('(pointer: coarse)').matches;
+  private reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   get glow() {
     return this.low ? 0 : 1;
   }
@@ -2457,6 +2462,16 @@ export class Renderer {
 
     ctx.drawImage(this.blockLayer, panX | 0, (panY - Math.ceil(s * (BLOCK_H + TALL))) | 0);
 
+    // Ghost targets show the plan without covering a gem already occupying its cell.
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    for (const p of this.guideTowers) {
+      const d = this.combat.gems[p.code];
+      if (!d || this.combat.towerAt(p.c, p.r)) continue;
+      ctx.drawImage(this.tower(towerKey(d), d.type, d.quality), X(p.c), Y(p.r - TOWER_H - TALL));
+    }
+    ctx.restore();
+
     if (this.flash >= 0 && now < this.flashUntil) {
       ctx.fillStyle = 'rgba(220,50,50,0.6)';
       ctx.fillRect(X(this.flash % this.maze.w), Y((this.flash / this.maze.w) | 0), s, s);
@@ -2497,13 +2512,19 @@ export class Renderer {
       [this.hints, '170,255,240', this.low],
       [this.pinned, '255,130,225', true],
       [this.pinReady, '255,130,225', this.low],
+      [this.placementWorking, '255,205,80', this.low || this.reducedMotion],
+      [this.placementComplete, '120,255,150', true],
     ] as const)
       for (const h of cells) {
         const cx = X((h % this.maze.w) + 0.5),
           cy = Y(((h / this.maze.w) | 0) + 0.5 - (TOWER_H + TALL) / 2),
           rad = s * 0.85;
         if (ring) {
-          ctx.strokeStyle = `rgba(${rgb},${cells === this.pinned ? 0.6 : aura + 0.3})`;
+          const steady =
+            cells === this.pinned ||
+            (this.reducedMotion &&
+              (cells === this.placementWorking || cells === this.placementComplete));
+          ctx.strokeStyle = `rgba(${rgb},${steady ? 0.6 : aura + 0.3})`;
           ctx.lineWidth = Math.max(2, s / 10);
           ctx.beginPath();
           ctx.arc(cx, cy, rad * 0.6, 0, 7);
