@@ -4,6 +4,7 @@ import waves from '../data/waves.json';
 import { Maze, type MapData } from '../src/sim/maze';
 import {
   CASTLE_HP,
+  leakSpread,
   CREEPS_PER_WAVE,
   ENDLESS,
   ENRAGE_TIME,
@@ -29,7 +30,8 @@ test('ground wave walks the maze and every creep leaks', () => {
   const s = sim();
   const { ticks, seen } = runWave(s);
   expect(s.phase).toBe('build');
-  expect(s.castleHp).toBe(CASTLE_HP - CREEPS_PER_WAVE);
+  expect(CASTLE_HP - s.castleHp).toBeGreaterThanOrEqual(CREEPS_PER_WAVE); // 1-3 per leak on waves 1-9
+  expect(CASTLE_HP - s.castleHp).toBeLessThanOrEqual(3 * CREEPS_PER_WAVE);
   // Never on a wall, and passes every checkpoint.
   for (const k of seen) {
     const [c, r] = k.split(',').map(Number);
@@ -106,8 +108,13 @@ test('enrage: after 3 minutes creeps ignore stuns and slows, so a locked wave en
     for (const c of s.creeps) [c.stunT, c.slowPct, c.slowPctT, c.slow] = [2, 0.9, 2, 999];
   }
   expect(s.phase).toBe('build');
-  expect(s.castleHp).toBe(CASTLE_HP - CREEPS_PER_WAVE);
+  expect(CASTLE_HP - s.castleHp).toBeGreaterThanOrEqual(CREEPS_PER_WAVE); // 1-3 per leak on waves 1-9
+  expect(CASTLE_HP - s.castleHp).toBeLessThanOrEqual(3 * CREEPS_PER_WAVE);
   expect(s.waveT).toBeGreaterThan(ENRAGE_TIME);
   s.startWave();
   expect(s.enraged).toBe(false);
+});
+
+test('leak spread follows the original per-10-wave ranges', () => {
+  expect([1, 15, 25, 35, 45, 55, 65, 95].map(leakSpread)).toEqual([2, 6, 10, 14, 18, 26, 34, 58]);
 });
