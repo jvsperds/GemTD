@@ -23,7 +23,12 @@ export const CREEPS_PER_WAVE = 10;
 export const SPAWN_INTERVAL = 1; // seconds
 export const HP_RAMP = 15; // wave by which creeps have the difficulty's full HP multiplier
 export const CASTLE_HP = 100;
-export const LEAK_DAMAGE = 1;
+// Original: a creep leaks 1 + rand(0..LEAK_SPREAD) where the spread grows each 10 waves
+// (2, 6, 10, 14, 18, then 26, 34, 42, ... by 8); boss waves use BOSS_LEAK_DAMAGE instead.
+export const leakSpread = (wave: number) => {
+  const t = Math.floor(wave / 10);
+  return t < 5 ? 2 + 4 * t : 26 + 8 * (t - 5);
+};
 export const BOSS_LEAK_DAMAGE = 10;
 export const MIN_SPEED = 100; // Dota move-speed floor under slows
 // Creep attributes (BUILD.md �2.6). Numbers from creeps.json "Raw" (1-player column);
@@ -471,7 +476,7 @@ export class WaveSim {
     if (atGoal) {
       if (cr.seg === wp.length - 1) {
         cr.alive = false;
-        let dmg = cr.def.boss ? this.bossLeak(cr) - this.bossBite : LEAK_DAMAGE;
+        let dmg = cr.def.boss ? this.bossLeak(cr) - this.bossBite : 1 + Math.floor(this.rand() * (leakSpread(this.wave) + 1));
         if (this.guard.t > 0) dmg = Math.max(0, dmg - this.guard.v);
         if (this.evade.t > 0 && this.rand() * 100 < this.evade.v) dmg = 0;
         this.castleHp -= dmg;
